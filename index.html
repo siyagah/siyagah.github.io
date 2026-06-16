@@ -830,6 +830,30 @@ sup.ann-sup:hover{text-decoration:underline}
 @media(max-width:1199px){#rem-box{padding:22px 18px;gap:14px}
   .rem-inp{font-size:14px;padding:9px 11px}.rem-btn{padding:10px 18px;font-size:14px}
   .rem-strip{padding:9px 12px;font-size:13px}}
+
+/* ── MyWall subfolder — enhanced compact group headers ─────────────────── */
+.mwsub-hd.mw-top{background:var(--paper2,var(--hover));border-left:3px solid var(--accent)}
+.mw-rel-date{font-size:10px;font-weight:400;color:var(--t3);margin-left:2px;flex-shrink:0}
+.mw-sort-lbl{font-size:10px;font-weight:400;color:var(--t3);margin-left:4px;
+  padding:1px 5px;border-radius:4px;background:var(--hover);flex-shrink:0}
+@media(max-width:1199px){.mw-rel-date{font-size:11px}.mw-sort-lbl{display:none}}
+
+/* ── Per-Section Smart Views (built-in to each section) ─────────────────── */
+.sec-sf-hd{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 13px;
+  cursor:pointer;user-select:none;-webkit-user-select:none;font-size:12.5px;
+  color:var(--t2);border-radius:6px;margin:2px 5px 0;transition:background .12s}
+.sec-sf-hd:hover{background:var(--hover)}
+.sec-sf-hd.ssf-active{color:var(--accent);font-weight:600;background:var(--hover)}
+.sec-sf-hd .sec-sf-lbl{flex:1;font-style:italic;opacity:.85;font-size:12px}
+.sec-sf-item{display:flex;align-items:center;gap:6px;padding:3px 10px 3px 28px;
+  cursor:pointer;font-size:12px;color:var(--t2);border-radius:5px;margin:1px 5px;
+  transition:background .1s}
+.sec-sf-item:hover{background:var(--hover)}
+.sec-sf-item.sel{background:var(--sel,var(--hover));color:var(--accent);font-weight:600}
+.sec-sf-item .sf-cnt{margin-left:auto;font-size:10.5px;background:var(--hover);
+  padding:1px 5px;border-radius:9px;color:var(--t3)}
+@media(max-width:1199px){.sec-sf-hd{padding:7px 12px 7px 16px;font-size:13px;min-height:36px}
+  .sec-sf-item{padding:6px 12px 6px 30px;font-size:13px;min-height:36px}}
 </style>
 <style type="text/css">[data-sonner-toaster][dir=ltr],html[dir=ltr]{--toast-icon-margin-start:-3px;--toast-icon-margin-end:4px;--toast-svg-margin-start:-1px;--toast-svg-margin-end:0px;--toast-button-margin-start:auto;--toast-button-margin-end:0;--toast-close-button-start:0;--toast-close-button-end:unset;--toast-close-button-transform:translate(-35%, -35%)}[data-sonner-toaster][dir=rtl],html[dir=rtl]{--toast-icon-margin-start:4px;--toast-icon-margin-end:-3px;--toast-svg-margin-start:0px;--toast-svg-margin-end:-1px;--toast-button-margin-start:0;--toast-button-margin-end:auto;--toast-close-button-start:unset;--toast-close-button-end:0;--toast-close-button-transform:translate(35%, -35%)}[data-sonner-toaster]{position:fixed;width:var(--width);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;--gray1:hsl(0, 0%, 99%);--gray2:hsl(0, 0%, 97.3%);--gray3:hsl(0, 0%, 95.1%);--gray4:hsl(0, 0%, 93%);--gray5:hsl(0, 0%, 90.9%);--gray6:hsl(0, 0%, 88.7%);--gray7:hsl(0, 0%, 85.8%);--gray8:hsl(0, 0%, 78%);--gray9:hsl(0, 0%, 56.1%);--gray10:hsl(0, 0%, 52.3%);--gray11:hsl(0, 0%, 43.5%);--gray12:hsl(0, 0%, 9%);--border-radius:8px;box-sizing:border-box;padding:0;margin:0;list-style:none;outline:0;z-index:999999999;transition:transform .4s ease}@media (hover:none) and (pointer:coarse){[data-sonner-toaster][data-lifted=true]{transform:none}}[data-sonner-toaster][data-x-position=right]{right:var(--offset-right)}[data-sonner-toaster][data-x-position=left]{left:var(--offset-left)}[data-sonner-toaster][data-x-position=center]{left:50%;transform:translateX(-50%)}[data-sonner-toaster][data-y-position=top]{top:var(--offset-top)}[data-sonner-toaster][data-y-position=bottom]{bottom:var(--offset-bottom)}[data-sonner-toast]{--y:translateY(100%);--lift-amount:calc(var(--lift) * var(--gap));z-index:var(--z-index);position:absolute;opacity:0;transform:var(--y);touch-action:none;transition:transform .4s,opacity .4s,height .4s,box-shadow .2s;box-sizing:border-box;outline:0;overflow-wrap:anywhere}[data-sonner-toast][data-styled=true]{padding:16px;background:var(--normal-bg);border:1px solid var(--normal-border);color:var(--normal-text);border-radius:var(--border-radius);box-shadow:0 4px 12px rgba(0,0,0,.1);width:var(--width);font-size:13px;display:flex;align-items:center;gap:6px}[data-sonner-toast]:focus-visible{box-shadow:0 4px 12px rgba(0,0,0,.1),0 0 0 2px rgba(0,0,0,.2)}[data-sonner-toast][data-y-position=top]{top:0;--y:translateY(-100%);--lift:1;--lift-amount:calc(1 * var(--gap))}[data-sonner-toast][data-y-position=bottom]{bottom:0;--y:translateY(100%);--lift:-1;--lift-amount:calc(var(--lift) * var(--gap))}[data-sonner-toast][data-styled=true] [data-description]{font-weight:400;line-height:1.4;color:#3f3f3f}[data-rich-colors=true][data-sonner-toast][data-styled=true] [data-description]{color:inherit}[data-sonner-toaster][data-sonner-theme=dark] [data-description]{color:#e8e8e8}[data-sonner-toast][data-styled=true] [data-title]{font-weight:500;line-height:1.5;color:inherit}[data-sonner-toast][data-styled=true] [data-icon]{display:flex;height:16px;width:16px;position:relative;justify-content:flex-start;align-items:center;flex-shrink:0;margin-left:var(--toast-icon-margin-start);margin-right:var(--toast-icon-margin-end)}[data-sonner-toast][data-promise=true] [data-icon]>svg{opacity:0;transform:scale(.8);transform-origin:center;animation:sonner-fade-in .3s ease forwards}[data-sonner-toast][data-styled=true] [data-icon]>*{flex-shrink:0}[data-sonner-toast][data-styled=true] [data-icon] svg{margin-left:var(--toast-svg-margin-start);margin-right:var(--toast-svg-margin-end)}[data-sonner-toast][data-styled=true] [data-content]{display:flex;flex-direction:column;gap:2px}[data-sonner-toast][data-styled=true] [data-button]{border-radius:4px;padding-left:8px;padding-right:8px;height:24px;font-size:12px;color:var(--normal-bg);background:var(--normal-text);margin-left:var(--toast-button-margin-start);margin-right:var(--toast-button-margin-end);border:none;font-weight:500;cursor:pointer;outline:0;display:flex;align-items:center;flex-shrink:0;transition:opacity .4s,box-shadow .2s}[data-sonner-toast][data-styled=true] [data-button]:focus-visible{box-shadow:0 0 0 2px rgba(0,0,0,.4)}[data-sonner-toast][data-styled=true] [data-button]:first-of-type{margin-left:var(--toast-button-margin-start);margin-right:var(--toast-button-margin-end)}[data-sonner-toast][data-styled=true] [data-cancel]{color:var(--normal-text);background:rgba(0,0,0,.08)}[data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-styled=true] [data-cancel]{background:rgba(255,255,255,.3)}[data-sonner-toast][data-styled=true] [data-close-button]{position:absolute;left:var(--toast-close-button-start);right:var(--toast-close-button-end);top:0;height:20px;width:20px;display:flex;justify-content:center;align-items:center;padding:0;color:var(--gray12);background:var(--normal-bg);border:1px solid var(--gray4);transform:var(--toast-close-button-transform);border-radius:50%;cursor:pointer;z-index:1;transition:opacity .1s,background .2s,border-color .2s}[data-sonner-toast][data-styled=true] [data-close-button]:focus-visible{box-shadow:0 4px 12px rgba(0,0,0,.1),0 0 0 2px rgba(0,0,0,.2)}[data-sonner-toast][data-styled=true] [data-disabled=true]{cursor:not-allowed}[data-sonner-toast][data-styled=true]:hover [data-close-button]:hover{background:var(--gray2);border-color:var(--gray5)}[data-sonner-toast][data-swiping=true]::before{content:'';position:absolute;left:-100%;right:-100%;height:100%;z-index:-1}[data-sonner-toast][data-y-position=top][data-swiping=true]::before{bottom:50%;transform:scaleY(3) translateY(50%)}[data-sonner-toast][data-y-position=bottom][data-swiping=true]::before{top:50%;transform:scaleY(3) translateY(-50%)}[data-sonner-toast][data-swiping=false][data-removed=true]::before{content:'';position:absolute;inset:0;transform:scaleY(2)}[data-sonner-toast][data-expanded=true]::after{content:'';position:absolute;left:0;height:calc(var(--gap) + 1px);bottom:100%;width:100%}[data-sonner-toast][data-mounted=true]{--y:translateY(0);opacity:1}[data-sonner-toast][data-expanded=false][data-front=false]{--scale:var(--toasts-before) * 0.05 + 1;--y:translateY(calc(var(--lift-amount) * var(--toasts-before))) scale(calc(-1 * var(--scale)));height:var(--front-toast-height)}[data-sonner-toast]>*{transition:opacity .4s}[data-sonner-toast][data-x-position=right]{right:0}[data-sonner-toast][data-x-position=left]{left:0}[data-sonner-toast][data-expanded=false][data-front=false][data-styled=true]>*{opacity:0}[data-sonner-toast][data-visible=false]{opacity:0;pointer-events:none}[data-sonner-toast][data-mounted=true][data-expanded=true]{--y:translateY(calc(var(--lift) * var(--offset)));height:var(--initial-height)}[data-sonner-toast][data-removed=true][data-front=true][data-swipe-out=false]{--y:translateY(calc(var(--lift) * -100%));opacity:0}[data-sonner-toast][data-removed=true][data-front=false][data-swipe-out=false][data-expanded=true]{--y:translateY(calc(var(--lift) * var(--offset) + var(--lift) * -100%));opacity:0}[data-sonner-toast][data-removed=true][data-front=false][data-swipe-out=false][data-expanded=false]{--y:translateY(40%);opacity:0;transition:transform .5s,opacity .2s}[data-sonner-toast][data-removed=true][data-front=false]::before{height:calc(var(--initial-height) + 20%)}[data-sonner-toast][data-swiping=true]{transform:var(--y) translateY(var(--swipe-amount-y,0)) translateX(var(--swipe-amount-x,0));transition:none}[data-sonner-toast][data-swiped=true]{user-select:none}[data-sonner-toast][data-swipe-out=true][data-y-position=bottom],[data-sonner-toast][data-swipe-out=true][data-y-position=top]{animation-duration:.2s;animation-timing-function:ease-out;animation-fill-mode:forwards}[data-sonner-toast][data-swipe-out=true][data-swipe-direction=left]{animation-name:swipe-out-left}[data-sonner-toast][data-swipe-out=true][data-swipe-direction=right]{animation-name:swipe-out-right}[data-sonner-toast][data-swipe-out=true][data-swipe-direction=up]{animation-name:swipe-out-up}[data-sonner-toast][data-swipe-out=true][data-swipe-direction=down]{animation-name:swipe-out-down}@keyframes swipe-out-left{from{transform:var(--y) translateX(var(--swipe-amount-x));opacity:1}to{transform:var(--y) translateX(calc(var(--swipe-amount-x) - 100%));opacity:0}}@keyframes swipe-out-right{from{transform:var(--y) translateX(var(--swipe-amount-x));opacity:1}to{transform:var(--y) translateX(calc(var(--swipe-amount-x) + 100%));opacity:0}}@keyframes swipe-out-up{from{transform:var(--y) translateY(var(--swipe-amount-y));opacity:1}to{transform:var(--y) translateY(calc(var(--swipe-amount-y) - 100%));opacity:0}}@keyframes swipe-out-down{from{transform:var(--y) translateY(var(--swipe-amount-y));opacity:1}to{transform:var(--y) translateY(calc(var(--swipe-amount-y) + 100%));opacity:0}}@media (max-width:600px){[data-sonner-toaster]{position:fixed;right:var(--mobile-offset-right);left:var(--mobile-offset-left);width:100%}[data-sonner-toaster][dir=rtl]{left:calc(var(--mobile-offset-left) * -1)}[data-sonner-toaster] [data-sonner-toast]{left:0;right:0;width:calc(100% - var(--mobile-offset-left) * 2)}[data-sonner-toaster][data-x-position=left]{left:var(--mobile-offset-left)}[data-sonner-toaster][data-y-position=bottom]{bottom:var(--mobile-offset-bottom)}[data-sonner-toaster][data-y-position=top]{top:var(--mobile-offset-top)}[data-sonner-toaster][data-x-position=center]{left:var(--mobile-offset-left);right:var(--mobile-offset-right);transform:none}}[data-sonner-toaster][data-sonner-theme=light]{--normal-bg:#fff;--normal-border:var(--gray4);--normal-text:var(--gray12);--success-bg:hsl(143, 85%, 96%);--success-border:hsl(145, 92%, 87%);--success-text:hsl(140, 100%, 27%);--info-bg:hsl(208, 100%, 97%);--info-border:hsl(221, 91%, 93%);--info-text:hsl(210, 92%, 45%);--warning-bg:hsl(49, 100%, 97%);--warning-border:hsl(49, 91%, 84%);--warning-text:hsl(31, 92%, 45%);--error-bg:hsl(359, 100%, 97%);--error-border:hsl(359, 100%, 94%);--error-text:hsl(360, 100%, 45%)}[data-sonner-toaster][data-sonner-theme=light] [data-sonner-toast][data-invert=true]{--normal-bg:#000;--normal-border:hsl(0, 0%, 20%);--normal-text:var(--gray1)}[data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-invert=true]{--normal-bg:#fff;--normal-border:var(--gray3);--normal-text:var(--gray12)}[data-sonner-toaster][data-sonner-theme=dark]{--normal-bg:#000;--normal-bg-hover:hsl(0, 0%, 12%);--normal-border:hsl(0, 0%, 20%);--normal-border-hover:hsl(0, 0%, 25%);--normal-text:var(--gray1);--success-bg:hsl(150, 100%, 6%);--success-border:hsl(147, 100%, 12%);--success-text:hsl(150, 86%, 65%);--info-bg:hsl(215, 100%, 6%);--info-border:hsl(223, 43%, 17%);--info-text:hsl(216, 87%, 65%);--warning-bg:hsl(64, 100%, 6%);--warning-border:hsl(60, 100%, 9%);--warning-text:hsl(46, 87%, 65%);--error-bg:hsl(358, 76%, 10%);--error-border:hsl(357, 89%, 16%);--error-text:hsl(358, 100%, 81%)}[data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast] [data-close-button]{background:var(--normal-bg);border-color:var(--normal-border);color:var(--normal-text)}[data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast] [data-close-button]:hover{background:var(--normal-bg-hover);border-color:var(--normal-border-hover)}[data-rich-colors=true][data-sonner-toast][data-type=success]{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}[data-rich-colors=true][data-sonner-toast][data-type=success] [data-close-button]{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}[data-rich-colors=true][data-sonner-toast][data-type=info]{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}[data-rich-colors=true][data-sonner-toast][data-type=info] [data-close-button]{background:var(--info-bg);border-color:var(--info-border);color:var(--info-text)}[data-rich-colors=true][data-sonner-toast][data-type=warning]{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}[data-rich-colors=true][data-sonner-toast][data-type=warning] [data-close-button]{background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning-text)}[data-rich-colors=true][data-sonner-toast][data-type=error]{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text)}[data-rich-colors=true][data-sonner-toast][data-type=error] [data-close-button]{background:var(--error-bg);border-color:var(--error-border);color:var(--error-text)}.sonner-loading-wrapper{--size:16px;height:var(--size);width:var(--size);position:absolute;inset:0;z-index:10}.sonner-loading-wrapper[data-visible=false]{transform-origin:center;animation:sonner-fade-out .2s ease forwards}.sonner-spinner{position:relative;top:50%;left:50%;height:var(--size);width:var(--size)}.sonner-loading-bar{animation:sonner-spin 1.2s linear infinite;background:var(--gray11);border-radius:6px;height:8%;left:-10%;position:absolute;top:-3.9%;width:24%}.sonner-loading-bar:first-child{animation-delay:-1.2s;transform:rotate(.0001deg) translate(146%)}.sonner-loading-bar:nth-child(2){animation-delay:-1.1s;transform:rotate(30deg) translate(146%)}.sonner-loading-bar:nth-child(3){animation-delay:-1s;transform:rotate(60deg) translate(146%)}.sonner-loading-bar:nth-child(4){animation-delay:-.9s;transform:rotate(90deg) translate(146%)}.sonner-loading-bar:nth-child(5){animation-delay:-.8s;transform:rotate(120deg) translate(146%)}.sonner-loading-bar:nth-child(6){animation-delay:-.7s;transform:rotate(150deg) translate(146%)}.sonner-loading-bar:nth-child(7){animation-delay:-.6s;transform:rotate(180deg) translate(146%)}.sonner-loading-bar:nth-child(8){animation-delay:-.5s;transform:rotate(210deg) translate(146%)}.sonner-loading-bar:nth-child(9){animation-delay:-.4s;transform:rotate(240deg) translate(146%)}.sonner-loading-bar:nth-child(10){animation-delay:-.3s;transform:rotate(270deg) translate(146%)}.sonner-loading-bar:nth-child(11){animation-delay:-.2s;transform:rotate(300deg) translate(146%)}.sonner-loading-bar:nth-child(12){animation-delay:-.1s;transform:rotate(330deg) translate(146%)}@keyframes sonner-fade-in{0%{opacity:0;transform:scale(.8)}100%{opacity:1;transform:scale(1)}}@keyframes sonner-fade-out{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.8)}}@keyframes sonner-spin{0%{opacity:1}100%{opacity:.15}}@media (prefers-reduced-motion){.sonner-loading-bar,[data-sonner-toast],[data-sonner-toast]>*{transition:none!important;animation:none!important}}.sonner-loader{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transform-origin:center;transition:opacity .2s,transform .2s}.sonner-loader[data-visible=false]{opacity:0;transform:scale(.8) translate(-50%,-50%)}</style><style id="connection-highlight-style">
                 @keyframes highlightAnimation {
@@ -982,7 +1006,7 @@ const SK = 'my-notebook-v1';
 let DB = {folders:[], articles:[], sections:[], trash:[]};
 let HISTORY = [], HIST_POS = -1;
 
-let ST = {folder:null, article:null, exp:{f2:true}, editing:false, etitle:'', efolders:[], etags:[], search:'', tag:null, tagOpen:false, secOpen:{}, pendingSec:null, snippet:false, sfOpen:true};
+let ST = {folder:null, article:null, exp:{f2:true}, editing:false, etitle:'', efolders:[], etags:[], search:'', tag:null, tagOpen:false, secOpen:{}, pendingSec:null, snippet:false, sfOpen:true, secSF:null, secSFOpen:{}};
 
 function loadDB(){
   const el = document.getElementById('nd');
@@ -1162,6 +1186,17 @@ function renderP2H(){
   /* Universal new-note button — always visible in every pane-2 state */
   const newBtn=`<button class="btn bp p2-new-btn" onclick="quickNewNote()" title="New note">✚ Note</button>`;
   const previewBtn=`<button class="btn bn p2-view-btn" onclick="toggleListView()" title="${ST.snippet?'Title only':'Show preview'}">${ST.snippet?'⊟ Compact':'▤ Preview'}</button>`;
+  /* ── Section smart-view header ── */
+  if(ST.secSF){
+    const _ssec=DB.sections.find(s=>s.id===ST.secSF.secId);
+    const _ssf=SF.find(s=>s.id===ST.secSF.sfId);
+    const ham=window.innerWidth<1200?`<button class="btn bn bi" onclick="showPane('sb')" style="font-size:24px;flex-shrink:0">≡</button>`:'';
+    const cls=window.innerWidth<1200?`<button class="btn bn bi" onclick="closeP2()" style="font-size:14px;flex-shrink:0">◀</button>`:'';
+    el.innerHTML=ham
+      +`<span class="tbt" style="flex:1;min-width:0;overflow:hidden;font-size:12px">${_ssf?.icon||'📊'} ${esc((_ssf&&(DB.sfItems?.[_ssf.id]?.name||_ssf.name))||'')} <span style="font-weight:400;opacity:.6">· ${esc(_ssec?.name||'')}</span></span>`
+      +newBtn+previewBtn+cls;
+    return;
+  }
   /* ── Smart-view header ── */
   if(_sfDef){
     const ham=window.innerWidth<1200
@@ -1217,6 +1252,34 @@ function renderP2C(){
     el.innerHTML=h+'</div>';
     return;
   }
+  /* ── Section smart-view content ── */
+  if(ST.secSF){
+    const {secId,sfId}=ST.secSF;
+    const _ssec=DB.sections.find(s=>s.id===secId);
+    const _ssf=SF.find(s=>s.id===sfId);
+    if(!_ssec||!_ssf){ST.secSF=null;renderP2C();return;}
+    const sfName=(_ssf&&(DB.sfItems?.[sfId]?.name||_ssf.name))||'';
+    const grps=getSecSmartGroups(secId,sfId);
+    if(grps){
+      const tot=getSecSmartArts(secId,sfId).length;
+      let h='<div class="fv">'+`<div class="slbl">${_ssf.icon} ${esc(sfName)} <span style="font-weight:400;color:var(--t3);font-size:11px">· ${esc(_ssec.name)}</span> (${tot})</div>`;
+      if(!ST.sfGrpOpen)ST.sfGrpOpen={};
+      grps.forEach(([gname,garr])=>{
+        const gkey='sec-'+secId+'|'+sfId+'|'+gname;
+        const gOpen=ST.sfGrpOpen[gkey]===true; /* default CLOSED */
+        h+=`<div class="slbl sf-grp sf-grp-hd" onclick="togSfGrp('${esc(gkey)}')" role="button">`
+          +`<span class="sf-grp-tog">${gOpen?'▾':'▸'}</span>${gname} (${garr.length})</div>`;
+        if(gOpen){h+='<div class="al">';garr.forEach(a=>{h+=artCard(a,ST.article===a.id,true);});h+='</div>';}
+      });
+      el.innerHTML=h+'</div>';return;
+    }
+    const arts=getSecSmartArts(secId,sfId);
+    let h='<div class="fv">'+`<div class="slbl">${_ssf.icon} ${esc(sfName)} <span style="font-weight:400;color:var(--t3);font-size:11px">· ${esc(_ssec.name)}</span> (${arts.length})</div>`;
+    if(!arts.length){
+      h+=`<div style="padding:22px 14px;text-align:center;background:var(--paper);border:1.5px dashed var(--border2);border-radius:var(--rl);color:var(--t3);font-size:13px;line-height:1.6">No ${esc(sfName.toLowerCase())} in ${esc(_ssec.name)}</div>`;
+    }else{h+='<div class="al">';arts.forEach(a=>{h+=artCard(a,ST.article===a.id,true);});h+='</div>';}
+    el.innerHTML=h+'</div>';return;
+  }
   const curF=DB.folders.find(f=>f.id===ST.folder);
   const _sf=!curF&&SF.find(s=>s.id===ST.folder);
   if(_sf){
@@ -1229,7 +1292,7 @@ function renderP2C(){
       if(!ST.sfGrpOpen)ST.sfGrpOpen={};
       groups.forEach(([gname,garr])=>{
         const gkey=_sf.id+'|'+gname;
-        const gOpen=ST.sfGrpOpen[gkey]!==false;   /* default: expanded */
+        const gOpen=ST.sfGrpOpen[gkey]===true;    /* default: collapsed */
         h+=`<div class="slbl sf-grp sf-grp-hd" onclick="togSfGrp('${esc(gkey)}')" role="button">`+
            `<span class="sf-grp-tog">${gOpen?'▾':'▸'}</span>${gname} (${garr.length})</div>`;
         if(gOpen){
@@ -1431,7 +1494,7 @@ function selFolder(id){
     if(ST.exp[id]) collapseFolder(id);
     else ST.exp[id]=true;
   }
-  ST.tag=null;
+  ST.tag=null;ST.secSF=null;
   ST.folder=id;ST.article=null;ST.editing=false;
   /* Mobile/tablet: open article list so user can see folder contents */
   if(window.innerWidth<1200) openP2();
@@ -1929,12 +1992,46 @@ function togMwSubGrp(fid,kid){
   renderP2C();
 }
 function renderMyWallSubfolder(curF){
-  const arts=artsIn(curF.id).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
   if(!ST.mwSubGrpOpen)ST.mwSubGrpOpen={};
-  /* Build kind buckets */
+  /* Reset to closed when switching to a different subfolder */
+  if(ST.mwSubGrpLast&&ST.mwSubGrpLast!==curF.id){
+    Object.keys(ST.mwSubGrpOpen).forEach(k=>{
+      if(k.startsWith(ST.mwSubGrpLast+'|'))ST.mwSubGrpOpen[k]=false;
+    });
+  }
+  ST.mwSubGrpLast=curF.id;
+
+  /* Collect ALL notes from this folder AND every descendant folder (subtree) */
+  function _subtreeArts(fid){
+    let a=artsIn(fid);
+    chOf(fid).forEach(sf=>{a=a.concat(_subtreeArts(sf.id));});
+    return a;
+  }
+  const allArts=_subtreeArts(curF.id)
+    .sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+
+  let h='<div class="fv">';
+  h+=`<div class="slbl">${esc(curF.name)}`
+    +`<span style="font-weight:400;color:var(--t3);font-size:12px"> (${allArts.length} notes</span>`
+    +`<span class="mw-sort-lbl">↓ latest NIB</span>`
+    +`<span style="font-weight:400;color:var(--t3);font-size:12px">)</span></div>`;
+
+  if(!allArts.length){
+    h+='<div style="padding:22px 14px;text-align:center;background:var(--paper);'
+      +'border:1.5px dashed var(--border2);border-radius:var(--rl)">'
+      +'<div style="color:var(--t3);font-size:13px;margin-bottom:10px">No notes yet</div>'
+      +'</div>';
+    return h+'</div>';
+  }
+
+  /* Group all notes by their NIB (note-kind) */
   const byKind={};
-  arts.forEach(a=>{const k=artKind(a);(byKind[k]=byKind[k]||[]).push(a);});
-  /* Sort kinds by the latest updatedAt in each bucket (most active first) */
+  allArts.forEach(a=>{
+    const k=artKind(a);
+    (byKind[k]=byKind[k]||[]).push(a);
+  });
+
+  /* Sort kind groups: most-recently-edited note in each group sorts first */
   const kinds=noteKinds()
     .filter(k=>byKind[k.id]&&byKind[k.id].length)
     .sort((a,b)=>{
@@ -1942,29 +2039,28 @@ function renderMyWallSubfolder(curF){
       const lb=(byKind[b.id]||[]).reduce((m,x)=>x.updatedAt>m?x.updatedAt:m,'');
       return lb.localeCompare(la);
     });
-  /* Also include kinds that may have 0 arts — skip empty */
-  let h='<div class="fv">';
-  h+=`<div class="slbl">${esc(curF.name)} <span style="font-weight:400;color:var(--t3);font-size:12px">(${arts.length} notes · by type)</span></div>`;
-  if(!arts.length){
-    h+='<div style="padding:22px 14px;text-align:center;background:var(--paper);border:1.5px dashed var(--border2);border-radius:var(--rl)"><div style="color:var(--t3);font-size:13px;margin-bottom:10px">No notes yet</div><button class="btn bp" onclick="openModal(\'art\',\''+curF.id+'\')" style="font-size:12px">Add note</button></div>';
-    return h+'</div>';
-  }
+
   if(!kinds.length){
-    /* fallback: show all notes flat */
-    h+='<div class="al">';arts.forEach(a=>{h+=artCard(a,ST.article===a.id,true);});h+='</div>';
+    /* Fallback: notes have unknown kinds — show flat */
+    h+='<div class="al">';
+    allArts.forEach(a=>{h+=artCard(a,ST.article===a.id,true);});
+    h+='</div>';
     return h+'</div>';
   }
-  kinds.forEach(k=>{
+
+  kinds.forEach((k,i)=>{
     const arr=(byKind[k.id]||[]).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
     const gkey=curF.id+'|'+k.id;
-    const isOpen=ST.mwSubGrpOpen[gkey]===true; /* default closed */
-    const latestDate=arr[0]?.updatedAt?arr[0].updatedAt.slice(0,10):'';
-    h+=`<div class="mwsub-hd" onclick="togMwSubGrp('${curF.id}','${k.id}')" role="button">`
+    const isOpen=ST.mwSubGrpOpen[gkey]===true; /* default CLOSED */
+    const latestIso=arr[0]?.updatedAt||'';
+    const relDate=latestIso?mwRelDate(latestIso):'';
+    const isTop=(i===0); /* most recently active NIB gets accent border */
+    h+=`<div class="mwsub-hd${isTop?' mw-top':''}" onclick="togMwSubGrp('${curF.id}','${k.id}')" role="button">`
       +`<span class="mw-tog">${isOpen?'▾':'▸'}</span>`
       +`<span class="mw-dot" style="background:${k.color}"></span>`
       +esc(k.name)
       +`<span class="mw-cnt">${arr.length}</span>`
-      +(latestDate?`<span class="mw-latest">· ${latestDate}</span>`:'')
+      +(relDate?`<span class="mw-rel-date">· ${relDate}</span>`:'')
       +'</div>';
     if(isOpen){
       h+='<div class="al">';
@@ -2663,6 +2759,165 @@ function clearReminder(aid){
   persist();
   render();
   toast('🔕 Reminder cleared');
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   DELETE NOTE (context menu — global on all note titles)
+   Moves the note to DB.trash so it can be recovered via the Trash panel.
+   Also cleans up tabs and clears pane 3 if the deleted note was open.
+   ════════════════════════════════════════════════════════════════════════════ */
+function deleteNote(aid){
+  const art=DB.articles.find(a=>a.id===aid);
+  if(!art)return;
+  const now=new Date().toISOString();
+  if(!DB.trash)DB.trash=[];
+  /* Deep-copy article into trash so later edits don't affect the backup */
+  DB.trash.push({id:uid(),type:'article',item:JSON.parse(JSON.stringify(art)),deletedAt:now});
+  /* Remove from articles list */
+  DB.articles=DB.articles.filter(a=>a.id!==aid);
+  /* Remove from tab bar if pinned */
+  if(DB.tabs)DB.tabs=DB.tabs.filter(t=>t!==aid);
+  /* Clear pane 3 if this note was open */
+  if(ST.article===aid){ST.article=null;ST.editing=false;}
+  persist();
+  render();
+  updateTrashBtn();
+  toast('🗑 Note moved to Trash');
+}
+
+
+/* ── Relative date for MyWall subfolder group headers ───────────────────── */
+function mwRelDate(iso){
+  if(!iso)return '';
+  const d=new Date(iso),now=new Date();
+  const diff=now-d;
+  if(isNaN(diff))return '';
+  const mins=Math.floor(diff/60000);
+  const hrs=Math.floor(diff/3600000);
+  const days=Math.floor(diff/86400000);
+  if(mins<2)return 'just now';
+  if(mins<60)return mins+'m ago';
+  if(hrs<24)return hrs+'h ago';
+  if(days===1)return 'yesterday';
+  if(days<7)return days+'d ago';
+  return d.toLocaleDateString(undefined,{day:'numeric',month:'short'});
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   PER-SECTION SMART VIEWS
+   Every section in the sidebar gets a built-in "📊 Smart Views" entry that
+   shows the same smart view categories as the global Smart Views, but scoped
+   to only the notes that live inside that section's folder tree.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Render the collapsible "📊 Smart Views" item at the bottom of a section */
+function renderSecSF(secId){
+  if(!ST.secSFOpen)ST.secSFOpen={};
+  const open=ST.secSFOpen[secId]===true; /* default collapsed */
+  const anyActive=ST.secSF&&ST.secSF.secId===secId;
+  let h=`<div class="sec-sf-hd${anyActive?' ssf-active':''}" onclick="togSecSF(event,'${secId}')">`
+    +`<span class="tr-tog">${open?'▾':'▸'}</span>`
+    +`<span style="font-size:13px">📊</span>`
+    +`<span class="sec-sf-lbl">Smart Views</span>`
+    +'</div>';
+  if(open){
+    sfOrdered().forEach(sf=>{
+      const cnt=getSecSmartArts(secId,sf.id).length;
+      const active=ST.secSF&&ST.secSF.secId===secId&&ST.secSF.sfId===sf.id;
+      const sfName=(DB.sfItems?.[sf.id]?.name)||sf.name;
+      h+=`<div class="sec-sf-item${active?' sel':''}" onclick="selSecSF('${secId}','${sf.id}')">`
+        +`<span>${sf.icon}</span>`
+        +`<span style="flex:1">${esc(sfName)}</span>`
+        +(cnt?`<span class="sf-cnt">${cnt}</span>`:'')
+        +'</div>';
+    });
+  }
+  return h;
+}
+
+/* Toggle the section's Smart Views sub-panel open/closed */
+function togSecSF(ev,secId){
+  ev.stopPropagation();
+  if(!ST.secSFOpen)ST.secSFOpen={};
+  ST.secSFOpen[secId]=!ST.secSFOpen[secId];
+  renderTree();
+}
+
+/* Select a specific smart view within a section */
+function selSecSF(secId,sfId){
+  if(ST.editing)saveArt();
+  ST.secSF={secId,sfId};
+  ST.folder=null;ST.tag=null;ST.article=null;ST.editing=false;
+  if(window.innerWidth<1200)showPane('p2');
+  renderTree();renderP2H();renderP2C();
+}
+
+/* ── Helpers — get all folder IDs in a section's tree ────────────────────── */
+function getSectionFolderIds(secId){
+  const ids=[];
+  function walk(fid){ids.push(fid);chOf(fid).forEach(sf=>walk(sf.id));}
+  DB.folders.filter(f=>!f.parentId&&f.sectionId===secId).forEach(f=>walk(f.id));
+  return ids;
+}
+function getSecArts(secId){
+  const fids=getSectionFolderIds(secId);
+  return DB.articles.filter(a=>a.folderIds&&a.folderIds.some(id=>fids.includes(id)));
+}
+
+/* ── Section-scoped smart arts ───────────────────────────────────────────── */
+function getSecSmartArts(secId,sfId){
+  const sa=getSecArts(secId);
+  switch(sfId){
+    case 'sf-new':    return [...sa].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+    case 'sf-recent': return [...sa].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||'')).slice(0,20);
+    case 'sf-favs':   return sa.filter(a=>a.favourite).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+    case 'sf-pinned': return sa.filter(a=>a.pinned).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+    case 'sf-time':   return [...sa].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+    case 'sf-journal':return sa.filter(isJournal).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+    case 'sf-arch':   return sa.filter(a=>a.archived).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+    case 'sf-mywall': return sa.filter(isNagNote);
+    case 'sf-remind': return sa.filter(a=>a.reminder&&a.reminder.dt)
+                             .sort((a,b)=>a.reminder.dt.localeCompare(b.reminder.dt));
+    default: return [];
+  }
+}
+
+/* ── Section-scoped smart groups (same structure as global getSmartGroups) ── */
+function getSecSmartGroups(secId,sfId){
+  const sa=getSecArts(secId);
+  const now=new Date(),day=864e5;
+  const ts=a=>new Date(a.updatedAt||a.createdAt||0).getTime();
+  const sod=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x.getTime();};
+  const sorted=[...sa].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+  if(sfId==='sf-time'){
+    const dow=(now.getDay()+6)%7,weekStart=sod(now)-dow*day;
+    const lastWeekStart=weekStart-7*day;
+    const monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
+    const lastMonthStart=new Date(now.getFullYear(),now.getMonth()-1,1).getTime();
+    return[
+      ['📅 This Week',sorted.filter(a=>ts(a)>=weekStart)],
+      ['📅 Last Week',sorted.filter(a=>ts(a)>=lastWeekStart&&ts(a)<weekStart)],
+      ['🗓 This Month',sorted.filter(a=>ts(a)>=monthStart)],
+      ['🗓 Last Month',sorted.filter(a=>ts(a)>=lastMonthStart&&ts(a)<monthStart)],
+    ];
+  }
+  if(sfId==='sf-arch'){
+    const manArch=sorted.filter(a=>a.archived);
+    if(!manArch.length)return null;
+    return[['📦 Manually Archived',manArch]];
+  }
+  if(sfId==='sf-remind'){
+    const todayStr=now.toISOString().slice(0,10);
+    const rem=sa.filter(a=>a.reminder&&a.reminder.dt).sort((a,b)=>a.reminder.dt.localeCompare(b.reminder.dt));
+    return[
+      ['⚠ Overdue',rem.filter(a=>a.reminder.dt.slice(0,10)<todayStr)],
+      ['📅 Today',rem.filter(a=>a.reminder.dt.slice(0,10)===todayStr)],
+      ['🔔 Upcoming',rem.filter(a=>a.reminder.dt.slice(0,10)>todayStr)],
+    ];
+  }
+  return null;
 }
 
 /* ── Backlinks / bi-directional links ─────────────────────────────
@@ -3818,7 +4073,7 @@ function renderSection(sec){
         <span class="sec-act" onclick="event.stopPropagation();showSecCtx(event,'${sec.id}')">⋯</span>
       </span>
     </div>
-    ${open?`<div class="sec-body">${folders.map(f=>trNode(f,0)).join('')}${!folders.length?'<div style="padding:6px 22px;font-size:11.5px;color:#3A5A3E;font-style:italic">Empty — add a folder with ＋</div>':''}</div>`:''}
+    ${open?`<div class="sec-body">${folders.map(f=>trNode(f,0)).join('')}${!folders.length?'<div style="padding:6px 22px;font-size:11.5px;color:#3A5A3E;font-style:italic">Empty — add a folder with ＋</div>':''}${renderSecSF(sec.id)}</div>`:''}
   </div>`;
 }
 
@@ -4272,7 +4527,9 @@ function showArtCtx(ev,aid){
     `<div class="csep"></div>`+
     `<div class="ci" onclick="hideCtx();openLinkToNote('${aid}')">🔗 Link to note…</div>`+
     `<div class="ci" onclick="hideCtx();openAttachArt('${aid}')">📎 Attach to folder…</div>`+
-    (detachRows?`<div class="csep"></div>${detachRows}`:'');
+    (detachRows?`<div class="csep"></div>${detachRows}`:'')+
+    `<div class="csep"></div>`+
+    `<div class="ci d" onclick="hideCtx();deleteNote('${aid}')">🗑 Delete Note</div>`;
 
   m.style.display='block';
   const vw=window.innerWidth,vh=window.innerHeight;
@@ -5270,7 +5527,7 @@ function renderMyWall(sf){
       .sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
     const pending=k.nag?arr.filter(a=>!a.finalised).length:0;
     const gkey='sf-mywall|'+k.id;
-    const gOpen=ST.sfGrpOpen[gkey]!==false;
+    const gOpen=ST.sfGrpOpen[gkey]===true; /* default CLOSED */
     const dot=`<span class="wall-dot" style="background:${k.color}"></span>`;
     const handle=`<span class="wall-grp-handle" title="Drag to reorder · tap on mobile"
       onclick="event.stopPropagation()"
