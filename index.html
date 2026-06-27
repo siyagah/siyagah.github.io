@@ -9363,6 +9363,32 @@ async function initSync(cfg){
 }
 
 /** Push current DB to Firestore — debounced 3 s after last persist() */
+async function syncNow(){
+  const cfg=getSyncConfig();
+  if(!cfg||!_syncFsDb){ toast("☁ Cloud Sync is not connected on this device — open ⚙ → Cloud Sync"); return; }
+  try{
+    setSyncStatus("busy");
+    const docRef=_syncFsDb.collection("notebooks").doc(cfg.notebookId);
+    const snap=await docRef.get();
+    let added=0;
+    if(snap.exists && snap.data() && snap.data().db){
+      const before=(DB.articles||[]).length;
+      DB=mergeDB(DB, JSON.parse(snap.data().db));
+      added=(DB.articles||[]).length-before;
+      _save(); render();
+    }
+    const now=Date.now();
+    _syncIgnoreNext=true;
+    await docRef.set({ db:JSON.stringify(DB), deviceUpdatedAt:now, updatedAt:firebase.firestore.FieldValue.serverTimestamp() });
+    _lastSyncTime=now; localStorage.setItem(SYNC_TIME_SK,_lastSyncTime);
+    setSyncStatus("live");
+    toast("✅ Synced — "+(DB.articles||[]).length+" notes"+(added>0?(" (+"+added+" merged in)"):" (already up to date)"));
+  }catch(e){
+    setSyncStatus("err");
+    toast("❌ Sync failed: "+((e&&e.message)||e));
+    console.error("syncNow:",e);
+  }
+}
 /* ── Merge-based sync core: union by id, newest edit wins, no data loss ── */
 function _mergeById(localArr, remoteArr, tsKey){
   localArr=localArr||[]; remoteArr=remoteArr||[];
@@ -9404,24 +9430,18 @@ function pushToCloud(){
       const docRef=_syncFsDb.collection('notebooks').doc(cfg.notebookId);
       const now=Date.now();
       _syncIgnoreNext=true;
-      let mergedOut=DB;
-      await _syncFsDb.runTransaction(async tx=>{
-        const snap=await tx.get(docRef);
-        mergedOut=DB;
-        if(snap.exists){ const rd=snap.data(); if(rd&&rd.db){ try{ mergedOut=mergeDB(DB, JSON.parse(rd.db)); }catch(e){ mergedOut=DB; } } }
-        tx.set(docRef,{
-          db:JSON.stringify(mergedOut),
-          deviceUpdatedAt:now,
-          updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-        });
+      await docRef.set({
+        db:JSON.stringify(DB),
+        deviceUpdatedAt:now,
+        updatedAt:firebase.firestore.FieldValue.serverTimestamp()
       });
-      DB=mergedOut; _save(); render();           /* adopt the unioned result locally */
       _lastSyncTime=now;
       localStorage.setItem(SYNC_TIME_SK,_lastSyncTime);
       setSyncStatus('live');
     }catch(e){
       _syncIgnoreNext=false;
       setSyncStatus('err');
+      toast('☁ Sync push failed: '+((e&&e.message)||e));
       console.error('Push error:',e);
     }
   },3000);
@@ -9459,7 +9479,8 @@ function openSyncModal(){
       </div>
       <div id="migrate-err" style="color:#c00;font-size:11px;margin-top:6px;display:none"></div>
     </div>
-    <div class="ma">
+    <div class="ma" style="flex-wrap:wrap;gap:6px">
+      <button class="btn bp" onclick="syncNow()" title="Pull, merge and push now">🔄 Sync Now</button>
       <button class="btn bd" onclick="disconnectSync()">Disconnect</button>
       <button class="btn bp" onclick="closeSyncModal()">Done</button>
     </div>`:`
