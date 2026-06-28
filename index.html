@@ -15,7 +15,7 @@
 ║  Claude: preserve the embedded JSON data tag (id "nd") below      ║
 ╚═══════════════════════════════════════════════════════════════════╝
 -->
-<script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.ch0Jz-JlMrQ.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo_YD4KoV8fTh_kLhktsiThAm3yJ5A/cb=gapi.loaded_0?le=scs,fedcm_migration_mod" async=""></script><script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.ch0Jz-JlMrQ.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo_YD4KoV8fTh_kLhktsiThAm3yJ5A/cb=gapi.loaded_0?le=scs" async=""></script><script id="nd" type="application/json">{"folders": [], "articles": [], "sections": [], "trash": []}</script>
+<script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.ch0Jz-JlMrQ.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo_YD4KoV8fTh_kLhktsiThAm3yJ5A/cb=gapi.loaded_0?le=scs,fedcm_migration_mod" async=""></script><script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.ch0Jz-JlMrQ.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo_YD4KoV8fTh_kLhktsiThAm3yJ5A/cb=gapi.loaded_0?le=scs" async=""></script><script id="nd" type="application/json">{}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&amp;family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&amp;display=swap" rel="stylesheet">
 <style>
@@ -1623,12 +1623,12 @@ sup.ann-sup:hover{text-decoration:underline}
 <div id="rsz2" title="Drag to resize panes" class=""></div>
 
 <div id="p3" class="">
-  <div id="tab-bar" class="has-tabs" style="display: flex;"></div>
+  <div id="tab-bar" class="has-tabs" style="display: flex;"><div class="tab-it tab-cal" onclick="_calOpen()" title="Calendar">📅 Cal</div><div class="tab-it" onclick="tabSelect('mqm9612ghl6')" title="Saheeh Bukhari 3641: Where to Hijrah? The victorious group will be at Shyam"><span class="tab-lbl">Saheeh Bukhari 3641: W…</span><button class="tab-x" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();closeTab('mqm9612ghl6')" title="Close tab">✕</button></div><div class="tab-it" onclick="tabSelect('mqksc0z7ynx')" title="What generation are you raising? A generation which will revive Islam or a generation of the foam of the sea?"><span class="tab-lbl">What generation are yo…</span><button class="tab-x" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();closeTab('mqksc0z7ynx')" title="Close tab">✕</button></div><button class="tab-add-btn" onclick="openTabPicker(this)" title="Search &amp; add a note to the Tab bar">＋ Add Tab</button></div>
   <div id="p3h" class="editing"></div>
   <div id="p3c"></div>
 </div>
 
-<div id="ctx" onclick="event.stopPropagation()" style="display: none; left: 320px; top: 772px;" data-aid=""></div>
+<div id="ctx" onclick="event.stopPropagation()" style="display: none; left: 320px; top: 772px;" data-aid="mqpr3vl6oiy"></div>
 <div id="ann-bubble" style="display: none; position: fixed; z-index: 10006; left: 1437.98px; top: 253.812px;"><button class="ann-bub-btn" onmousedown="annBubClick(event)">💬 Comment</button></div>
 <div id="ov" onclick="closeModal()" class=""><div id="mb" onclick="event.stopPropagation()"></div></div>
 <!-- drag ghost label -->
@@ -2108,7 +2108,7 @@ function renderP3H(){
     /* Bar 2 — Tag bar: tags left, Folder+Save+✕ pinned right */
     h=`<div class="p3h-tag-bar">`
       +`<span class="tag-ed-lbl">🏷 Tags</span>`
-      +`>`
+      +`<div class="tag-editor" id="tag-editor" onclick="document.getElementById('tag-inp')?.focus()"></div>`
       +`<div class="p3h-eflx"></div>`
       +`<div class="p3h-tag-bar-acts">`
       +`<button class="btn" onclick="openPicker()" title="Assign folder">🏷 ${fc===1?'1 folder':fc+' folders'}</button>`
@@ -2214,7 +2214,10 @@ function renderP3C(){
     return;
   }
   if(ST.editing&&curA){
-    el.innerHTML=kindBarHTML(curA)+`<div id="ed" contenteditable="true" spellcheck="true"></div>`;
+    /* Preserve any unsaved live edits before rebuilding the editor (fixes content loss on NTI/title/any re-render) */
+    {const _le=document.getElementById('ed');
+     if(_le&&_le.dataset.aid===curA.id){const _c=_le.cloneNode(true);_c.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());curA.content=_c.innerHTML;if(ST.etitle!=null)curA.title=ST.etitle.trim();}}
+    el.innerHTML=kindBarHTML(curA)+`<div id="ed" data-aid="${curA.id}" contenteditable="true" spellcheck="true"></div>`;
     const ed=document.getElementById('ed');ed.innerHTML=curA.content;initRichPaste(ed);
     wireAnnEditor(ed,curA);
     if((curA.annMode||'inline')==='inline')injectInlineAnns(curA,ed,true);
@@ -6973,7 +6976,16 @@ function _doPaste(opt){
   insertAtCaret(ins);
   var ed=document.getElementById('ed');
   var art=DB.articles.find(function(a){return a.id===ST.article;});
-  if(art&&ed){art.content=ed.innerHTML;art.updatedAt=new Date().toISOString();persist();}
+  /* v03.NotePane.C2 — persist BOTH the live body AND the typed title before any
+     view-mode switch, and strip inline annotation cards (mirrors saveArt/_flushEd).
+     Without saving the title here, a structured paste that flips to view mode
+     discarded the in-progress title (ST.etitle), losing it. */
+  if(art&&ed){
+    var _c=ed.cloneNode(true);_c.querySelectorAll('.ann-inline-card').forEach(function(n){n.remove();});
+    art.content=_c.innerHTML;
+    if(ST.etitle!=null)art.title=ST.etitle.trim();
+    art.updatedAt=new Date().toISOString();persist();
+  }
   /* For structured pastes: switch to view mode so collapsible sections + TOC appear */
   if((opt==='smart'||opt==='fmt')&&art){
     ST.editing=false;
@@ -9733,13 +9745,23 @@ function isNagNote(a){ if(!a||a.finalised) return false;
 /* MyWall = every note not yet Finished or Archived */
 function isMyWallNote(a){ return !a.finalised && !a.archived; }
 
-function setNoteKind(aid,kid){
+function _flushEd(){
+  if(!ST.editing)return;
+  const ed=document.getElementById('ed');
+  const a=DB.articles.find(x=>x.id===ST.article);
+  if(!ed||!a||ed.dataset.aid!==a.id)return;
+  const c=ed.cloneNode(true);c.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());
+  a.content=c.innerHTML;
+  if(ST.etitle!=null)a.title=ST.etitle.trim();
+  a.updatedAt=new Date().toISOString();
+}
+function setNoteKind(aid,kid){ _flushEd();
   const a=DB.articles.find(x=>x.id===aid); if(!a)return;
   a.kind=kid; a.kinds=[kid];
   if(a.finalised&&kindById(kid).nag)a.finalised=false;
   persist(); renderTree();renderP2C();renderP3H();renderP3C();
 }
-function toggleNoteKind(aid,kid){
+function toggleNoteKind(aid,kid){ _flushEd();
   const a=DB.articles.find(x=>x.id===aid); if(!a)return;
   const kinds=artKinds(a).slice();
   const i=kinds.indexOf(kid);
@@ -9751,7 +9773,7 @@ function toggleNoteKind(aid,kid){
   const _p=document.getElementById('nti-picker');
   if(_p&&_p.classList.contains('open')&&_p.dataset.aid===aid)_p.innerHTML=renderNtiPickerBody(aid);
 }
-function finishNote(aid){
+function finishNote(aid){ _flushEd();
   const a=DB.articles.find(x=>x.id===aid); if(!a)return;
   a.finalised=true;
   persist();
@@ -10795,7 +10817,7 @@ document.getElementById('sb').addEventListener('contextmenu', e => {
       Sync is <strong style="color:var(--green)">active</strong>. Your notebook updates in real time across all devices.
       <br><br><strong>Notebook ID</strong> — use this on every device with the same Firebase config:
       <div style="display:flex;gap:6px;align-items:center;margin-top:6px">
-        <input class="mi" id="nb-ro" value="" readonly="" style="font-size:11px;font-family:monospace;flex:1">
+        <input class="mi" id="nb-ro" value="nb-mqeiw74v-n4uch7" readonly="" style="font-size:11px;font-family:monospace;flex:1">
         <button class="btn bp" onclick="navigator.clipboard.writeText(document.getElementById('nb-ro').value).then(()=&gt;toast('Notebook ID copied ✓'))">Copy</button>
       </div>
     </div>
@@ -10946,4 +10968,4 @@ document.getElementById('sb').addEventListener('contextmenu', e => {
     </div>
   </div>
 </div>
-<section id="id-recall-widget-root" style="all: initial;"></section><iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" tabindex="-1" vspace="0" width="100%" aria-hidden="true" id="I0_1782051874490" name="I0_1782051874490" src="https://aaas-notebook.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyBxrQ5uNrerOAFiCmUbUkUM8tjMpjKygsA&amp;appName=siyagah-main&amp;v=9.23.0&amp;eid=p&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.ch0Jz-JlMrQ.O%2Fd%3D1%2Frs%3DAHpOoo_YD4KoV8fTh_kLhktsiThAm3yJ5A%2Fm%3D__features__#id=I0_1782051874490&amp;_gfid=I0_1782051874490&amp;parent=https%3A%2F%2Fsiyagah.github.io&amp;pfname=&amp;rpctoken=16484655" style="position: absolute; top: -100px; width: 1px; height: 1px;"></iframe><div id="nti-picker" data-aid="" class="" style="inset: 171.5px auto auto 1855.47px;"></div></body></html>
+<section id="id-recall-widget-root" style="all: initial;"></section><iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" tabindex="-1" vspace="0" width="100%" aria-hidden="true" id="I0_1782051874490" name="I0_1782051874490" src="https://aaas-notebook.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyBxrQ5uNrerOAFiCmUbUkUM8tjMpjKygsA&amp;appName=siyagah-main&amp;v=9.23.0&amp;eid=p&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.ch0Jz-JlMrQ.O%2Fd%3D1%2Frs%3DAHpOoo_YD4KoV8fTh_kLhktsiThAm3yJ5A%2Fm%3D__features__#id=I0_1782051874490&amp;_gfid=I0_1782051874490&amp;parent=https%3A%2F%2Fsiyagah.github.io&amp;pfname=&amp;rpctoken=16484655" style="position: absolute; top: -100px; width: 1px; height: 1px;"></iframe><div id="nti-picker" data-aid="mqpr0jmv7xk" class="" style="inset: 171.5px auto auto 1855.47px;"><div class="nti-pk-hd">🏷 NTI Types<button class="nti-pk-cls" onclick="closeNtiPicker()">✕</button></div><div class="nti-pk-scroll"><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-general')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">❓</span><span class="nti-pk-cat-name">Undecided</span><span class="nti-pk-cat-cnt">1</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-general')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-general','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind on" style="background:#6B7280;border-color:#6B7280;color:#fff" onclick="toggleNoteKind('mqpr0jmv7xk','general')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'general','cat-general','mqpr0jmv7xk')" title="General · tap to remove">General</button><button class="nti-pk-kind" style="color:#D946EF;border-color:#D946EF" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqeq87t8')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqeq87t8','cat-general','mqpr0jmv7xk')" title="Image · tap to add">Image</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-articles')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">📦</span><span class="nti-pk-cat-name">Preserve</span><span class="nti-pk-cat-cnt">1</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-articles')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-articles','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind on" style="background:#3B82F6;border-color:#3B82F6;color:#fff" onclick="toggleNoteKind('mqpr0jmv7xk','info')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'info','cat-articles','mqpr0jmv7xk')" title="Info · tap to remove">Info</button><button class="nti-pk-kind" style="color:#10B981;border-color:#10B981" onclick="toggleNoteKind('mqpr0jmv7xk','resource')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'resource','cat-articles','mqpr0jmv7xk')" title="Resources · tap to add">Resources</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-tasks')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">⚡</span><span class="nti-pk-cat-name">Action Needed</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-tasks')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-tasks','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind" style="color:#F97316;border-color:#F97316" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqezvg3b')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqezvg3b','cat-tasks','mqpr0jmv7xk')" title="Need REPLIES · tap to add">Need REPLIES</button><button class="nti-pk-kind" style="color:#8B5CF6;border-color:#8B5CF6" onclick="toggleNoteKind('mqpr0jmv7xk','di')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'di','cat-tasks','mqpr0jmv7xk')" title="Developing Idea · tap to add">Developing Idea</button><button class="nti-pk-kind" style="color:#EF4444;border-color:#EF4444" onclick="toggleNoteKind('mqpr0jmv7xk','article')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'article','cat-tasks','mqpr0jmv7xk')" title="Article · tap to add">Article</button><button class="nti-pk-kind" style="color:#84CC16;border-color:#84CC16" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqenqgon')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqenqgon','cat-tasks','mqpr0jmv7xk')" title="Agenda · tap to add">Agenda</button><button class="nti-pk-kind" style="color:#F43F5E;border-color:#F43F5E" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqeogl1c')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqeogl1c','cat-tasks','mqpr0jmv7xk')" title="Meeting · tap to add">Meeting</button><button class="nti-pk-kind" style="color:#14B8A6;border-color:#14B8A6" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqfuzeu9')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqfuzeu9','cat-tasks','mqpr0jmv7xk')" title="ToDO TODAY · tap to add">ToDO TODAY</button><button class="nti-pk-kind" style="color:#A855F7;border-color:#A855F7" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqfuzwm7')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqfuzwm7','cat-tasks','mqpr0jmv7xk')" title="ToDO NEXT · tap to add">ToDO NEXT</button><button class="nti-pk-kind" style="color:#EC4899;border-color:#EC4899" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqfv04a8')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqfv04a8','cat-tasks','mqpr0jmv7xk')" title="ToDO URGENT · tap to add">ToDO URGENT</button><button class="nti-pk-kind" style="color:#84CC16;border-color:#84CC16" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqfv0d2o')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqfv0d2o','cat-tasks','mqpr0jmv7xk')" title="ToDo TOMORROW · tap to add">ToDo TOMORROW</button><button class="nti-pk-kind" style="color:#0EA5E9;border-color:#0EA5E9" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqhi836v')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqhi836v','cat-tasks','mqpr0jmv7xk')" title="RESPONSE Waiting · tap to add">RESPONSE Waiting</button><button class="nti-pk-kind" style="color:#D946EF;border-color:#D946EF" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqix0039')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqix0039','cat-tasks','mqpr0jmv7xk')" title="ToDO NOW · tap to add">ToDO NOW</button><button class="nti-pk-kind" style="color:#F97316;border-color:#F97316" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqixswso')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqixswso','cat-tasks','mqpr0jmv7xk')" title="FollowUP · tap to add">FollowUP</button><button class="nti-pk-kind" style="color:#F59E0B;border-color:#F59E0B" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqlkew1rl0b')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqlkew1rl0b','cat-tasks','mqpr0jmv7xk')" title="ToDo · tap to add">ToDo</button><button class="nti-pk-kind" style="color:#EC4899;border-color:#EC4899" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqp5tih2usj')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqp5tih2usj','cat-tasks','mqpr0jmv7xk')" title="Task for Children · tap to add">Task for Children</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-appts')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">🗑</span><span class="nti-pk-cat-name">Temporary</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-appts')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-appts','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind" style="color:#F59E0B;border-color:#F59E0B" onclick="toggleNoteKind('mqpr0jmv7xk','quick')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'quick','cat-appts','mqpr0jmv7xk')" title="Quick Note · tap to add">Quick Note</button><button class="nti-pk-kind" style="color:#0EA5E9;border-color:#0EA5E9" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqeovonq')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqeovonq','cat-appts','mqpr0jmv7xk')" title="Daily Journal/ Diary · tap to add">Daily Journal/ Diary</button><button class="nti-pk-kind" style="color:#F43F5E;border-color:#F43F5E" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqhi4jo6')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqhi4jo6','cat-appts','mqpr0jmv7xk')" title="Appointment · tap to add">Appointment</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-mqkn72h4779')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">📝</span><span class="nti-pk-cat-name">Dawah</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-mqkn72h4779')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-mqkn72h4779','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><span class="nti-pk-empty">Empty — tap ＋ to add</span></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-mqkn7ef1y4v')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">📝</span><span class="nti-pk-cat-name">Media</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-mqkn7ef1y4v')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind" style="color:#6366F1;border-color:#6366F1" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqkn803rdoh')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqkn803rdoh','cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Posted · tap to add">Posted</button><button class="nti-pk-kind" style="color:#6B7280;border-color:#6B7280" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqkn8m32ye3')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqkn8m32ye3','cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Ready to Post · tap to add">Ready to Post</button><button class="nti-pk-kind" style="color:#10B981;border-color:#10B981" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqkvyn29pjs')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqkvyn29pjs','cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Post to HORSE group · tap to add">Post to HORSE group</button><button class="nti-pk-kind" style="color:#EF4444;border-color:#EF4444" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqnu74bi3ml')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqnu74bi3ml','cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Article for 'Hijrah Made Easy' · tap to add">Article for 'Hijrah Made Easy'</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-mqkvecmwt8u')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">📝</span><span class="nti-pk-cat-name">Study Organising</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-mqkvecmwt8u')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-mqkvecmwt8u','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind" style="color:#3B82F6;border-color:#3B82F6" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqkvgcbj16x')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqkvgcbj16x','cat-mqkvecmwt8u','mqpr0jmv7xk')" title="Organise to Mapping · tap to add">Organise to Mapping</button><button class="nti-pk-kind" style="color:#8B5CF6;border-color:#8B5CF6" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqnnyrcbpbs')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqnnyrcbpbs','cat-mqkvecmwt8u','mqpr0jmv7xk')" title="Health Study · tap to add">Health Study</button></div></div><div class="nti-pk-add-cat" onclick="addNtiCat()">＋ Add new category</div></div></div></body></html>
