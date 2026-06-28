@@ -9329,15 +9329,14 @@ async function initSync(cfg){
 
     /* Real-time listener — fires immediately with current cloud state,
        then again on every remote change */
-    _syncUnsub=docRef.onSnapshot(snap=>{
+    _syncUnsub=docRef.onSnapshot(async snap=>{
       /* Skip the echo of our own push */
       if(_syncIgnoreNext){_syncIgnoreNext=false;setSyncStatus('live');return;}
       if(!snap.exists){setSyncStatus('live');return;}
-      const remote=snap.data();
-      if(!remote?.db){setSyncStatus('live');return;}
-      const remoteT=remote.deviceUpdatedAt||0;
+      const md=snap.data(); const remoteT=(md&&md.deviceUpdatedAt)||0;
       try{
-        const remoteDB=JSON.parse(remote.db);
+        const remoteDB=await _readCloudDB(docRef, md);
+        if(!remoteDB){setSyncStatus('live');return;}
         const before=(DB.articles||[]).length+(DB.folders||[]).length+(DB.trash||[]).length;
         DB=mergeDB(DB, remoteDB);                  /* MERGE — never replace, so nothing is lost */
         const after=(DB.articles||[]).length+(DB.folders||[]).length+(DB.trash||[]).length;
@@ -9368,18 +9367,19 @@ async function syncNow(){
   if(!cfg||!_syncFsDb){ toast("☁ Cloud Sync is not connected on this device — open ⚙ → Cloud Sync"); return; }
   try{
     setSyncStatus("busy");
-    const docRef=_syncFsDb.collection("notebooks").doc(cfg.notebookId);
-    const snap=await docRef.get();
+    const nb=_syncFsDb.collection("notebooks").doc(cfg.notebookId);
+    const main=await nb.get();
     let added=0;
-    if(snap.exists && snap.data() && snap.data().db){
+    const remoteDB=await _readCloudDB(nb, main.exists?main.data():null);
+    if(remoteDB){
       const before=(DB.articles||[]).length;
-      DB=mergeDB(DB, JSON.parse(snap.data().db));
+      DB=mergeDB(DB, remoteDB);
       added=(DB.articles||[]).length-before;
       _save(); render();
     }
     const now=Date.now();
     _syncIgnoreNext=true;
-    await docRef.set({ db:JSON.stringify(DB), deviceUpdatedAt:now, updatedAt:firebase.firestore.FieldValue.serverTimestamp() });
+    await _writeCloudDB(nb, now);
     _lastSyncTime=now; localStorage.setItem(SYNC_TIME_SK,_lastSyncTime);
     setSyncStatus("live");
     toast("✅ Synced — "+(DB.articles||[]).length+" notes"+(added>0?(" (+"+added+" merged in)"):" (already up to date)"));
@@ -9419,6 +9419,32 @@ function mergeDB(local, remote){
   out.trash=(out.trash||[]).filter(t=>{ if(!t||t.id==null) return true; return !artMap[t.id]; });
   return out;
 }
+/* ── Chunked cloud storage: bypass Firestore's 1 MiB per-document limit ── */
+function _b64enc(s){ return btoa(unescape(encodeURIComponent(s))); }
+function _b64dec(s){ return decodeURIComponent(escape(atob(s))); }
+var _SYNC_CHUNK=900000;
+async function _readCloudDB(nb, md){
+  if(!md) return null;
+  if(md.n==null && md.db){ try{return JSON.parse(md.db);}catch(e){return null;} } /* legacy single-blob */
+  const n=md.n; if(!n) return null; const ver=md.ver; const parts=[];
+  for(let i=0;i<n;i++){
+    const c=await nb.collection("chunks").doc(String(i)).get();
+    if(!c.exists) return null;
+    const cd=c.data();
+    if(!cd || (ver!=null && cd.ver!=null && cd.ver!==ver)) return null; /* mid-write; wait for next snapshot */
+    parts.push(cd.p||"");
+  }
+  try{ return JSON.parse(_b64dec(parts.join(""))); }catch(e){ return null; }
+}
+async function _writeCloudDB(nb, now){
+  const b64=_b64enc(JSON.stringify(DB));
+  const n=Math.ceil(b64.length/_SYNC_CHUNK);
+  const batch=_syncFsDb.batch();
+  for(let i=0;i<n;i++){ batch.set(nb.collection("chunks").doc(String(i)),{p:b64.slice(i*_SYNC_CHUNK,(i+1)*_SYNC_CHUNK),ver:now}); }
+  batch.set(nb,{ n:n, ver:now, deviceUpdatedAt:now, updatedAt:firebase.firestore.FieldValue.serverTimestamp() });
+  await batch.commit();
+  const b2=_syncFsDb.batch(); for(let i=n;i<n+10;i++) b2.delete(nb.collection("chunks").doc(String(i))); try{ await b2.commit(); }catch(e){}
+}
 function pushToCloud(){
   if(!getSyncConfig()||!_syncFsDb)return;
   clearTimeout(_syncPushTimer);
@@ -9427,14 +9453,10 @@ function pushToCloud(){
     try{
       const cfg=getSyncConfig();
       if(!cfg||!_syncFsDb)return;
-      const docRef=_syncFsDb.collection('notebooks').doc(cfg.notebookId);
+      const nb=_syncFsDb.collection('notebooks').doc(cfg.notebookId);
       const now=Date.now();
       _syncIgnoreNext=true;
-      await docRef.set({
-        db:JSON.stringify(DB),
-        deviceUpdatedAt:now,
-        updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-      });
+      await _writeCloudDB(nb, now);
       _lastSyncTime=now;
       localStorage.setItem(SYNC_TIME_SK,_lastSyncTime);
       setSyncStatus('live');
