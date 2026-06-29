@@ -1088,7 +1088,25 @@ sup.ann-sup:hover{text-decoration:underline}
 /* Bar 4 — Title bar: nav + FULL-WIDTH title input */
 .p3h-title-bar{display:flex;align-items:center;gap:6px;padding:5px 10px;
   border-bottom:1px solid var(--border2);min-height:40px;flex-shrink:0;
-  background:var(--paper);width:100%}
+  background:var(--paper);width:100%;position:relative}
+/* v03.NotePane.C4 — Save-flash chip, done-dimming, colour popup */
+.save-flash{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  font-size:11px;font-weight:600;color:#fff;background:var(--green,#1B7A46);
+  border-radius:10px;padding:2px 9px;opacity:0;pointer-events:none;
+  transition:opacity .25s ease;white-space:nowrap;z-index:3}
+.save-flash.show{opacity:.92}
+.tx-done{opacity:.42;transition:opacity .15s}
+.tx-done:hover{opacity:.6}
+.clr-pop{position:fixed;z-index:9999;background:var(--paper,#fff);
+  border:1px solid var(--border2,#ccc);border-radius:10px;padding:8px;
+  box-shadow:0 8px 28px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:6px}
+.clr-row{display:flex;align-items:center;gap:5px}
+.clr-lbl{font-size:11px;color:var(--t3,#888);width:34px;flex-shrink:0}
+.clr-sw{width:24px;height:24px;border:1px solid var(--border,#bbb);border-radius:6px;
+  cursor:pointer;font-size:12px;font-weight:700;display:inline-flex;
+  align-items:center;justify-content:center;color:#333;padding:0;line-height:1}
+.clr-sw:hover{transform:scale(1.08)}
+@media(max-width:640px){.clr-sw{width:30px;height:30px}}
 .p3h-title-bar #ti{flex:1;width:0;font-size:15px;border:none;
   background:transparent;outline:none;font-family:var(--ui);
   font-weight:600;padding:2px 0;color:var(--t1)}
@@ -2137,6 +2155,8 @@ function renderP3H(){
       h+=`<div class="p3h-edit-bar">`
         +`<button class="et" onmousedown="ec(event,'bold')"><b>B</b></button>`
         +`<button class="et" onmousedown="ec(event,'italic')"><i>I</i></button>`
+        +`<button class="et" onmousedown="edMarkDone(event)" title="Mark done — dim/grey this line, toggle">✓</button>`
+        +`<button class="et" onmousedown="edColorBtn(event)" title="Text & highlight colour">🎨</button>`
         +`<div class="esep"></div>`
         +`<button class="et" onmousedown="fb(event,'h1')" style="font-size:12px;font-weight:800">H1</button>`
         +`<button class="et" onmousedown="fb(event,'h2')" style="font-size:11px;font-weight:700">H2</button>`
@@ -2166,6 +2186,7 @@ function renderP3H(){
         :(document.getElementById('sb')?.classList.contains('closed')
           ?`<button class="btn bn bi" onclick="toggleSB()" style="font-size:14px">☰</button>`:''))
       +`<input id="ti" value="${esc(ST.etitle)}" placeholder="Article title…" oninput="ST.etitle=this.value">`
+      +`<span id="save-flash" class="save-flash">✓ Saved</span>`
       +'</div>';
     el.innerHTML=h;
     renderTagEditor();
@@ -5690,6 +5711,8 @@ function _buildEBSub(g){
     text:[
       '<button class="et" onmousedown="ec(event,\'bold\')"><b>B</b></button>',
       '<button class="et" onmousedown="ec(event,\'italic\')"><i>I</i></button>',
+      '<button class="et" onmousedown="edMarkDone(event)" title="Mark done (toggle)">\u2713</button>',
+      '<button class="et" onmousedown="edColorBtn(event)" title="Colour">\ud83c\udfa8</button>',
     ],
     heads:[
       '<button class="et" onmousedown="fb(event,\'h1\')" style="font-size:12px;font-weight:800">H1</button>',
@@ -6985,12 +7008,14 @@ function _doPaste(opt){
     art.content=_c.innerHTML;
     if(ST.etitle!=null)art.title=ST.etitle.trim();
     art.updatedAt=new Date().toISOString();persist();
+    if(typeof flashSaved==='function')flashSaved('✓ Pasted & saved');
   }
-  /* For structured pastes: switch to view mode so collapsible sections + TOC appear */
-  if((opt==='smart'||opt==='fmt')&&art){
-    ST.editing=false;
-    renderP3H();renderP3C();
-  }
+  /* v03.NotePane.C3 — stay in EDIT mode after a structured paste.
+     The transformed/cleaned HTML is already inserted live into #ed and saved
+     above, so there is no need to flip to view mode. Previously smart/fmt pastes
+     forced ST.editing=false (to reveal collapsible sections + TOC), which kicked
+     the user out of editing mid-flow. Collapsible sections + TOC still appear the
+     moment the user leaves edit mode normally (Done/Save). */
 }
 
 
@@ -7189,6 +7214,117 @@ function edBookmarkBtn(ev){ev.preventDefault();
   insertAtCaret(bkCardHTML(url));}
 function edMentionBtn(ev){ev.preventDefault();insertAtCaret('@');showMenDD();}
 
+/* ───────────────────────────────────────────────────────────────────────
+   v03.NotePane.C4 — Save-flash + lightweight editor auto-save,
+   Mark-done (dim/grey toggle), and Text/Highlight colour.
+   ─────────────────────────────────────────────────────────────────────── */
+/* Brief "✓ Saved" confirmation near the title. Pure CSS fade; ~0 cost. */
+let _flashT=null;
+function flashSaved(msg){
+  const el=document.getElementById('save-flash');
+  if(!el)return;
+  if(msg)el.textContent=msg;
+  el.classList.add('show');
+  clearTimeout(_flashT);
+  _flashT=setTimeout(function(){el.classList.remove('show');},1100);
+}
+/* Lightweight auto-save while typing/marking: commits #ed → article and writes
+   localStorage + linked file + cloud. Deliberately skips snapshotState() so
+   per-keystroke saves don't flood the 60-step undo history or repeatedly
+   stringify the whole DB. Undo snapshots still occur at real boundaries
+   (manual Save, paste, NTI changes). */
+function _edAutoSave(){
+  if(!ST.editing)return;
+  const ed=document.getElementById('ed');
+  const a=DB.articles.find(function(x){return x.id===ST.article;});
+  if(!ed||!a||ed.dataset.aid!==a.id)return;
+  _flushEd();
+  try{_save();}catch(e){}
+  try{scheduleAutoSave();}catch(e){}
+  try{pushToCloud();}catch(e){}
+  flashSaved();
+}
+/* Block elements inside #ed touched by the current selection/caret. */
+function _edBlocksInSel(){
+  const ed=document.getElementById('ed');if(!ed)return[];
+  const sel=window.getSelection();if(!sel||!sel.rangeCount)return[];
+  const r=sel.getRangeAt(0);
+  const kids=[].slice.call(ed.children);
+  let hit=kids.filter(function(b){try{return r.intersectsNode(b);}catch(e){return false;}});
+  if(hit.length)return hit;
+  let n=sel.anchorNode;while(n&&n.parentNode&&n.parentNode!==ed)n=n.parentNode;
+  return (n&&n.parentNode===ed&&n.nodeType===1)?[n]:[];
+}
+/* Toggle "done" dimming on the selected line(s)/block(s). Fully reversible. */
+function edMarkDone(ev){
+  if(ev&&ev.preventDefault)ev.preventDefault();
+  const ed=document.getElementById('ed');if(!ed)return;
+  const blocks=_edBlocksInSel();
+  if(!blocks.length){ed.focus();return;}
+  const allDone=blocks.every(function(b){return b.classList&&b.classList.contains('tx-done');});
+  blocks.forEach(function(b){if(b.classList)b.classList.toggle('tx-done',!allDone);});
+  ed.focus();
+  _edAutoSave();
+}
+/* Colour popup ───────────────────────────────────────────────────────── */
+const _TX_FG=[['Default',''],['#C0392B','#C0392B'],['#E67E22','#E67E22'],['#27AE60','#27AE60'],['#2980B9','#2980B9'],['#8E44AD','#8E44AD']];
+const _TX_BG=[['None','transparent'],['#FFF2A8','#FFF2A8'],['#C9F2C7','#C9F2C7'],['#BFE3FF','#BFE3FF'],['#FFD6E7','#FFD6E7'],['#E2E2E2','#E2E2E2']];
+let _clrPop=null;
+function edColorBtn(ev){
+  if(ev&&ev.preventDefault)ev.preventDefault();
+  const ed=document.getElementById('ed');if(!ed)return;
+  const s=window.getSelection();
+  if(s&&s.rangeCount&&_isED(s.anchorNode))_edRange=s.getRangeAt(0).cloneRange();
+  _openColorPop(ev);
+}
+function _clrPopAway(e){if(_clrPop&&!_clrPop.contains(e.target))_closeColorPop();}
+function _closeColorPop(){if(_clrPop){_clrPop.remove();_clrPop=null;document.removeEventListener('mousedown',_clrPopAway,true);}}
+function _openColorPop(ev){
+  _closeColorPop();
+  const ed=document.getElementById('ed');
+  const defFg=(ed?getComputedStyle(ed).color:'')||'inherit';
+  const sw=function(label,val,kind){
+    const isClear=(val===''||val==='transparent');
+    const bg=kind==='fg'?(val||defFg):(val==='transparent'?'transparent':val);
+    const base=isClear
+      ?'background:repeating-linear-gradient(45deg,#fff,#fff 4px,#eee 4px,#eee 8px)'
+      :'background:'+bg;
+    return '<button type="button" class="clr-sw" title="'+label+'" '
+      +'onmousedown="_applyColor(event,\''+kind+'\',\''+(val||'')+'\')" '
+      +'style="'+base+(kind==='fg'&&!isClear?';color:'+val:'')+'">'
+      +(isClear?'✕':(kind==='fg'?'A':''))+'</button>';
+  };
+  const html='<div class="clr-row"><span class="clr-lbl">Text</span>'
+    +_TX_FG.map(function(c){return sw(c[0],c[1],'fg');}).join('')+'</div>'
+    +'<div class="clr-row"><span class="clr-lbl">Mark</span>'
+    +_TX_BG.map(function(c){return sw(c[0],c[1],'bg');}).join('')+'</div>';
+  const p=document.createElement('div');
+  p.className='clr-pop';p.innerHTML=html;
+  document.body.appendChild(p);
+  const x=(ev&&ev.clientX!=null)?ev.clientX:120,y=(ev&&ev.clientY!=null)?ev.clientY:120;
+  const r=p.getBoundingClientRect();
+  let left=Math.min(x,window.innerWidth-r.width-8);
+  let top=y+18;if(top+r.height>window.innerHeight-8)top=y-r.height-10;
+  p.style.left=Math.max(8,left)+'px';p.style.top=Math.max(8,top)+'px';
+  _clrPop=p;
+  setTimeout(function(){document.addEventListener('mousedown',_clrPopAway,true);},0);
+}
+function _applyColor(ev,kind,val){
+  if(ev&&ev.preventDefault)ev.preventDefault();
+  const ed=document.getElementById('ed');if(!ed)return;
+  _restoreCaret();ed.focus();
+  try{document.execCommand('styleWithCSS',false,true);}catch(e){}
+  if(kind==='fg'){
+    const c=val||getComputedStyle(ed).color||'#000';
+    document.execCommand('foreColor',false,c);
+  }else{
+    const c=val||'transparent';
+    if(!document.execCommand('hiliteColor',false,c))document.execCommand('backColor',false,c);
+  }
+  _closeColorPop();
+  _edAutoSave();
+}
+
 /* Wire the editor (called from renderP3C each time edit mode opens) */
 let _dragCard=null;
 function _rangeAtPoint(x,y){
@@ -7208,6 +7344,10 @@ function initRichPaste(ed){
       mv.insertAdjacentHTML('beforeend','<button type="button" title="Options" onclick="bkItemMenu(this,event)">⋯</button>');
   });
   markCards();
+  /* v03.NotePane.C4 — debounced auto-save while typing (fires ~1.2s after a
+     pause), so edits/pastes are durably saved and the user sees "✓ Saved". */
+  let _asT=null;
+  ed.addEventListener('input',function(){clearTimeout(_asT);_asT=setTimeout(_edAutoSave,1200);});
   ed.addEventListener('paste',e=>{
     try{
       const cd=e.clipboardData;if(!cd)return;
