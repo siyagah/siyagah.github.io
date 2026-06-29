@@ -1107,6 +1107,22 @@ sup.ann-sup:hover{text-decoration:underline}
   align-items:center;justify-content:center;color:#333;padding:0;line-height:1}
 .clr-sw:hover{transform:scale(1.08)}
 @media(max-width:640px){.clr-sw{width:30px;height:30px}}
+/* v03.NotePane.C5 — collapse/expand/preview controls in EDIT mode */
+#ed-col-tb{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid var(--border2);
+  background:var(--paper);flex-wrap:wrap;align-items:center;flex-shrink:0}
+.ed-col-btn{font-size:11px;padding:3px 9px;border:1px solid var(--border2);border-radius:7px;
+  background:var(--white,#fff);color:var(--t2);cursor:pointer;line-height:1.4;font-family:var(--ui)}
+.ed-col-btn:hover{background:var(--hover,#f0f0f0)}
+.ed-col-btn.on{background:var(--accent,#7C3AED);color:#fff;border-color:transparent}
+#ed .ed-col-arr{display:inline-flex;width:18px;height:18px;margin-right:6px;align-items:center;
+  justify-content:center;border:none;background:transparent;color:var(--t3);cursor:pointer;
+  font-size:10px;vertical-align:middle;user-select:none;-webkit-user-select:none;border-radius:4px;padding:0}
+#ed .ed-col-arr:hover{background:var(--hover,#eee);color:var(--t1)}
+#ed .ed-col-hidden{display:none!important}
+#ed .ed-col-preview{color:var(--t3);font-size:12px;font-style:italic;opacity:.75;
+  padding:2px 0 4px 24px;user-select:none;-webkit-user-select:none}
+@media(max-width:640px){.ed-col-btn{padding:5px 10px;font-size:12px}
+  #ed .ed-col-arr{width:24px;height:24px;font-size:12px}}
 .p3h-title-bar #ti{flex:1;width:0;font-size:15px;border:none;
   background:transparent;outline:none;font-family:var(--ui);
   font-weight:600;padding:2px 0;color:var(--t1)}
@@ -2237,11 +2253,12 @@ function renderP3C(){
   if(ST.editing&&curA){
     /* Preserve any unsaved live edits before rebuilding the editor (fixes content loss on NTI/title/any re-render) */
     {const _le=document.getElementById('ed');
-     if(_le&&_le.dataset.aid===curA.id){const _c=_le.cloneNode(true);_c.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());curA.content=_c.innerHTML;if(ST.etitle!=null)curA.title=ST.etitle.trim();}}
-    el.innerHTML=kindBarHTML(curA)+`<div id="ed" data-aid="${curA.id}" contenteditable="true" spellcheck="true"></div>`;
+     if(_le&&_le.dataset.aid===curA.id){const _c=_le.cloneNode(true);_c.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());_edColClean(_c);curA.content=_c.innerHTML;if(ST.etitle!=null)curA.title=ST.etitle.trim();}}
+    el.innerHTML=kindBarHTML(curA)+_edColToolbarHTML()+`<div id="ed" data-aid="${curA.id}" contenteditable="true" spellcheck="true"></div>`;
     const ed=document.getElementById('ed');ed.innerHTML=curA.content;initRichPaste(ed);
     wireAnnEditor(ed,curA);
     if((curA.annMode||'inline')==='inline')injectInlineAnns(curA,ed,true);
+    _edColInit(ed);
     const _annBL=annPanelHTML(curA)+backlinksHTML(curA,curA.content);
     if(_annBL)ed.insertAdjacentHTML('afterend',_annBL);
     /* Mobile/tablet keyboard fix: only autofocus the body editor when the
@@ -2364,7 +2381,7 @@ function saveArt(){
   /* Contact form mode — save fields directly */
   const _cfa=DB.articles.find(x=>x.id===ST.article);
   if(_cfa?.contactData?.mode==='form'){_saveContactForm(_cfa);return;}
-  const ed=document.getElementById('ed');if(!ed){ST.editing=false;return;}const a=DB.articles.find(x=>x.id===ST.article);if(!a){ST.editing=false;return;}a.title=ST.etitle.trim();const _edc=ed.cloneNode(true);_edc.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());a.content=_edc.innerHTML;a.folderIds=ST.efolders;a.tags=ST.etags;a.updatedAt=new Date().toISOString();if(!DB.theme)DB.theme={};DB.theme.lastEditedArticle=a.id;persist();ST.editing=false;renderP2C();renderP3H();renderP3C();adjustP3Layout();}
+  const ed=document.getElementById('ed');if(!ed){ST.editing=false;return;}const a=DB.articles.find(x=>x.id===ST.article);if(!a){ST.editing=false;return;}a.title=ST.etitle.trim();const _edc=ed.cloneNode(true);_edc.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());_edColClean(_edc);a.content=_edc.innerHTML;a.folderIds=ST.efolders;a.tags=ST.etags;a.updatedAt=new Date().toISOString();if(!DB.theme)DB.theme={};DB.theme.lastEditedArticle=a.id;persist();ST.editing=false;renderP2C();renderP3H();renderP3C();adjustP3Layout();}
 function doSearch(q){ST.search=q;const x=document.getElementById('sqx');if(x)x.style.display=q?'block':'none';renderTree();}
 function clearSearch(){if(!ST.search)return;ST.search='';const i=document.getElementById('sq');if(i)i.value='';const x=document.getElementById('sqx');if(x)x.style.display='none';renderTree();}
 function ec(ev,cmd){ev.preventDefault();document.execCommand(cmd,false,null);document.getElementById('ed')?.focus();}
@@ -7004,12 +7021,13 @@ function _doPaste(opt){
      Without saving the title here, a structured paste that flips to view mode
      discarded the in-progress title (ST.etitle), losing it. */
   if(art&&ed){
-    var _c=ed.cloneNode(true);_c.querySelectorAll('.ann-inline-card').forEach(function(n){n.remove();});
+    var _c=ed.cloneNode(true);_c.querySelectorAll('.ann-inline-card').forEach(function(n){n.remove();});_edColClean(_c);
     art.content=_c.innerHTML;
     if(ST.etitle!=null)art.title=ST.etitle.trim();
     art.updatedAt=new Date().toISOString();persist();
     if(typeof flashSaved==='function')flashSaved('✓ Pasted & saved');
   }
+  if(typeof _edColInit==='function')_edColInit(document.getElementById('ed'));
   /* v03.NotePane.C3 — stay in EDIT mode after a structured paste.
      The transformed/cleaned HTML is already inserted live into #ed and saved
      above, so there is no need to flip to view mode. Previously smart/fmt pastes
@@ -7325,6 +7343,121 @@ function _applyColor(ev,kind,val){
   _edAutoSave();
 }
 
+/* ───────────────────────────────────────────────────────────────────────
+   v03.NotePane.C5 — Collapse / Expand / Preview controls in EDIT mode.
+   The same heading-section folding that existed only in view mode now works
+   while editing. Crucially this is NON-DESTRUCTIVE: the toggle arrows,
+   preview snippets and hidden-state class are injected into the live #ed only
+   for display, and are stripped on every save (_edColClean), so the stored
+   note content stays pristine. Collapse state lives in art.sectionState,
+   shared with view mode, so folds match in both modes.
+   ─────────────────────────────────────────────────────────────────────── */
+/* Headings that are direct children of #ed, in document order. */
+function _edColHeads(ed){
+  if(!ed)return[];
+  const out=[];let idx=0;
+  Array.prototype.forEach.call(ed.children,function(el){
+    if(/^H[1-4]$/.test(el.tagName)){out.push({el:el,idx:idx++,level:parseInt(el.tagName[1])});}
+  });
+  return out;
+}
+/* Strip all C5 display-only artefacts from a (cloned) node before saving. */
+function _edColClean(node){
+  if(!node)return;
+  node.querySelectorAll('.ed-col-arr,.ed-col-preview').forEach(function(n){n.remove();});
+  node.querySelectorAll('.ed-col-hidden').forEach(function(n){n.classList.remove('ed-col-hidden');if(n.getAttribute('class')==='')n.removeAttribute('class');});
+}
+/* Recompute hidden siblings + preview snippets from art.sectionState. */
+function _edColApply(ed){
+  if(!ed)return;
+  const art=DB.articles.find(function(a){return a.id===ST.article;});
+  const state=(art&&art.sectionState)||{};
+  const prev=DB.theme&&DB.theme.collapsePreview==='preview';
+  /* reset */
+  Array.prototype.forEach.call(ed.children,function(el){if(el.classList){el.classList.remove('ed-col-hidden');if(el.getAttribute('class')==='')el.removeAttribute('class');}});
+  ed.querySelectorAll('.ed-col-preview').forEach(function(n){n.remove();});
+  const heads=_edColHeads(ed);
+  heads.forEach(function(h){
+    const arr=h.el.querySelector(':scope > .ed-col-arr');
+    const collapsed=state[h.idx]===true;
+    if(arr)arr.innerHTML=collapsed?'&#9654;':'&#9660;';
+    if(!collapsed)return;
+    /* hide following siblings until next heading of level <= this one */
+    let firstHidden=null;let n=h.el.nextElementSibling;
+    while(n){
+      if(/^H[1-4]$/.test(n.tagName)&&parseInt(n.tagName[1])<=h.level)break;
+      if(!firstHidden&&n.textContent.trim())firstHidden=n;
+      n.classList.add('ed-col-hidden');
+      n=n.nextElementSibling;
+    }
+    if(prev&&firstHidden){
+      const pv=document.createElement('div');
+      pv.className='ed-col-preview';pv.setAttribute('contenteditable','false');
+      pv.textContent=(firstHidden.textContent||'').trim().slice(0,90)+'…';
+      h.el.insertAdjacentElement('afterend',pv);
+    }
+  });
+}
+/* Inject toggle arrows into headings + apply current fold state. */
+function _edColInit(ed){
+  if(!ed)return;
+  ed.querySelectorAll('.ed-col-arr').forEach(function(n){n.remove();});
+  const heads=_edColHeads(ed);
+  const tb=document.getElementById('ed-col-tb');
+  if(tb)tb.style.display=heads.length?'flex':'none';
+  if(!heads.length)return;
+  heads.forEach(function(h){
+    const b=document.createElement('button');
+    b.className='ed-col-arr';b.type='button';b.setAttribute('contenteditable','false');
+    b.setAttribute('data-sec',h.idx);b.innerHTML='&#9660;';
+    b.addEventListener('mousedown',function(e){e.preventDefault();});
+    b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();_edColToggle(this);});
+    h.el.insertBefore(b,h.el.firstChild);
+  });
+  _edColApply(ed);
+  _edColSyncPrevBtn();
+}
+function _edColToggle(arrEl){
+  const ed=document.getElementById('ed');if(!ed||!arrEl)return;
+  const idx=parseInt(arrEl.getAttribute('data-sec'));
+  const art=DB.articles.find(function(a){return a.id===ST.article;});
+  if(!art)return;
+  if(!art.sectionState)art.sectionState={};
+  if(art.sectionState[idx]===true)delete art.sectionState[idx];
+  else art.sectionState[idx]=true;
+  _edColApply(ed);
+  persist();
+}
+function _edColAll(collapse){
+  const ed=document.getElementById('ed');if(!ed)return;
+  const art=DB.articles.find(function(a){return a.id===ST.article;});
+  if(!art)return;
+  if(!art.sectionState)art.sectionState={};
+  _edColHeads(ed).forEach(function(h){
+    if(collapse)art.sectionState[h.idx]=true;else delete art.sectionState[h.idx];
+  });
+  _edColApply(ed);
+  persist();
+}
+function _edColPreview(){
+  if(!DB.theme)DB.theme={};
+  DB.theme.collapsePreview=DB.theme.collapsePreview==='preview'?'compact':'preview';
+  _edColApply(document.getElementById('ed'));
+  _edColSyncPrevBtn();
+  persist();
+}
+function _edColSyncPrevBtn(){
+  const btn=document.getElementById('ed-col-prev-btn');
+  if(btn)btn.classList.toggle('on',DB.theme&&DB.theme.collapsePreview==='preview');
+}
+function _edColToolbarHTML(){
+  return '<div id="ed-col-tb" style="display:none">'
+    +'<button class="ed-col-btn" onmousedown="event.preventDefault()" onclick="_edColAll(true)">&#9654; Collapse all</button>'
+    +'<button class="ed-col-btn" onmousedown="event.preventDefault()" onclick="_edColAll(false)">&#9660; Expand all</button>'
+    +'<button class="ed-col-btn" id="ed-col-prev-btn" onmousedown="event.preventDefault()" onclick="_edColPreview()" title="Show a preview line under collapsed sections">&#8801; Preview</button>'
+    +'</div>';
+}
+
 /* Wire the editor (called from renderP3C each time edit mode opens) */
 let _dragCard=null;
 function _rangeAtPoint(x,y){
@@ -7348,6 +7481,17 @@ function initRichPaste(ed){
      pause), so edits/pastes are durably saved and the user sees "✓ Saved". */
   let _asT=null;
   ed.addEventListener('input',function(){clearTimeout(_asT);_asT=setTimeout(_edAutoSave,1200);});
+  /* v03.NotePane.C5 — re-wire fold arrows when the number of headings changes
+     (e.g. user types or deletes a heading). Debounced; only re-inits on change
+     to avoid disturbing the caret on every keystroke. */
+  let _hcT=null,_lastHc=ed.querySelectorAll(':scope > h1,:scope > h2,:scope > h3,:scope > h4').length;
+  ed.addEventListener('input',function(){
+    clearTimeout(_hcT);
+    _hcT=setTimeout(function(){
+      const hc=ed.querySelectorAll(':scope > h1,:scope > h2,:scope > h3,:scope > h4').length;
+      if(hc!==_lastHc){_lastHc=hc;_edColInit(ed);}
+    },700);
+  });
   ed.addEventListener('paste',e=>{
     try{
       const cd=e.clipboardData;if(!cd)return;
@@ -9890,7 +10034,7 @@ function _flushEd(){
   const ed=document.getElementById('ed');
   const a=DB.articles.find(x=>x.id===ST.article);
   if(!ed||!a||ed.dataset.aid!==a.id)return;
-  const c=ed.cloneNode(true);c.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());
+  const c=ed.cloneNode(true);c.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());_edColClean(c);
   a.content=c.innerHTML;
   if(ST.etitle!=null)a.title=ST.etitle.trim();
   a.updatedAt=new Date().toISOString();
