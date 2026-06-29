@@ -7356,8 +7356,9 @@ function _applyColor(ev,kind,val){
 function _edColHeads(ed){
   if(!ed)return[];
   const out=[];let idx=0;
-  Array.prototype.forEach.call(ed.children,function(el){
-    if(/^H[1-4]$/.test(el.tagName)){out.push({el:el,idx:idx++,level:parseInt(el.tagName[1])});}
+  ed.querySelectorAll('h1,h2,h3,h4').forEach(function(el){
+    if(el.closest('.ann-inline-card,.bk-card,.ed-col-preview'))return;
+    out.push({el:el,idx:idx++,level:parseInt(el.tagName[1])});
   });
   return out;
 }
@@ -7374,7 +7375,7 @@ function _edColApply(ed){
   const state=(art&&art.sectionState)||{};
   const prev=DB.theme&&DB.theme.collapsePreview==='preview';
   /* reset */
-  Array.prototype.forEach.call(ed.children,function(el){if(el.classList){el.classList.remove('ed-col-hidden');if(el.getAttribute('class')==='')el.removeAttribute('class');}});
+  ed.querySelectorAll('.ed-col-hidden').forEach(function(el){el.classList.remove('ed-col-hidden');if(el.getAttribute('class')==='')el.removeAttribute('class');});
   ed.querySelectorAll('.ed-col-preview').forEach(function(n){n.remove();});
   const heads=_edColHeads(ed);
   heads.forEach(function(h){
@@ -7484,13 +7485,20 @@ function initRichPaste(ed){
   /* v03.NotePane.C5 — re-wire fold arrows when the number of headings changes
      (e.g. user types or deletes a heading). Debounced; only re-inits on change
      to avoid disturbing the caret on every keystroke. */
-  let _hcT=null,_lastHc=ed.querySelectorAll(':scope > h1,:scope > h2,:scope > h3,:scope > h4').length;
+  let _hcT=null,_lastHc=ed.querySelectorAll('h1,h2,h3,h4').length;
   ed.addEventListener('input',function(){
     clearTimeout(_hcT);
     _hcT=setTimeout(function(){
-      const hc=ed.querySelectorAll(':scope > h1,:scope > h2,:scope > h3,:scope > h4').length;
+      const hc=ed.querySelectorAll('h1,h2,h3,h4').length;
       if(hc!==_lastHc){_lastHc=hc;_edColInit(ed);}
     },700);
+  });
+  /* v03.NotePane.C6 — after any paste (including the browser-default path that
+     never reaches _doPaste), re-wire fold arrows once the inserted nodes settle.
+     Headings pasted from Google Docs etc. can land nested, so detection now
+     scans all descendants and this guarantees arrows appear on new headings. */
+  ed.addEventListener('paste',function(){
+    setTimeout(function(){_lastHc=ed.querySelectorAll('h1,h2,h3,h4').length;_edColInit(ed);},60);
   });
   ed.addEventListener('paste',e=>{
     try{
