@@ -32,6 +32,8 @@
   --fs-h2:calc(var(--fs-content)*1.235);
   --fs-h3:var(--fs-content);
   --fs-list-meta:calc(var(--fs-list)*0.846);
+  /* Line-spacing variables — adjusted by Appearance ▸ Line spacing (v04.02) */
+  --lh-content:1.6;--pp-gap:12px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:var(--paper);color:var(--t1);font-size:14px}
@@ -100,6 +102,8 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .tbt{font-weight:500;font-size:14px;color:var(--t1);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}
 .tbs{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px}
 .ftag{font-size:9.5px;background:var(--greenlt);color:var(--green2);padding:1px 6px;border-radius:10px}
+ .ftag-nav{cursor:pointer;transition:filter .12s,box-shadow .12s}
+ .ftag-nav:hover{filter:brightness(.94);box-shadow:0 0 0 1px var(--green2)}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:var(--r);cursor:pointer;font-size:12.5px;border:1px solid var(--border2);background:var(--paper);color:var(--t2);font-family:var(--ui);transition:background .1s;white-space:nowrap}
@@ -130,11 +134,15 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .av{padding:26px 38px;max-width:750px;margin:0 auto}
 .av-h1{font-family:var(--body);font-size:var(--fs-h1);font-weight:600;color:var(--t1);margin:0 0 4px;line-height:1.25}
 .av-meta{font-size:11px;color:var(--t3);margin-bottom:8px}
+ .note-dateline{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:11px;color:var(--t3);font-family:var(--body);margin:0}
+ .note-dateline .dl-div{opacity:.45}
+ .note-dateline-hr{border:none;border-top:1px solid var(--border);height:0;margin:6px 0 14px}
+ #ed:empty::before{content:'Start writing here…';color:var(--t3);opacity:.55;font-style:italic;pointer-events:none}
 .av-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:20px}
-.av-body{font-family:var(--body);font-size:var(--fs-content);line-height:1.85;color:#2A261E}
+.av-body{font-family:var(--body);font-size:var(--fs-content);line-height:var(--lh-content);color:#2A261E}
 .av-body h2{font-size:var(--fs-h2);font-weight:600;margin:20px 0 7px;color:var(--t1)}
 .av-body h3{font-size:var(--fs-h3);font-weight:600;margin:15px 0 5px;color:var(--t1)}
-.av-body p{margin:0 0 13px}
+.av-body p{margin:0 0 var(--pp-gap)}
 .av-body ul,.av-body ol{margin:7px 0 13px;padding-left:22px}
 .av-body li{margin-bottom:4px;line-height:1.75}
 .av-body blockquote{border-left:3px solid var(--gold);padding:2px 0 2px 15px;margin:14px 0;color:var(--t2);font-style:italic}
@@ -147,11 +155,12 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .et{padding:3px 7px;background:none;border:1px solid var(--border2);border-radius:5px;cursor:pointer;font-size:12.5px;color:var(--t2);min-width:26px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-family:var(--ui)}
 .et:hover{background:var(--paper)}
 .esep{width:1px;background:var(--border);margin:0 2px;align-self:stretch}
-#ed{flex:1;padding:24px 38px;outline:none;font-family:var(--body);font-size:var(--fs-content);line-height:1.85;color:#2A261E;overflow-y:auto;max-width:750px;margin:0 auto;width:100%;min-height:0}
+#ed{flex:1;padding:24px 38px;outline:none;font-family:var(--body);font-size:var(--fs-content);line-height:var(--lh-content);color:#2A261E;overflow-y:auto;max-width:750px;margin:0 auto;width:100%;min-height:0}
 #ed h2{font-size:var(--fs-h2);font-weight:600;margin:16px 0 6px;color:var(--t1)}
 #ed h3{font-size:var(--fs-h3);font-weight:600;margin:12px 0 4px;color:var(--t1)}
-#ed p{margin:0 0 11px}
+#ed p{margin:0 0 var(--pp-gap)}
 #ed ul,#ed ol{margin:6px 0 11px;padding-left:22px}
+ .av-body ol,#ed ol{list-style-type:decimal-leading-zero}
 #ed blockquote{border-left:3px solid var(--gold);padding:2px 0 2px 15px;margin:13px 0;color:var(--t2);font-style:italic}
 
 /* Rich paste: images / bookmarks / mentions / embeds */
@@ -548,6 +557,13 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
         cursor:pointer;font-size:13px;font-weight:600;
         background:var(--paper);color:var(--t2);font-family:var(--ui);line-height:1}
 .fs-btn:hover{border-color:var(--green);color:var(--green);background:var(--greenlt)}
+/* Line-spacing segmented control (v04.02) */
+.ls-row{display:flex;gap:6px}
+.ls-btn{flex:1;padding:7px 6px;border:1.5px solid var(--border2);border-radius:6px;
+        cursor:pointer;font-size:12.5px;font-weight:600;background:var(--paper);
+        color:var(--t2);font-family:var(--ui);line-height:1;transition:all .12s}
+.ls-btn:hover{border-color:var(--green);color:var(--green);background:var(--greenlt)}
+.ls-btn.on{border-color:var(--green);color:#fff;background:var(--green)}
 
 /* ── Auto-save UI ───────────────────────────────────────────────────── */
 .sb-autosave{background:rgba(56,189,248,.07);border-color:rgba(56,189,248,.22);color:#6BB8D8}
@@ -1802,6 +1818,29 @@ const fmtDs=d=>{
   const h=dt.getHours(),mn=dt.getMinutes(),ampm=h>=12?'PM':'AM',h12=h%12||12;
   return date+' · '+h12+':'+(String(mn).padStart(2,'0'))+' '+ampm;
 };
+/* v03.NotePane.C7 — date line shown at top of the writing body (both view and
+   edit modes). Created + Updated on one line, divided by "|", followed by a
+   separator rule. Rendered non-editable and OUTSIDE #ed in edit mode, so it is
+   never captured into saved content. */
+function _dateLineHTML(a){
+  if(!a)return '';
+  const parts=[];
+  if(a.createdAt)parts.push(`<span>Created ${fmtDs(a.createdAt)}</span>`);
+  if(a.createdAt&&a.updatedAt)parts.push(`<span class="dl-div">|</span>`);
+  if(a.updatedAt)parts.push(`<span>Updated ${fmtDs(a.updatedAt)}</span>`);
+  if(!parts.length)return '';
+  return `<div class="note-dateline" contenteditable="false">${parts.join('')}</div><div class="note-dateline-hr" contenteditable="false"></div>`;
+}
+/* True when the body has no real content — empty, whitespace-only, or the
+   legacy literal placeholder — AND carries no media/structural elements. Used
+   to blank #ed so the CSS placeholder shows and disappears once the user types. */
+function _isPlaceholder(html){
+  if(!html)return true;
+  const d=document.createElement('div');d.innerHTML=html;
+  if(d.querySelector('img,table,ul,ol,blockquote,hr,h1,h2,h3,h4,iframe,video,audio,.bk-card,.ann-inline-card'))return false;
+  const t=(d.textContent||'').trim();
+  return t===''||t==='Start writing here...';
+}
 function chOf(pid){return DB.folders.filter(f=>f.parentId===pid).sort((a,b)=>a.order-b.order);}
 function descOf(fid){const ids=[fid];function go(p){chOf(p).forEach(c=>{ids.push(c.id);go(c.id);});}go(fid);return ids;}
 function pathOf(fid){const p=[];let id=fid;while(id){const f=DB.folders.find(x=>x.id===id);if(!f)break;p.unshift(f);id=f.parentId;}return p;}
@@ -2219,8 +2258,9 @@ function renderP3H(){
     return;
   } else if(curA){
     el.classList.remove('editing');  /* restore row layout for view mode */
-    const tags=curA.folderIds.map(x=>{const p=pathOf(x);return p.length?`<span class="ftag">${esc(p.map(f=>f.name).join(' › '))}</span>`:''}).join('');
-    h+=`<div style="flex:1;min-width:0"><div class="tbt" title="Right-click to edit" oncontextmenu="event.preventDefault();event.stopPropagation();startEdit()">${esc(curA.title)||'<em style="color:var(--t3)">Untitled</em>'}</div><div class="tbs">${tags}</div></div>
+    /* v03.NotePane.C9 — attached-folder list removed from the title bar; it
+       still shows once below the NTI bar in the note body (avoids duplication). */
+    h+=`<div style="flex:1;min-width:0"><div class="tbt" title="Right-click to edit" oncontextmenu="event.preventDefault();event.stopPropagation();startEdit()">${esc(curA.title)||'<em style="color:var(--t3)">Untitled</em>'}</div></div>
       <button class="btn bn bi" onclick="quickCapture()" title="Quick note (Primary folder)" style="padding:5px 7px;font-size:14px">✚</button>
       <button class="btn" onclick="startEdit()">✏️ Edit</button>
       <button class="btn bn modal-pop-btn" onclick="${ST.noteModal?'closeNoteModal':'openNoteModal'}()" title="${ST.noteModal?'Return to layout (Esc / Ctrl+Shift+P)':'Pop out note (Ctrl+Shift+P)'}">${ST.noteModal?'⊞':'⊡'}</button>
@@ -2254,8 +2294,8 @@ function renderP3C(){
     /* Preserve any unsaved live edits before rebuilding the editor (fixes content loss on NTI/title/any re-render) */
     {const _le=document.getElementById('ed');
      if(_le&&_le.dataset.aid===curA.id){const _c=_le.cloneNode(true);_c.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());_edColClean(_c);curA.content=_c.innerHTML;if(ST.etitle!=null)curA.title=ST.etitle.trim();}}
-    el.innerHTML=kindBarHTML(curA)+_edColToolbarHTML()+`<div id="ed" data-aid="${curA.id}" contenteditable="true" spellcheck="true"></div>`;
-    const ed=document.getElementById('ed');ed.innerHTML=curA.content;initRichPaste(ed);
+    el.innerHTML=kindBarHTML(curA)+_edColToolbarHTML()+_dateLineHTML(curA)+`<div id="ed" data-aid="${curA.id}" contenteditable="true" spellcheck="true"></div>`;
+    const ed=document.getElementById('ed');ed.innerHTML=curA.content;if(_isPlaceholder(curA.content))ed.innerHTML='';initRichPaste(ed);
     wireAnnEditor(ed,curA);
     if((curA.annMode||'inline')==='inline')injectInlineAnns(curA,ed,true);
     _edColInit(ed);
@@ -2270,16 +2310,16 @@ function renderP3C(){
     return;
   }
   if(curA){
-    const tags=curA.folderIds.map(x=>{const p=pathOf(x);return p.length?`<span class="ftag">${esc(p.map(f=>f.name).join(' › '))}</span>`:''}).join('');
+    /* v03.NotePane.C10 — folder chips are clickable: tap to jump to that folder. */
+    const tags=curA.folderIds.map(x=>{const p=pathOf(x);return p.length?`<span class="ftag ftag-nav" onclick="selFolder('${x}')" title="Go to this folder">${esc(p.map(f=>f.name).join(' › '))}</span>`:''}).join('');
     el.scrollTop=0;el.innerHTML=`<div class="avw"><div class="av">
-      <div class="av-meta">Updated ${fmtD(curA.updatedAt)}</div>
       ${kindBarHTML(curA)}
       ${reminderStripHTML(curA)}
       <div class="av-tags">${tags}</div>
       ${(curA.tags||[]).length
         ?`<div class="art-tags">${(curA.tags||[]).map(t=>{const _tc=(DB.tagColors||{})[t];const _ts=_tc?` style="background:${_tc}1a;color:${_tc};border-color:${_tc}40"`:'';return `<span class="art-tag"${_ts} onclick="selTag('${esc(t)}')" oncontextmenu="event.preventDefault();showTagClrPicker(event,'${esc(t)}')">🏷 ${esc(t)}</span>`;}).join('')}</div>`
         :''}
-      <div class="av-body">${curA.content}</div>
+      <div class="av-body">${_dateLineHTML(curA)}${curA.content}</div>
       ${annPanelHTML(curA)}
       ${backlinksHTML(curA)}
     </div></div>`;
@@ -2935,7 +2975,7 @@ function newJournalEntry(){
   /* Ensure "journal" tag exists globally */
   if(!DB.globalTags)DB.globalTags=[];
   if(!DB.globalTags.includes('journal')){DB.globalTags.push('journal');DB.globalTags.sort();}
-  const a={id:uid(),title,content:'<p>Start writing here...</p>',
+  const a={id:uid(),title,content:'',
     folderIds:[],tags:['journal'],createdAt:iso,updatedAt:iso};
   DB.articles.push(a);
   persist();
@@ -2965,7 +3005,7 @@ function toggleArchive(aid){
 function mkArtTitleOnly(fid,title){
   if(!title?.trim())return;
   const now=new Date().toISOString();
-  const a={id:uid(),title:title.trim(),content:'<p>Start writing here...</p>',
+  const a={id:uid(),title:title.trim(),content:'',
     folderIds:fid?[fid]:[],tags:[],createdAt:now,updatedAt:now};
   DB.articles.push(a);persist();
   /* Select note so pane 3 shows it in VIEW mode (not edit mode) */
@@ -3473,7 +3513,7 @@ function quickNewNote(){
     if(!DB.globalTags)DB.globalTags=[];
     if(!DB.globalTags.includes(ST.tag)){DB.globalTags.push(ST.tag);DB.globalTags.sort();}
   }
-  const a={id:uid(),title,content:'<p>Start writing here...</p>',
+  const a={id:uid(),title,content:'',
     folderIds:fid?[fid]:[],tags,createdAt:now,updatedAt:now};
   DB.articles.push(a);persist();
   ST.article=a.id;ST.etitle=title;ST.efolders=fid?[fid]:[];ST.etags=[...tags];
@@ -7602,6 +7642,31 @@ function initRichPaste(ed){
     if(_edLpFired){_edLpFired=false;e.stopImmediatePropagation();e.preventDefault();}
   },true);
   ed.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenDD();closePastePop();closeItemMenu();}});
+  /* v03.NotePane.C8 — write ABOVE a list without a number. When the caret sits
+     at the very start of the FIRST item of a list and Enter is pressed, drop an
+     empty un-numbered paragraph above the list and move the caret into it,
+     instead of creating a new numbered/bulleted item. Any other case falls
+     through to the browser's normal list behaviour. */
+  ed.addEventListener('keydown',e=>{
+    if(e.key!=='Enter'||e.shiftKey||e.ctrlKey||e.metaKey||e.altKey)return;
+    const sel=window.getSelection();
+    if(!sel||!sel.isCollapsed||!sel.rangeCount)return;
+    const an=sel.anchorNode;if(!an)return;
+    const li=(an.nodeType===1?an:an.parentElement)?.closest('li');
+    if(!li||!ed.contains(li))return;
+    const list=li.parentElement;
+    if(!list||(list.tagName!=='OL'&&list.tagName!=='UL'))return;
+    if(list.firstElementChild!==li)return;               // only the first item
+    const r=sel.getRangeAt(0);
+    const pre=r.cloneRange();pre.selectNodeContents(li);pre.setEnd(r.startContainer,r.startOffset);
+    if(pre.toString().length!==0)return;                 // caret not at the very start
+    e.preventDefault();
+    const p=document.createElement('p');p.innerHTML='<br>';
+    list.parentNode.insertBefore(p,list);
+    const nr=document.createRange();nr.setStart(p,0);nr.collapse(true);
+    sel.removeAllRanges();sel.addRange(nr);
+    ed.dispatchEvent(new Event('input',{bubbles:true}));
+  });
   /* Image click → show resize bar */
   ed.addEventListener('click',e=>{
     const img=e.target.closest?.('img.ed-img');
@@ -7962,7 +8027,7 @@ function mkFolder(pid,name){
 }
 function rnFolder(id,name){if(!name?.trim())return;const f=DB.folders.find(x=>x.id===id);if(f){f.name=name.trim();persist();render();}}
 function rmFolder(id){trashFolder(id);}
-function mkArt(fid,title){if(!title?.trim())return;const now=new Date().toISOString();const a={id:uid(),title:title.trim(),content:'<p>Start writing here...</p>',folderIds:fid?[fid]:[],tags:[],createdAt:now,updatedAt:now};DB.articles.push(a);persist();ST.article=a.id;ST.etitle=a.title;ST.efolders=[...a.folderIds];ST.editing=true;render();}
+function mkArt(fid,title){if(!title?.trim())return;const now=new Date().toISOString();const a={id:uid(),title:title.trim(),content:'',folderIds:fid?[fid]:[],tags:[],createdAt:now,updatedAt:now};DB.articles.push(a);persist();ST.article=a.id;ST.etitle=a.title;ST.efolders=[...a.folderIds];ST.editing=true;render();}
 function rmArt(id){trashArt(id);}
 
 /* ── Context menu ────────────────────────────────────────────────── */
@@ -7987,6 +8052,7 @@ function showCtx(ev,fid){
       </div>
     </div>
     ${rootSectionMoves(fid)}
+    ${_isSysFolder(fid)?'':`<div class="ci" onclick="hideCtx();convertFolderToSection('${fid}')">🗂 Convert to section</div>`}
     <div class="ci" onclick="hideCtx();toggleJournalMode('${fid}')">${_f&&_f.journalMode?'📓 Remove Journal mode':'📓 Set as Journal'}</div>
     ${_f&&_f.journalMode&&_f.sectionId!=='db-section'?`<div class="ci" onclick="hideCtx();moveToMyJournal('${fid}')">📓 Move to My Journal</div>`:''}
     <div class="csep"></div>
@@ -8295,6 +8361,7 @@ function applyTheme(themeData){
   }
   // Apply any stored font sizes
   if(themeData.fonts) applyFontSizes(themeData.fonts);
+  applyLineSpacing(themeData.lineSpacing||'cozy');
 }
 
 function applyPreset(key){
@@ -8407,6 +8474,18 @@ function renderThemeModal(){
   h+='<div style="margin-top:8px;text-align:right">';
   h+='<button class="theme-reset" style="width:auto;font-size:11px;padding:4px 10px" onclick="resetFontSizes()">↺ Reset fonts</button>';
   h+='</div></div>';
+
+  /* Line spacing section (v04.02) */
+  h+='<div class="theme-divider"></div>';
+  h+='<div class="theme-sect">';
+  h+='<div class="theme-sect-lbl">Line spacing</div>';
+  h+='<div class="fs-sub" style="margin:-2px 0 8px">Space between lines & paragraphs in the note pane</div>';
+  const _lsCur=DB.theme?.lineSpacing||'cozy';
+  const _lsOpts=[{k:'compact',l:'Compact'},{k:'cozy',l:'Cozy'},{k:'relaxed',l:'Relaxed'}];
+  h+='<div class="ls-row">'+_lsOpts.map(o=>
+    `<button class="ls-btn${_lsCur===o.k?' on':''}" onclick="setLineSpacing('${o.k}')">${o.l}</button>`
+  ).join('')+'</div>';
+  h+='</div>';
 
   /* Reset */
   h+='<button class="theme-reset" onclick="resetTheme()">↺  Reset to Forest default</button>';
@@ -8581,7 +8660,9 @@ function showSecCtx(ev,sid){
       `<span class="ctx-clr-lbl">🎨 Section colour</span>`+
       `<div class="ctx-colors">${ctxSecColorSwatches(sid)}</div>`+
     `</div>`+
-    (canDel?`<div class="csep"></div><div class="ci d" onclick="hideCtx();delSection('${sid}')">🗑 Delete section</div>`:'');
+    (canDel?`<div class="csep"></div>`:'')+
+    sectionToFolderRows(sid)+
+    (canDel?`<div class="ci d" onclick="hideCtx();delSection('${sid}')">🗑 Delete section</div>`:'');
   m.style.display='block';
   const x=ev.clientX||ev.target.getBoundingClientRect().right;
   const y=ev.clientY||ev.target.getBoundingClientRect().bottom;
@@ -8645,6 +8726,112 @@ function rootSectionMoves(fid){
   return DB.sections.filter(s=>s.id!==f.sectionId).map(s=>
     `<div class="ci" onclick="hideCtx();moveFolderToSec('${fid}','${s.id}')">↗ Move to ${esc(s.name)}</div>`
   ).join('');
+}
+
+/* ── v04.00 Folder ⇄ Section transform ──────────────────────────────────
+   Convert a folder into a top-level Section (its sub-folders become the new
+   section's top-level folders), and a Section into a folder inside another
+   section (its top-level folders become that folder's children). System areas
+   (Smart Views, MyDatabase, MyWall, kb-*) are never eligible. Folder→Section is
+   blocked while notes are attached directly to the folder, since a Section
+   cannot hold notes directly. */
+function _isSysFolder(fid){
+  if(typeof SF_IDS!=='undefined'&&SF_IDS.has(fid))return true;
+  let f=DB.folders.find(x=>x.id===fid),guard=0;
+  if(!f)return true;
+  while(f.parentId&&guard++<300){const p=DB.folders.find(x=>x.id===f.parentId);if(!p)break;f=p;}
+  if(f.id===MYWALL_ROOT_ID)return true;
+  const sid=f.sectionId||'';
+  return sid.startsWith('db-')||sid.startsWith('kb-');
+}
+function convertFolderToSection(fid){
+  const f=DB.folders.find(x=>x.id===fid);
+  if(!f){toast('Folder not found');return;}
+  if(_isSysFolder(fid)){toast("This system folder can't be converted");return;}
+  const direct=DB.articles.filter(a=>(a.folderIds||[]).includes(fid)).length;
+  if(direct>0){
+    /* v04.01 — actionable blocker: move the directly-attached notes into a new
+       sub-folder, then convert. Keeps it a two-tap fix; no note is ever lost. */
+    showModal(`<div class="mt">Move notes, then convert</div>
+      <div class="mm">"<strong>${esc(f.name)}</strong>" has <strong>${direct}</strong> note${direct>1?'s':''} attached directly to it, and a Section can't hold notes directly.<br><br>I can move ${direct>1?'them':'it'} into a new sub-folder, then convert "<strong>${esc(f.name)}</strong>" to a Section.</div>
+      <input class="mi" id="c2s-sub" value="General" placeholder="Sub-folder name…" style="margin:0 0 10px;width:100%" onkeydown="if(event.key==='Enter')_moveNotesThenConvert('${fid}')">
+      <div class="ma"><button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="_moveNotesThenConvert('${fid}')">Move &amp; Convert</button></div>`);
+    setTimeout(()=>{const i=document.getElementById('c2s-sub');if(i){i.focus();i.select();}},60);
+    return;
+  }
+  const kids=chOf(fid);
+  showModal(`<div class="mt">Convert folder to section</div>
+    <div class="mm">Turn "<strong>${esc(f.name)}</strong>" into a <strong>Section</strong>?<br>Its <strong>${kids.length}</strong> sub-folder${kids.length===1?'':'s'} will become top-level folders of the new section.</div>
+    <div class="ma"><button class="btn" onclick="closeModal()">Cancel</button>
+    <button class="btn bp" onclick="_doFolderToSection('${fid}');closeModal()">Convert</button></div>`);
+}
+function _moveNotesThenConvert(fid){
+  const f=DB.folders.find(x=>x.id===fid);if(!f)return;
+  if(_isSysFolder(fid))return;
+  const nm=((document.getElementById('c2s-sub')||{}).value||'').trim()||'General';
+  /* new sub-folder inside F to hold the directly-attached notes */
+  const g={id:uid(),name:nm,parentId:fid,order:chOf(fid).length+1};
+  if(f.color&&f.color!=='#FFFFFF')g.color=f.color;
+  DB.folders.push(g);
+  /* remap direct notes F.id → g.id (preserve order, drop duplicates) */
+  DB.articles.forEach(a=>{
+    if(a.folderIds&&a.folderIds.includes(fid)){
+      a.folderIds=a.folderIds.map(x=>x===fid?g.id:x).filter((x,i,arr)=>arr.indexOf(x)===i);
+    }
+  });
+  closeModal();
+  _doFolderToSection(fid);   /* now no direct notes remain → conversion proceeds; g becomes a top-level folder of the new section */
+}
+function _doFolderToSection(fid){
+  const f=DB.folders.find(x=>x.id===fid);if(!f)return;
+  if(_isSysFolder(fid))return;
+  if(DB.articles.some(a=>(a.folderIds||[]).includes(fid)))return; /* safety re-check */
+  const ord=DB.sections.reduce((m,s)=>Math.max(m,s.order||0),0)+1;
+  const sid=uid();
+  const sec={id:sid,name:f.name,order:ord};
+  if(f.color&&f.color!=='#FFFFFF')sec.color=f.color;
+  DB.sections.push(sec);
+  if(!ST.secOpen)ST.secOpen={};ST.secOpen[sid]=true;
+  const kids=chOf(fid);
+  kids.forEach((c,i)=>{c.parentId=null;c.sectionId=sid;c.order=i+1;});
+  DB.folders=DB.folders.filter(x=>x.id!==fid);
+  DB.articles.forEach(a=>{if(a.folderIds&&a.folderIds.includes(fid))a.folderIds=a.folderIds.filter(x=>x!==fid);});
+  if(ST.folder===fid){ST.folder=kids[0]?kids[0].id:null;ST.article=null;ST.editing=false;}
+  persist();renderTree();renderP2H&&renderP2H();renderP2C&&renderP2C();renderP3H&&renderP3H();renderP3C&&renderP3C();
+  toast('Folder converted to section ✓');
+}
+function sectionToFolderRows(sid){
+  if(sid.startsWith('db-')||sid.startsWith('kb-'))return '';
+  const others=DB.sections.filter(s=>s.id!==sid&&!s.id.startsWith('db-')&&!s.id.startsWith('kb-')).sort((a,b)=>(a.order||0)-(b.order||0));
+  if(!others.length)return '';
+  return others.map(t=>`<div class="ci" onclick="hideCtx();confirmSectionToFolder('${sid}','${t.id}')">📁 Convert to folder in "${esc(t.name)}"</div>`).join('');
+}
+function confirmSectionToFolder(sid,tid){
+  const s=DB.sections.find(x=>x.id===sid),t=DB.sections.find(x=>x.id===tid);
+  if(!s||!t)return;
+  if(DB.sections.filter(x=>!x.id.startsWith('db-')&&!x.id.startsWith('kb-')).length<=1){toast("Can't convert your only section");return;}
+  const roots=DB.folders.filter(f=>!f.parentId&&f.sectionId===sid);
+  showModal(`<div class="mt">Convert section to folder</div>
+    <div class="mm">Turn section "<strong>${esc(s.name)}</strong>" into a <strong>folder</strong> inside "<strong>${esc(t.name)}</strong>"?<br>Its <strong>${roots.length}</strong> top-level folder${roots.length===1?'':'s'} will become sub-folders of it.</div>
+    <div class="ma"><button class="btn" onclick="closeModal()">Cancel</button>
+    <button class="btn bp" onclick="_doSectionToFolder('${sid}','${tid}');closeModal()">Convert</button></div>`);
+}
+function _doSectionToFolder(sid,tid){
+  if(sid.startsWith('db-')||sid.startsWith('kb-'))return;
+  const s=DB.sections.find(x=>x.id===sid),t=DB.sections.find(x=>x.id===tid);
+  if(!s||!t)return;
+  if(DB.sections.filter(x=>!x.id.startsWith('db-')&&!x.id.startsWith('kb-')).length<=1)return;
+  const nf={id:uid(),name:s.name,parentId:null,sectionId:tid,
+    order:DB.folders.filter(x=>!x.parentId&&x.sectionId===tid).length+1,color:s.color||'#FFFFFF'};
+  DB.folders.push(nf);
+  const roots=DB.folders.filter(f=>!f.parentId&&f.sectionId===sid&&f.id!==nf.id);
+  roots.forEach((c,i)=>{c.parentId=nf.id;c.sectionId=tid;c.order=i+1;});
+  DB.sections=DB.sections.filter(x=>x.id!==sid);
+  if(ST.secOpen)delete ST.secOpen[sid];
+  ST.exp[nf.id]=true;ST.secOpen[tid]=true;
+  persist();renderTree();
+  toast('Section converted to folder ✓');
 }
 
 /* ── Section drag-and-drop ─────────────────────────────────────────── */
@@ -9137,6 +9324,23 @@ function applyFontSizes(fonts){
   root.style.setProperty('--fs-list',    r(_FS_BASE.list   *g*(fonts.list||100)/100)+'px');
   root.style.setProperty('--fs-content', r(_FS_BASE.content*g*(fonts.content||100)/100)+'px');
   // --fs-h1, --fs-h2, --fs-h3, --fs-list-meta are derived by CSS calc()
+}
+
+/* ── Line-spacing system (v04.02) — global, applied via CSS variables ──── */
+const _LH={compact:{lh:1.4,gap:8},cozy:{lh:1.6,gap:12},relaxed:{lh:1.85,gap:16}};
+function applyLineSpacing(mode){
+  const m=_LH[mode]||_LH.cozy;
+  const root=document.documentElement;
+  root.style.setProperty('--lh-content',m.lh);
+  root.style.setProperty('--pp-gap',m.gap+'px');
+}
+function setLineSpacing(mode){
+  if(!_LH[mode])return;
+  if(!DB.theme)DB.theme={};
+  DB.theme.lineSpacing=mode;
+  applyLineSpacing(mode);
+  persist();
+  renderThemeModal();
 }
 
 /** Increment (+1) or decrement (-1) a font-size key one step */
