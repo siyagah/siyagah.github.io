@@ -3231,7 +3231,7 @@ function _confirmAnn(num,quote){
   if(!art.annotations)art.annotations=[];
   art.annotations.push({num,quote,comment:cmt,replies:[],createdAt:new Date().toISOString()});
   art.annNext=num+1;
-  art.content=ed.innerHTML;
+  art.content=_edCleanHTML(ed);
   art.updatedAt=new Date().toISOString();
   persist();
   _annPendingRange=null;
@@ -3281,7 +3281,7 @@ function annPanelHTML(art){
       +'<button class="ann-ab" onclick="scrollToAnnMark('+a.num+')">↑ Go to text</button>'
       +'<button class="ann-ab" onclick="showAnnEditBox('+a.num+')">✏ Edit</button>'
       +'<button class="ann-ab" onclick="showAnnReplyBox('+a.num+')">↩ Reply</button>'
-      +'<button class="ann-ab del" onclick="deleteAnnotation('+a.num+')">✕ Delete</button>'
+      +'<button class="ann-ab del" onclick="confirmDeleteAnnotation('+a.num+')">✕ Delete</button>'
       +'</div></div></div>';
   });
   return s+'</div>';
@@ -3338,6 +3338,29 @@ function submitAnnReply(num){
 }
 
 /* ── Delete annotation ────────────────────────────────────────────────────── */
+/* v03.06.03 — clean editor HTML before saving: strip injected inline comment
+   cards + collapse-state artefacts so they never leak into stored note content. */
+function _edCleanHTML(ed){
+  const _c=ed.cloneNode(true);
+  _c.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());
+  _edColClean(_c);
+  return _c.innerHTML;
+}
+/* v03.06.02 — confirm before deleting a comment (prevents accidental ✕ taps, esp. on touch) */
+function confirmDeleteAnnotation(num){
+  const art=DB.articles.find(a=>a.id===ST.article);if(!art)return;
+  const ann=(art.annotations||[]).find(a=>a.num===num);
+  if(!ann){deleteAnnotation(num);return;}
+  const nrep=(ann.replies||[]).length;
+  const raw=(ann.comment||'').trim();
+  const prev=esc(raw.slice(0,120))+(raw.length>120?'…':'');
+  showModal('<div class="mt">Delete comment?</div>'
+    +'<div class="mm">Delete comment <strong>['+num+']</strong>'+(prev?' — "<em>'+prev+'</em>"':'')+'?'
+      +(nrep?'<br>This also removes its <strong>'+nrep+'</strong> repl'+(nrep>1?'ies':'y')+'.':'')
+      +'<br>The highlight on the text will be cleared.</div>'
+    +'<div class="ma"><button class="btn" onclick="closeModal()">Cancel</button>'
+    +'<button class="btn bd" onclick="deleteAnnotation('+num+');closeModal()">Delete</button></div>');
+}
 function deleteAnnotation(num){
   const art=DB.articles.find(a=>a.id===ST.article);if(!art)return;
   const ed=document.getElementById('ed');
@@ -3346,7 +3369,7 @@ function deleteAnnotation(num){
     const sup=ed.querySelector('sup.ann-sup[data-ann="'+num+'"]');
     if(mark){const f=document.createDocumentFragment();while(mark.firstChild)f.appendChild(mark.firstChild);mark.replaceWith(f);}
     if(sup)sup.remove();
-    art.content=ed.innerHTML;
+    art.content=_edCleanHTML(ed);
   } else {
     const tmp=document.createElement('div');tmp.innerHTML=art.content;
     const mark=tmp.querySelector('mark.ann-mk[data-ann="'+num+'"]');
@@ -3405,13 +3428,16 @@ function injectInlineAnns(art,container,editMode){
         +'<span class="ann-badge">['+a.num+']</span>'
         +'<div class="ann-inline-body">'
         +(qt?'<div class="ann-quote">'+esc(qt)+((a.quote||'').length>80?'…':'')+'</div>':'')
-        +'<div class="ann-txt">'+esc(a.comment)+'</div>'
-        +(a.replies||[]).map(r=>'<div class="ann-rep-item">↳ '+esc(r)+'</div>').join('');
+        +'<div class="ann-txt" id="ann-txt-'+a.num+'">'+esc(a.comment)+'</div>'
+        +(a.replies||[]).map((r,ri)=>'<div class="ann-rep-item" id="ann-rep-'+a.num+'-'+ri+'">↳ '+esc(r)+(editMode?'<button class="ann-ab" style="margin-left:6px;font-size:10px;padding:1px 6px" onmousedown="event.preventDefault()" onclick="showAnnReplyEdit('+a.num+','+ri+')">✏</button>':'')+'</div>').join('');
       if(editMode){
-        inner+='<div class="ann-acts" style="margin-top:5px">'
+        /* v03.06.01 — reply/edit box targets (were missing in inline view, so Reply/Edit did nothing) */
+        inner+='<div id="ann-ri-wrap-'+a.num+'"></div>'
+          +'<div id="ann-edit-wrap-'+a.num+'"></div>'
+          +'<div class="ann-acts" style="margin-top:5px">'
           +'<button class="ann-ab" onmousedown="event.preventDefault()" onclick="showAnnEditBox('+a.num+')">✏ Edit</button>'
           +'<button class="ann-ab" onmousedown="event.preventDefault()" onclick="showAnnReplyBox('+a.num+')">↩ Reply</button>'
-          +'<button class="ann-ab del" onmousedown="event.preventDefault()" onclick="deleteAnnotation('+a.num+')">✕</button>'
+          +'<button class="ann-ab del" onmousedown="event.preventDefault()" onclick="confirmDeleteAnnotation('+a.num+')">✕</button>'
           +'</div>';
       }
       inner+='</div></div>';
@@ -6533,7 +6559,7 @@ function insertCite(){
     ed.focus();
     document.execCommand('insertHTML',false,html+'<br>');
     const art=DB.articles.find(function(a){return a.id===ST.article;});
-    if(art){art.content=ed.innerHTML;art.updatedAt=new Date().toISOString();persist();}
+    if(art){art.content=_edCleanHTML(ed);art.updatedAt=new Date().toISOString();persist();}
   },50);
 }
 function _citeModalHTML(){
