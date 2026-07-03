@@ -102,6 +102,7 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .tbt{font-weight:500;font-size:14px;color:var(--t1);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}
 .tbs{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px}
 .ftag{font-size:9.5px;background:var(--greenlt);color:var(--green2);padding:1px 6px;border-radius:10px}
+ .nti-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;flex-shrink:0;vertical-align:middle}
  .ftag-nav{cursor:pointer;transition:filter .12s,box-shadow .12s}
  .ftag-nav:hover{filter:brightness(.94);box-shadow:0 0 0 1px var(--green2)}
 
@@ -277,6 +278,8 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .pr{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer}
 .pr:hover{background:var(--paper)}
 .pc{width:15px;height:15px;border:1.5px solid var(--border2);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff}
+ .pk-chev{display:inline-block;width:14px;text-align:center;color:var(--t3);cursor:pointer;font-size:11px;flex-shrink:0;user-select:none}
+ .pk-chev-sp{cursor:default}
 .pc.on{background:var(--green);border-color:var(--green)}
 .rn-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .rn-lbl{font-size:11.5px;color:var(--t3);display:block;margin-bottom:4px}
@@ -1042,8 +1045,8 @@ sup.ann-sup:hover{text-decoration:underline}
 .kind-arch-btn:hover{opacity:1;background:var(--hover)!important}
 .kind-arch-btn.archived{opacity:1;color:#d97706}
 .kind-arch-row{display:none!important}
-#nti-picker{display:none;position:fixed;z-index:9200;background:var(--paper);border:1px solid var(--border2);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.22);width:min(310px,92vw);max-height:min(480px,78vh);flex-direction:column;overflow:hidden}
-#nti-picker.open{display:flex}
+#nti-picker,#jrn-picker{display:none;position:fixed;z-index:9200;background:var(--paper);border:1px solid var(--border2);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.22);width:min(310px,92vw);max-height:min(480px,78vh);flex-direction:column;overflow:hidden}
+#nti-picker.open,#jrn-picker.open{display:flex}
 .nti-pk-hd{display:flex;align-items:center;padding:10px 12px 8px;font-size:12px;font-weight:700;color:var(--t1);flex-shrink:0;border-bottom:1px solid var(--border2)}
 .nti-pk-cls{margin-left:auto;border:none;background:none;cursor:pointer;font-size:16px;color:var(--t3);line-height:1;padding:0 2px}
 .nti-pk-cls:hover{color:var(--t1)}
@@ -1863,7 +1866,7 @@ function renderTree(){
   // Render sections then tags inline
   /* Filter system sections (db-*, kb-*) from regular tree render */
   const _secs=[...DB.sections].filter(s=>!s.id.startsWith('db-')&&!s.id.startsWith('kb-')).sort((a,b)=>a.order-b.order);
-  el.innerHTML=renderSmartSection()+renderDatabaseSection()+_secs.map(s=>renderSection(s)).join('')+renderTagSection();
+  el.innerHTML=renderSmartSection()+renderDatabaseSection()+_secs.map(s=>renderSection(s)).join('')+renderTagSection()+renderNTISection();
 }
 
 function trNode(f,depth){
@@ -1932,6 +1935,16 @@ function renderP2H(){
   const cls=window.innerWidth<1200
     ?`<button class="btn bn bi" onclick="closeP2()" style="font-size:14px;flex-shrink:0" title="Back to reading">◀</button>`:'';
   /* ── Tag-filter header ── */
+  if(ST.kind){
+    const k=kindById(ST.kind);
+    el.innerHTML=ham
+      +`<span class="nti-dot" style="background:${k.color};margin-left:2px"></span>`
+      +`<span class="tbt" style="flex:1;min-width:0;overflow:hidden">${esc(k.name)}</span>`
+      +newBtn+previewBtn
+      +`<button class="btn bn bi" onclick="selKind(null)" style="font-size:13px" title="Clear type filter">✕</button>`
+      +cls;
+    return;
+  }
   if(ST.tag){
     el.innerHTML=ham
       +`<span style="font-size:13px;flex-shrink:0">🏷</span>`
@@ -1974,6 +1987,22 @@ function renderP2H(){
 
 function renderP2C(){
   const el=document.getElementById('p2c');
+  if(ST.kind){
+    const k=kindById(ST.kind);
+    const arts=DB.articles.filter(a=>artKinds(a).includes(ST.kind));
+    let h='<div class="fv">';
+    h+=`<div class="slbl"><span class="nti-dot" style="background:${k.color}"></span> ${esc(k.name)} &nbsp;·&nbsp; ${arts.length} note${arts.length!==1?'s':''}</div>`;
+    if(!arts.length){
+      h+='<div style="padding:22px 14px;text-align:center;background:var(--paper);border:1.5px dashed var(--border2);border-radius:var(--rl)">'
+         +'<div style="color:var(--t3);font-size:13px">No notes of this type yet</div></div>';
+    } else {
+      h+='<div class="al">';
+      arts.forEach(a=>{ h+=artCard(a,ST.article===a.id,false); });
+      h+='</div>';
+    }
+    el.innerHTML=h+'</div>';
+    return;
+  }
   if(ST.tag){
     const arts=DB.articles.filter(a=>(a.tags||[]).includes(ST.tag));
     let h='<div class="fv">';
@@ -2373,7 +2402,7 @@ function selFolder(id){_trackLastFolder(id);
     if(ST.exp[id]) collapseFolder(id);
     else ST.exp[id]=true;
   }
-  ST.tag=null;ST.secSF=null;
+  ST.tag=null;ST.kind=null;ST.secSF=null;
   ST.folder=id;ST.article=null;ST.editing=false;
   /* Mobile/tablet: open article list so user can see folder contents */
   if(window.innerWidth<1200) openP2();
@@ -3556,8 +3585,9 @@ function quickNewNote(){
 function renderTabBar(){
   const bar=document.getElementById('tab-bar');
   if(!bar)return;
-  const tabs=(DB.tabs||[]).filter(id=>DB.articles.some(a=>a.id===id));
-  /* Sync DB.tabs to remove stale ids */
+  const _seen=new Set();
+  const tabs=(DB.tabs||[]).filter(id=>{ if(_seen.has(id))return false; _seen.add(id); return DB.articles.some(a=>a.id===id); });
+  /* Sync DB.tabs to remove stale ids AND duplicates (self-heals any past dup corruption) */
   if(tabs.length!==(DB.tabs||[]).length){DB.tabs=tabs;persist();}
   bar.style.display='flex'; /* Always visible so ＋ Add button is accessible */
   bar.className=tabs.length?'has-tabs':'';
@@ -3771,7 +3801,7 @@ function togSecSF(ev,secId){
 function selSecSF(secId,sfId){
   if(ST.editing)saveArt();
   ST.secSF={secId,sfId};
-  ST.folder=null;ST.tag=null;ST.article=null;ST.editing=false;
+  ST.folder=null;ST.tag=null;ST.kind=null;ST.article=null;ST.editing=false;
   if(window.innerWidth<1200)showPane('p2');
   renderTree();renderP2H();renderP2C();
 }
@@ -3991,20 +4021,86 @@ function renderNtiPickerBody(aid){
   h+=`<div class="nti-pk-add-cat" onclick="addNtiCat()">＋ Add new category</div></div>`;
   return h;
 }
+
+/* ── v03.10.00 MyJournal button — attach a note to a journal event ──────────
+   Journal "events/categories" are journalMode folders under db-section. A note
+   joins an event by adding that folder to its folderIds (+ the "journal" tag so
+   it surfaces in 📓 My Journal). Mirrors the NTI-picker popup mechanics. */
+function openJournalPicker(aid,btn){
+  closeNtiPicker();
+  let p=document.getElementById('jrn-picker');
+  if(p&&p.classList.contains('open')&&p.dataset.aid===aid){closeJournalPicker();return;}
+  if(!p){p=document.createElement('div');p.id='jrn-picker';document.body.appendChild(p);}
+  p.dataset.aid=aid;
+  p.innerHTML=renderJournalPickerBody(aid);
+  const r=btn.getBoundingClientRect(),mob=window.innerWidth<1200;
+  if(mob){p.style.cssText='bottom:60px;left:4px;right:4px;top:auto;width:auto';}
+  else{const top=Math.min(r.bottom+4,window.innerHeight-460),left=Math.max(4,Math.min(r.left-6,window.innerWidth-318));p.style.cssText=`top:${top}px;left:${left}px;bottom:auto;right:auto`;}
+  p.classList.add('open');
+  const _cl=e=>{const pp=document.getElementById('jrn-picker'),cx=document.getElementById('ctx');if(pp&&!pp.contains(e.target)&&!(cx&&cx.contains(e.target))){closeJournalPicker();document.removeEventListener('mousedown',_cl,true);document.removeEventListener('touchstart',_cl,true);}};
+  setTimeout(()=>{document.addEventListener('mousedown',_cl,{capture:true});document.addEventListener('touchstart',_cl,{capture:true});},50);
+}
+function closeJournalPicker(){const p=document.getElementById('jrn-picker');if(p)p.classList.remove('open');}
+function renderJournalPickerBody(aid){
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return '';
+  const inSet=new Set(a.folderIds||[]);
+  const events=DB.folders.filter(f=>f.journalMode).sort((x,y)=>(x.order||0)-(y.order||0));
+  let h=`<div class="nti-pk-hd">📓 Add to My Journal<button class="nti-pk-cls" onclick="closeJournalPicker()">✕</button></div><div class="nti-pk-scroll">`;
+  h+='<div class="nti-pk-kinds" style="flex-direction:column;align-items:stretch;gap:6px">';
+  if(events.length){
+    h+=events.map(f=>{const on=inSet.has(f.id);const sty=on?'background:var(--green);border-color:var(--green);color:#fff;opacity:1':'color:var(--green2);border-color:var(--green2)';return `<button class="nti-pk-kind${on?' on':''}" style="justify-content:flex-start;text-align:left;${sty}" onclick="toggleNoteJournal('${aid}','${f.id}')" title="${on?'Tap to remove from this event':'Tap to add to this event'}">${on?'✓ ':'📓 '}${esc(f.name)}</button>`;}).join('');
+  } else {
+    h+='<span class="nti-pk-empty">No journal events yet — create one below.</span>';
+  }
+  h+='</div>';
+  h+=`<div class="nti-pk-add-cat" onclick="newJournalEventForNote('${aid}')">＋ New journal event</div></div>`;
+  return h;
+}
+function _ensureJournalTag(a){
+  if(!a.tags)a.tags=[];
+  if(!a.tags.includes('journal'))a.tags.push('journal');
+  if(!DB.globalTags)DB.globalTags=[];
+  if(!DB.globalTags.includes('journal')){DB.globalTags.push('journal');DB.globalTags.sort();}
+}
+function toggleNoteJournal(aid,fid){
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return;
+  if(!a.folderIds)a.folderIds=[];
+  const i=a.folderIds.indexOf(fid);
+  if(i>=0){ a.folderIds.splice(i,1); toast('Removed from journal event'); }
+  else { a.folderIds.push(fid); _ensureJournalTag(a); toast('📓 Added to journal event'); }
+  a.updatedAt=new Date().toISOString();
+  persist();
+  const p=document.getElementById('jrn-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderJournalPickerBody(aid);
+  renderTree();renderP2C();renderP3H();renderP3C();
+}
+function newJournalEventForNote(aid){
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return;
+  const name=prompt('Name for new journal event:\n(e.g. Daily Reflections, Work Log)');
+  if(!name?.trim())return;
+  const fol={id:uid(),name:name.trim(),sectionId:'db-section',parentId:null,journalMode:true,order:DB.folders.length};
+  DB.folders.push(fol);
+  if(!a.folderIds)a.folderIds=[];a.folderIds.push(fol.id);
+  _ensureJournalTag(a);
+  a.updatedAt=new Date().toISOString();
+  persist();
+  const p=document.getElementById('jrn-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderJournalPickerBody(aid);
+  renderTree();renderP2C();renderP3H();renderP3C();
+  toast('📓 Added to new event "'+name.trim()+'"');
+}
 function togNtiCat(catId){if(!ST.ntiCatOpen)ST.ntiCatOpen={};ST.ntiCatOpen[catId]=!(ST.ntiCatOpen[catId]!==false);const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
 function _ctxPos(m,ev){m.style.display='block';const vw=window.innerWidth,vh=window.innerHeight;let x=ev.clientX,y=ev.clientY;setTimeout(()=>{const mw=m.offsetWidth,mh=m.offsetHeight;if(x+mw>vw)x=vw-mw-4;if(y+mh>vh)y=vh-mh-4;m.style.left=x+'px';m.style.top=y+'px';},0);}
-function addNtiCat(){const name=prompt('Category name:');if(!name?.trim())return;const icon=prompt('Icon (emoji):','📝')||'📝';if(!DB.noteKindCats)DB.noteKindCats=[];const id='cat-'+uid();DB.noteKindCats.push({id,name:name.trim(),icon,order:DB.noteKindCats.length});persist();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
+function addNtiCat(){const name=prompt('Category name:');if(!name?.trim())return;const icon=prompt('Icon (emoji):','📝')||'📝';if(!DB.noteKindCats)DB.noteKindCats=[];const id='cat-'+uid();DB.noteKindCats.push({id,name:name.trim(),icon,order:DB.noteKindCats.length});persist();renderTree();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
 function showNtiCatMenu(ev,catId,aid){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;const m=document.getElementById('ctx');m.innerHTML=`<div class="ci" onclick="renNtiCat('${catId}','${aid}')">✏ Rename</div><div class="csep"></div><div class="ci d" onclick="delNtiCat('${catId}','${aid}')">🗑 Delete</div>`;_ctxPos(m,ev);}
-function renNtiCat(catId,aid){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;const name=prompt('New name:',cat.name);if(!name?.trim()||name.trim()===cat.name)return;cat.name=name.trim();persist();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
+function renNtiCat(catId,aid){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;const name=prompt('New name:',cat.name);if(!name?.trim()||name.trim()===cat.name)return;cat.name=name.trim();persist();renderTree();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
 function delNtiCat(catId,aid){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;if(catId==='cat-general'){toast('⚠ Cannot delete General');return;}if(!confirm(`Delete "${cat.name}"?
-Its types move to General.`))return;noteKinds().forEach(k=>{if((k.catId||'cat-general')===catId)k.catId='cat-general';});DB.noteKindCats=DB.noteKindCats.filter(c=>c.id!==catId);persist();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid||aid);}
+Its types move to General.`))return;noteKinds().forEach(k=>{if((k.catId||'cat-general')===catId)k.catId='cat-general';});DB.noteKindCats=DB.noteKindCats.filter(c=>c.id!==catId);persist();renderTree();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid||aid);}
 function showNtiKindMenu(ev,kindId,catId,aid){hideCtx();const k=noteKinds().find(x=>x.id===kindId);if(!k)return;const moveCats=noteKindCats().filter(c=>c.id!==catId).map(c=>`<div class="ci" onclick="moveKindToCat('${kindId}','${c.id}','${aid}')">${esc(c.icon||'📝')} → ${esc(c.name)}</div>`).join('');const m=document.getElementById('ctx');m.innerHTML=`<div class="ci" onclick="renNtiKind('${kindId}','${aid}')">✏ Rename</div>`+`<div class="ci" onclick="openKindClrPicker(event,'${kindId}','${aid}')">🎨 Change Colour</div>`+(moveCats?`<div class="csep"></div>`+moveCats:'')+'<div class="csep"></div>'+`<div class="ci d" onclick="delNtiKind('${kindId}','${aid}')">🗑 Delete</div>`;_ctxPos(m,ev);}
 function addKindInCat(aid,catId){const name=prompt('New type name:');if(!name?.trim())return;const nm=name.trim();const ks=ensureNoteKinds();if(ks.some(k=>k.name.toLowerCase()===nm.toLowerCase())){toast('Type already exists');return;}const color=_NTI_PALETTE[ks.length%_NTI_PALETTE.length];const nag=confirm(`Show untouched-days tracking for "${nm}"?
-OK=yes, Cancel=no`);const id='k_'+uid();ks.push({id,name:nm,color,nag,order:ks.length,catId});persist();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(aid);toast(`✓ "${nm}" added`);}
-function renNtiKind(kindId,aid){hideCtx();const k=noteKinds().find(x=>x.id===kindId);if(!k)return;const name=prompt('New name:',k.name);if(!name?.trim()||name.trim()===k.name)return;k.name=name.trim();persist();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(aid);renderP2C();renderP3H();renderP3C();}
+OK=yes, Cancel=no`);const id='k_'+uid();ks.push({id,name:nm,color,nag,order:ks.length,catId});persist();renderTree();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(aid);toast(`✓ "${nm}" added`);}
+function renNtiKind(kindId,aid){hideCtx();const k=noteKinds().find(x=>x.id===kindId);if(!k)return;const name=prompt('New name:',k.name);if(!name?.trim()||name.trim()===k.name)return;k.name=name.trim();persist();renderTree();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(aid);renderP2C();renderP3H();renderP3C();}
 function delNtiKind(kindId,aid){hideCtx();const k=noteKinds().find(x=>x.id===kindId);if(!k)return;if(!confirm(`Delete "${k.name}"?
 Notes revert to General.`))return;DB.articles.forEach(a=>{if(Array.isArray(a.kinds)){a.kinds=a.kinds.filter(id=>id!==kindId);if(!a.kinds.length)a.kinds=['general'];a.kind=a.kinds[0];}else if(a.kind===kindId){a.kind='general';a.kinds=['general'];}});DB.noteKinds=DB.noteKinds.filter(x=>x.id!==kindId);persist();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(aid);renderTree();renderP2C();renderP3H();renderP3C();toast(`🗑 Deleted`);}
-function moveKindToCat(kindId,catId,aid){hideCtx();const k=noteKinds().find(x=>x.id===kindId);if(k)k.catId=catId;persist();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(aid);}
+function moveKindToCat(kindId,catId,aid){hideCtx();const k=noteKinds().find(x=>x.id===kindId);if(k)k.catId=catId;persist();renderTree();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(aid);}
 
 
 
@@ -4414,7 +4510,7 @@ function _getFavCats(){
 }
 function selDbItem(id){
   if(ST.editing)saveArt();
-  ST.tag=null;ST.secSF=null;
+  ST.tag=null;ST.kind=null;ST.secSF=null;
   ST.folder=id;ST.article=null;ST.editing=false;
   if(window.innerWidth<1200)openP2();
   render();
@@ -5490,7 +5586,7 @@ function openKindClrPicker(ev,kindId,aid){
   hideCtx();closeNtiPicker();
   const k=noteKinds().find(x=>x.id===kindId);
   _showClrPicker(ev,k?.color||'',hex=>{
-    if(k&&hex){k.color=hex;persist();
+    if(k&&hex){k.color=hex;persist();renderTree();
       if(aid)renderP3H();
       const pk2=document.getElementById('nti-picker');
       if(pk2&&pk2.dataset.aid)pk2.innerHTML=renderNtiPickerBody(pk2.dataset.aid);}
@@ -8231,27 +8327,79 @@ function confirmDel(type,id){
     <button class="btn bd" onclick="${type==='art'?'trashArt':'trashFolder'}('${id}');closeModal()">Move to Trash</button></div>`);
 }
 function openPicker(){
-  function rows(flds,d){return flds.map(f=>{const s=ST.efolders.includes(f.id);const k=chOf(f.id);
-    return `<div class="pr" style="padding-left:${12+d*12}px" onclick="togglePick('${f.id}')">
-      <div class="pc${s?' on':''}">${s?'✓':''}</div>
-      <span style="font-size:12px">📁</span>
-      <span style="font-size:13px;color:var(--t1)">${esc(f.name)}</span>
-    </div>${k.length?rows(k,d+1):''}`;}).join('');}
+  /* v03.11.00 — searchable, 2-layer folder picker. Full tree rendered once;
+     shows only mother + immediate child by default (deeper levels collapsed
+     behind a chevron), with a search box. Search / expand / select happen
+     in-place (no modal re-render) so the search field keeps focus and stays fast. */
+  function rowHTML(f,d){
+    const s=ST.efolders.includes(f.id);
+    const hasKids=chOf(f.id).length>0;
+    const exp=!!(ST.pickExp&&ST.pickExp[f.id]);
+    const chev=hasKids
+      ?`<span class="pk-chev" onclick="event.stopPropagation();togglePickExp('${f.id}')">${exp?'\u25be':'\u25b8'}</span>`
+      :`<span class="pk-chev pk-chev-sp"></span>`;
+    const path=pathOf(f.id).map(x=>x.name).join(' \u203a ');
+    return `<div class="pr" data-fid="${esc(f.id)}" data-d="${d}" data-parent="${esc(f.parentId||'')}" data-name="${esc((f.name||'').toLowerCase())}" style="padding-left:${8+d*14}px" onclick="togglePick('${f.id}')">`
+      +chev
+      +`<div class="pc${s?' on':''}">${s?'\u2713':''}</div>`
+      +`<span style="font-size:12px">\ud83d\udcc1</span>`
+      +`<span class="pk-nm" style="font-size:13px;color:var(--t1)">${esc(f.name)}</span>`
+      +`<span class="pk-path" style="display:none;font-size:10.5px;color:var(--t3);margin-left:6px">${esc(path)}</span>`
+      +`</div>`;
+  }
+  function tree(flds,d){return flds.map(f=>rowHTML(f,d)+tree(chOf(f.id),d+1)).join('');}
   showModal(`<div class="mt">Assign to folders</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:10px">An article can live in multiple folders</div>
-    <div class="pl">${rows(DB.folders.filter(f=>!f.parentId),0)}</div>
+    <input class="mi" id="pkSearch" placeholder="\ud83d\udd0d Search folders\u2026" style="margin:0 0 8px;width:100%" oninput="_pkFilter(this.value)">
+    <div class="pl" id="pkList">${tree(DB.folders.filter(f=>!f.parentId),0)}</div>
     <div style="display:flex;gap:6px;margin-top:8px">
-      <input class="mi" id="npf" placeholder="New folder name…" style="flex:1;margin:0;min-width:0" onkeydown="if(event.key==='Enter')createFolderFromPicker('')">
-      <button class="btn" style="flex-shrink:0" onclick="createFolderFromPicker('')">＋ New folder</button>
+      <input class="mi" id="npf" placeholder="New folder name\u2026" style="flex:1;margin:0;min-width:0" onkeydown="if(event.key==='Enter')createFolderFromPicker('')">
+      <button class="btn" style="flex-shrink:0" onclick="createFolderFromPicker('')">\uff0b New folder</button>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-      <span style="font-size:12px;color:var(--t3)">${ST.efolders.length} selected</span>
+      <span style="font-size:12px;color:var(--t3)" id="pkCount">${ST.efolders.length} selected</span>
       <button class="btn bp" onclick="closeModal()">Done</button>
     </div>`);
-  // Don't auto-pop the keyboard on mobile — keep the list scannable first
+  _pkApplyVis();
   setTimeout(()=>document.getElementById('npf')?.blur(),80);
 }
-function togglePick(fid){if(ST.efolders.includes(fid))ST.efolders=ST.efolders.filter(x=>x!==fid);else ST.efolders.push(fid);openPicker();}
+function _pkRow(fid){const l=document.getElementById('pkList');if(!l)return null;const sel=(window.CSS&&CSS.escape)?CSS.escape(fid):fid;return l.querySelector('.pr[data-fid="'+sel+'"]');}
+function _pkApplyVis(){
+  const list=document.getElementById('pkList');if(!list)return;
+  list.querySelectorAll('.pr').forEach(r=>{
+    const pp=r.querySelector('.pk-path');if(pp)pp.style.display='none';
+    const d=+r.dataset.d;
+    if(d<=1){r.style.display='';return;}
+    let vis=true,pr=_pkRow(r.dataset.parent);
+    while(pr){const pd=+pr.dataset.d;if(pd>=1&&!(ST.pickExp&&ST.pickExp[pr.dataset.fid])){vis=false;break;}if(pd===0)break;pr=_pkRow(pr.dataset.parent);}
+    r.style.display=vis?'':'none';
+  });
+}
+function togglePickExp(fid){
+  if(!ST.pickExp)ST.pickExp={};
+  ST.pickExp[fid]=!ST.pickExp[fid];
+  const row=_pkRow(fid);
+  if(row){const ch=row.querySelector('.pk-chev');if(ch&&!ch.classList.contains('pk-chev-sp'))ch.textContent=ST.pickExp[fid]?'\u25be':'\u25b8';}
+  const q=(document.getElementById('pkSearch')||{}).value||'';
+  if(q.trim())_pkFilter(q);else _pkApplyVis();
+}
+function _pkFilter(q){
+  const list=document.getElementById('pkList');if(!list)return;
+  q=(q||'').trim().toLowerCase();
+  if(!q){list.querySelectorAll('.pk-path').forEach(e=>e.style.display='none');_pkApplyVis();return;}
+  list.querySelectorAll('.pr').forEach(r=>{
+    const hit=(r.dataset.name||'').includes(q);
+    r.style.display=hit?'':'none';
+    const pp=r.querySelector('.pk-path');if(pp)pp.style.display=hit?'':'none';
+  });
+}
+function togglePick(fid){
+  if(ST.efolders.includes(fid))ST.efolders=ST.efolders.filter(x=>x!==fid);
+  else ST.efolders.push(fid);
+  const row=_pkRow(fid);
+  if(!row){openPicker();return;}
+  const pc=row.querySelector('.pc');const on=ST.efolders.includes(fid);pc.classList.toggle('on',on);pc.textContent=on?'\u2713':'';
+  const cnt=document.getElementById('pkCount');if(cnt)cnt.textContent=ST.efolders.length+' selected';
+}
 
 /* ── Mobile helpers ─────────────────────────────────────────────── */
 function mobBack(){ backFromP3(); }
@@ -8276,7 +8424,7 @@ function getAllTags(){
 
 function selTag(tag){
   if(ST.editing)saveArt();
-  ST.tag=(ST.tag===tag)?null:tag;
+  ST.tag=(ST.tag===tag)?null:tag;ST.kind=null;
   ST.article=null;ST.editing=false;
   renderTree();renderP2H();renderP2C();renderP3H();renderP3C();
 }
@@ -8284,6 +8432,66 @@ function selTag(tag){
 function toggleTagPanel(){
   ST.tagOpen=!ST.tagOpen;
   renderTagPanel();
+}
+
+/* ── v03.09.00 Sidebar NTI (Note Types) manager ───────────────────────────
+   Surfaces the existing note-kind engine in the sidebar: tap a type to filter
+   the note list to that type; right-click / long-press for rename / colour /
+   move-to-group / delete. Groups (categories) get add / rename / delete. */
+function selKind(kindId){
+  if(ST.editing)saveArt();
+  ST.kind=(ST.kind===kindId)?null:kindId;
+  ST.tag=null;ST.article=null;ST.editing=false;
+  renderTree();renderP2H();renderP2C();renderP3H();renderP3C();
+  if(ST.kind&&window.innerWidth<1200)showPane('p2');
+}
+function toggleNtiSection(e){ if(e)e.stopPropagation(); ST.ntiOpen=!ST.ntiOpen; renderTree(); }
+function togNtiCatSB(catId){ if(!ST.ntiCatOpenSB)ST.ntiCatOpenSB={}; ST.ntiCatOpenSB[catId]=!(ST.ntiCatOpenSB[catId]!==false); renderTree(); }
+function renderNTISection(){
+  const open=ST.ntiOpen;
+  const cats=noteKindCats();
+  if(!ST.ntiCatOpenSB)ST.ntiCatOpenSB={};
+  let body='';
+  if(open){
+    body='<div class="sec-body">';
+    cats.forEach(cat=>{
+      const kinds=kindsInCat(cat.id);
+      const co=ST.ntiCatOpenSB[cat.id]!==false;
+      body+=`<div class="tr-row nti-cat-row" style="padding-left:13px;-webkit-touch-callout:none;user-select:none" `
+        +`onclick="togNtiCatSB('${cat.id}')" oncontextmenu="showNtiCatMenu(event,'${cat.id}','')">`
+        +`<span class="tr-tog">${co?'▾':'▸'}</span>`
+        +`<span class="tr-ico" style="font-size:11px">${esc(cat.icon||'📝')}</span>`
+        +`<span class="tr-name">${esc(cat.name)}</span>`
+        +`<span class="sec-acts">`
+        +`<span class="sec-act" onclick="event.stopPropagation();addKindInCat('','${cat.id}')" title="Add type">＋</span>`
+        +`<span class="sec-act" onclick="event.stopPropagation();showNtiCatMenu(event,'${cat.id}','')" title="Options">⋯</span>`
+        +`</span></div>`;
+      if(co){
+        kinds.forEach(k=>{
+          const cnt=DB.articles.filter(a=>artKinds(a).includes(k.id)).length;
+          body+=`<div class="tr-row nti-kind-row${ST.kind===k.id?' sel':''}" data-kind="${k.id}" `
+            +`style="padding-left:26px;-webkit-touch-callout:none;user-select:none" `
+            +`onclick="selKind('${k.id}')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'${k.id}','${cat.id}','')">`
+            +`<span class="tr-tog"></span>`
+            +`<span class="nti-dot" style="background:${k.color}"></span>`
+            +`<span class="tr-name">${esc(k.name)}</span>`
+            +`<span class="tr-cnt">${cnt}</span>`
+            +`</div>`;
+        });
+        if(!kinds.length)body+=`<div style="padding:5px 26px;font-size:11px;color:#3A5A3E;font-style:italic">Empty — tap ＋ to add</div>`;
+      }
+    });
+    body+=`<div class="tr-row" style="padding-left:13px;color:var(--green2);cursor:pointer;-webkit-touch-callout:none;user-select:none" onclick="addNtiCat()"><span class="tr-tog"></span><span class="tr-name">＋ Add group</span></div>`;
+    body+='</div>';
+  }
+  return `<div class="sf-sec nti-sec">
+    <div class="sec-hd sf-hd-sec" onclick="toggleNtiSection(event)">
+      <span class="sec-tog">${open?'▾':'▸'}</span>
+      <span class="sec-nm">Note Types</span>
+      <span class="sec-acts"><span class="sec-act" onclick="event.stopPropagation();addNtiCat()" title="Add group">＋</span></span>
+    </div>
+    ${body}
+  </div>`;
 }
 
 function renderTagPanel(){
@@ -9941,16 +10149,33 @@ function mergeDB(local, remote){
   if(!remote||typeof remote!=="object") return local;
   if(!local||typeof local!=="object") return remote;
   const out=Object.assign({}, local);
-  ["articles","folders","sections","calEvents","calCategories","noteKinds","noteKindCats","myFavCats","tabs"]
+  ["articles","folders","sections","calEvents","calCategories","noteKinds","noteKindCats","myFavCats"]
     .forEach(k=>{ out[k]=_mergeById(local[k], remote[k], "updatedAt"); });
   out.trash=_mergeById(local.trash, remote.trash, "deletedAt");
   out.globalTags=_mergeStrs(local.globalTags, remote.globalTags);
-  /* reconcile a record that is active on one side but trashed on the other */
-  const trashMap={}; (out.trash||[]).forEach(t=>{if(t&&t.id!=null)trashMap[t.id]=t;});
-  out.articles=(out.articles||[]).filter(a=>{ const t=a&&a.id!=null?trashMap[a.id]:null;
-    if(!t) return true; return (a.updatedAt||0) > (t.deletedAt||0); });
-  const artMap={}; (out.articles||[]).forEach(a=>{if(a&&a.id!=null)artMap[a.id]=a;});
-  out.trash=(out.trash||[]).filter(t=>{ if(!t||t.id==null) return true; return !artMap[t.id]; });
+  out.tabs=_mergeStrs(local.tabs, remote.tabs); /* v03.08.01 — tabs are string ids; union-dedupe (were duplicating on every sync via _mergeById) */
+  /* reconcile records active on one side but trashed on the other.
+     v03.07.01 — key tombstones by the DELETED RECORD id (t.item.id and any
+     subtree folder/article ids) instead of the trash entry's own uid, so
+     deletions no longer resurrect on cross-device sync. Now covers folders too. */
+  const tomb={};
+  const _tadd=(rid,at)=>{ if(rid==null||at==null) return; if(!tomb[rid]||at>tomb[rid]) tomb[rid]=at; };
+  (out.trash||[]).forEach(t=>{
+    if(!t) return; const at=t.deletedAt;
+    _tadd(t.item&&t.item.id!=null?t.item.id:t.id, at);
+    if(t.subtree){
+      (t.subtree.folders ||[]).forEach(f=>{ if(f&&f.id!=null) _tadd(f.id, at); });
+      (t.subtree.articles||[]).forEach(a=>{ if(a&&a.id!=null) _tadd(a.id, at); });
+    }
+  });
+  const _alive=(r)=>{ if(!r||r.id==null) return true; const d=tomb[r.id]; if(d==null) return true; return (r.updatedAt||0) > d; };
+  out.articles=(out.articles||[]).filter(_alive);
+  out.folders =(out.folders ||[]).filter(_alive);
+  /* drop tombstones whose primary record is active again (edited after deletion) */
+  const activeMap={};
+  (out.articles||[]).forEach(a=>{ if(a&&a.id!=null) activeMap[a.id]=1; });
+  (out.folders ||[]).forEach(f=>{ if(f&&f.id!=null) activeMap[f.id]=1; });
+  out.trash=(out.trash||[]).filter(t=>{ if(!t) return true; const rid=t.item&&t.item.id!=null?t.item.id:t.id; return !activeMap[rid]; });
   return out;
 }
 /* ── Chunked cloud storage: bypass Firestore's 1 MiB per-document limit ── */
@@ -10355,6 +10580,7 @@ function kindBarHTML(a){
   return `<div class="kind-bar">`
     +`<div class="nti-chips">${chips||'<span class="nti-no-type">No type</span>'}</div>`
     +`<button class="nti-picker-btn" onclick="openNtiPicker('${a.id}',this)" title="Add / manage NTI types">🏷 Types</button>`
+    +`<button class="nti-picker-btn" onclick="openJournalPicker('${a.id}',this)" title="Add this note to a My Journal event">📓 Journal</button>`
     +`<div class="kind-act">${statusHTML}${archIcon}</div>`
     +`</div>`;
 }
