@@ -1138,6 +1138,13 @@ sup.ann-sup:hover{text-decoration:underline}
   font-size:10px;vertical-align:middle;user-select:none;-webkit-user-select:none;border-radius:4px;padding:0}
 #ed .ed-col-arr:hover{background:var(--hover,#eee);color:var(--t1)}
 #ed .ed-col-hidden{display:none!important}
+#ed .ed-col-grip{display:inline-flex;width:16px;height:18px;margin-right:1px;align-items:center;justify-content:center;color:var(--t3);cursor:grab;font-size:12px;line-height:1;vertical-align:middle;user-select:none;-webkit-user-select:none;touch-action:none;opacity:.4}
+#ed .ed-col-grip:hover{opacity:1;color:var(--green2)}
+#ed .ed-col-grip:active{cursor:grabbing}
+#ed .ed-blk-dragging{opacity:.4}
+@media(max-width:640px){#ed .ed-col-grip{width:22px;height:24px;font-size:14px;opacity:.55}}
+#ed-drop-line{display:none}
+#ed-drag-ghost{position:fixed;display:none;z-index:100000;pointer-events:none;background:var(--green);color:#fff;font-size:12px;padding:3px 9px;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.28);max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--ui)}
 #ed .ed-col-preview{color:var(--t3);font-size:12px;font-style:italic;opacity:.75;
   padding:2px 0 4px 24px;user-select:none;-webkit-user-select:none}
 @media(max-width:640px){.ed-col-btn{padding:5px 10px;font-size:12px}
@@ -1854,6 +1861,17 @@ function artsIn(fid){return DB.articles.filter(a=>a.folderIds.includes(fid));}
 
 /* ── Render ──────────────────────────────────────────────────────── */
 function render(){renderTree();renderP2H();renderP2C();renderP3H();renderP3C();renderTabBar();updateTrashBtn();adjustP3Layout();_applyHeadingStyles();}
+/* v03.12.01 — render triggered by background cloud-sync must NOT rebuild the
+   live editor (that reset the caret to the top mid-typing). When actively
+   editing, refresh everything except the editor panes so the caret is kept. */
+function _renderPreserveEdit(){
+  const ed=document.getElementById('ed');
+  if(ST.editing && ed && ed.dataset.aid===ST.article){
+    renderTree();renderP2H();renderP2C();renderTabBar();updateTrashBtn();
+    return;
+  }
+  render();
+}
 
 function renderTree(){
   const el=document.getElementById('tree');updateAccordionBtn();
@@ -2247,6 +2265,7 @@ function renderP3H(){
         +`<button class="et" onmousedown="fb(event,'h1')" style="font-size:12px;font-weight:800">H1</button>`
         +`<button class="et" onmousedown="fb(event,'h2')" style="font-size:11px;font-weight:700">H2</button>`
         +`<button class="et" onmousedown="fb(event,'h3')" style="font-size:11px;font-weight:700">H3</button>`
+        +`<button class="et" onmousedown="fb(event,'p')" style="font-size:13px" title="Normal text (remove heading)">¶</button>`
         +`<button class="et" onmousedown="fb(event,'p')" style="font-size:11px">P</button>`
         +`<div class="esep"></div>`
         +`<button class="et" onmousedown="ec(event,'insertUnorderedList')">• List</button>`
@@ -2456,7 +2475,21 @@ function saveArt(){
 function doSearch(q){ST.search=q;const x=document.getElementById('sqx');if(x)x.style.display=q?'block':'none';renderTree();}
 function clearSearch(){if(!ST.search)return;ST.search='';const i=document.getElementById('sq');if(i)i.value='';const x=document.getElementById('sqx');if(x)x.style.display='none';renderTree();}
 function ec(ev,cmd){ev.preventDefault();document.execCommand(cmd,false,null);document.getElementById('ed')?.focus();}
-function fb(ev,tag){ev.preventDefault();document.execCommand('formatBlock',false,'<'+tag+'>');document.getElementById('ed')?.focus();}
+function fb(ev,tag){
+  ev.preventDefault();
+  const ed=document.getElementById('ed');if(!ed)return;
+  /* v03.13.00 — toggle: if the caret's block is already this heading, revert it
+     to a normal paragraph. Passing tag='p' always makes it normal text. */
+  let cur=null;
+  try{const sel=window.getSelection();
+    if(sel&&sel.rangeCount){let n=sel.getRangeAt(0).startContainer;n=(n&&n.nodeType===1)?n:(n&&n.parentElement);
+      const b=n&&n.closest&&n.closest('h1,h2,h3,h4,h5,h6');if(b)cur=b.tagName.toLowerCase();}
+  }catch(e){}
+  const target=(cur&&cur===tag)?'p':tag;
+  document.execCommand('formatBlock',false,'<'+target+'>');
+  ed.focus();
+  try{ed.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}
+}
 
 /* ── Rich paste: images, links, bookmarks, embeds, @mentions ─────── */
 let _edRange=null;          // last caret position inside #ed
@@ -5944,6 +5977,7 @@ function _buildEBSub(g){
       '<button class="et" onmousedown="fb(event,\'h1\')" style="font-size:12px;font-weight:800">H1</button>',
       '<button class="et" onmousedown="fb(event,\'h2\')" style="font-size:11px;font-weight:700">H2</button>',
       '<button class="et" onmousedown="fb(event,\'h3\')" style="font-size:11px;font-weight:700">H3</button>',
+      '<button class="et" onmousedown="fb(event,\'p\')" style="font-size:13px" title="Normal text (remove heading)">¶</button>',
       '<button class="et" onmousedown="fb(event,\'p\')" style="font-size:11px">P</button>',
     ],
     lists:[
@@ -7574,7 +7608,7 @@ function _edColHeads(ed){
 /* Strip all C5 display-only artefacts from a (cloned) node before saving. */
 function _edColClean(node){
   if(!node)return;
-  node.querySelectorAll('.ed-col-arr,.ed-col-preview').forEach(function(n){n.remove();});
+  node.querySelectorAll('.ed-col-arr,.ed-col-grip,.ed-col-preview').forEach(function(n){n.remove();});
   node.querySelectorAll('.ed-col-hidden').forEach(function(n){n.classList.remove('ed-col-hidden');if(n.getAttribute('class')==='')n.removeAttribute('class');});
 }
 /* Recompute hidden siblings + preview snippets from art.sectionState. */
@@ -7611,21 +7645,130 @@ function _edColApply(ed){
 /* Inject toggle arrows into headings + apply current fold state. */
 function _edColInit(ed){
   if(!ed)return;
-  ed.querySelectorAll('.ed-col-arr').forEach(function(n){n.remove();});
+  ed.querySelectorAll('.ed-col-arr,.ed-col-grip').forEach(function(n){n.remove();});
   const heads=_edColHeads(ed);
   const tb=document.getElementById('ed-col-tb');
   if(tb)tb.style.display=heads.length?'flex':'none';
   if(!heads.length)return;
   heads.forEach(function(h){
+    const g=document.createElement('span');
+    g.className='ed-col-grip';g.setAttribute('contenteditable','false');g.title='Drag to move this section (left/right to change level)';g.textContent='\u283F';
+    g.addEventListener('pointerdown',function(e){_edBlockDragStart(e,h.el);});
+    h.el.insertBefore(g,h.el.firstChild);
     const b=document.createElement('button');
     b.className='ed-col-arr';b.type='button';b.setAttribute('contenteditable','false');
     b.setAttribute('data-sec',h.idx);b.innerHTML='&#9660;';
     b.addEventListener('mousedown',function(e){e.preventDefault();});
     b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();_edColToggle(this);});
-    h.el.insertBefore(b,h.el.firstChild);
+    h.el.insertBefore(b,g.nextSibling);
   });
   _edColApply(ed);
   _edColSyncPrevBtn();
+}
+
+/* ── v03.15.00 Move a text-block by its heading grip (reorder + level change) ──
+   Custom pointer-drag (NOT native DnD, which corrupts contenteditable). Grab the
+   grip ⠿ on a heading: vertical = where the whole block lands (heading + all its
+   content up to the next same/higher heading); horizontal = target level. Works
+   in the NotePane and the PC pop-out (same #ed). Content is only re-ordered, never
+   duplicated or lost; arrows/grips are rebuilt and autosave fires after a move. */
+let _edDrag=null;
+function _edRetag(el,tag){
+  const n=document.createElement(tag);
+  for(const a of Array.from(el.attributes)){
+    if(a.name==='class'){const c=a.value.replace(/\bed-col-hidden\b/g,'').replace(/\s+/g,' ').trim();if(c)n.setAttribute('class',c);}
+    else n.setAttribute(a.name,a.value);
+  }
+  n.innerHTML=el.innerHTML;el.replaceWith(n);return n;
+}
+function _edBlockDragStart(e,headEl){
+  if(e.button&&e.button!==0)return;
+  e.preventDefault();e.stopPropagation();
+  const ed=headEl.closest('#ed')||document.getElementById('ed');if(!ed)return;
+  const level=parseInt(headEl.tagName[1]);
+  const nodes=[headEl];let n=headEl.nextElementSibling;
+  while(n){if(/^H[1-4]$/.test(n.tagName)&&parseInt(n.tagName[1])<=level)break;nodes.push(n);n=n.nextElementSibling;}
+  _edDrag={ed,headEl,level,nodes,startX:e.clientX,startY:e.clientY,moved:false,targetBefore:null,targetLevel:level};
+  document.addEventListener('pointermove',_edBlockDragMove);
+  document.addEventListener('pointerup',_edBlockDragEnd,{once:true});
+}
+function _edDragPaint(cx,cy){
+  const d=_edDrag;if(!d)return;
+  const ed=d.ed, edR=ed.getBoundingClientRect();
+  const heads=Array.from(ed.querySelectorAll('h1,h2,h3,h4'))
+    .filter(h=>!h.closest('.ann-inline-card,.bk-card,.ed-col-preview')&&d.nodes.indexOf(h)<0);
+  let bestDist=Infinity,bestBefore=null;
+  heads.forEach(h=>{const r=h.getBoundingClientRect();const dd=Math.abs(cy-r.top);if(dd<bestDist){bestDist=dd;bestBefore=h;}});
+  const last=ed.lastElementChild;
+  if(last&&d.nodes.indexOf(last)<0){const r=last.getBoundingClientRect();const dd=Math.abs(cy-r.bottom);if(dd<bestDist){bestDist=dd;bestBefore=null;}}
+  d.targetBefore=bestBefore;
+  const baseLeft=edR.left+(parseFloat(getComputedStyle(ed).paddingLeft)||24);
+  let lvl=1+Math.floor(Math.max(0,(cx-baseLeft))/26);lvl=Math.max(1,Math.min(4,lvl));d.targetLevel=lvl;
+  let dl=document.getElementById('ed-drop-line');
+  if(!dl){dl=document.createElement('div');dl.id='ed-drop-line';document.body.appendChild(dl);}
+  const lx=baseLeft+(lvl-1)*26; let ly;
+  if(bestBefore){ly=bestBefore.getBoundingClientRect().top-1;}
+  else {const r=(last||ed).getBoundingClientRect();ly=r.bottom+1;}
+  const lw=Math.max(60,Math.min(edR.right-lx-20,420));
+  dl.style.cssText='position:fixed;height:2.5px;border-radius:2px;background:var(--green);z-index:99999;pointer-events:none;display:block;left:'+lx+'px;top:'+ly+'px;width:'+lw+'px;box-shadow:0 0 0 1px rgba(255,255,255,.6)';
+  dl.setAttribute('data-lvl',lvl);
+  const gh=document.getElementById('ed-drag-ghost');
+  if(gh){gh.style.left=(cx+14)+'px';gh.style.top=(cy+10)+'px';}
+}
+function _edBlockDragMove(e){
+  const d=_edDrag;if(!d)return;
+  if(!d.moved){ if(Math.abs(e.clientX-d.startX)<5&&Math.abs(e.clientY-d.startY)<5)return;
+    d.moved=true; d.nodes.forEach(x=>x.classList.add('ed-blk-dragging'));
+    document.body.style.userSelect='none';
+    let gh=document.getElementById('ed-drag-ghost');
+    if(!gh){gh=document.createElement('div');gh.id='ed-drag-ghost';document.body.appendChild(gh);}
+    gh.textContent='\u283F '+(((d.headEl.textContent||'Section').replace(/^[\u25b6\u25bc\u283f\s]+/i,'').trim().slice(0,40))||'Section');
+    gh.style.display='block';
+  }
+  d.lastX=e.clientX; d.lastY=e.clientY;
+  const ed=d.ed, edR=ed.getBoundingClientRect(), EDGE=46;
+  let dir=0;
+  if(e.clientY<edR.top+EDGE)dir=-1; else if(e.clientY>edR.bottom-EDGE)dir=1;
+  d.scrollDir=dir;
+  if(dir&&!d.scrollTimer){
+    d.scrollTimer=setInterval(function(){
+      if(!_edDrag){clearInterval(d.scrollTimer);d.scrollTimer=null;return;}
+      ed.scrollTop+=d.scrollDir*14;
+      _edDragPaint(d.lastX,d.lastY);
+    },16);
+  } else if(!dir&&d.scrollTimer){ clearInterval(d.scrollTimer); d.scrollTimer=null; }
+  _edDragPaint(e.clientX,e.clientY);
+}
+function _edBlockDragEnd(){
+  document.removeEventListener('pointermove',_edBlockDragMove);
+  document.body.style.userSelect='';
+  const d=_edDrag;_edDrag=null;
+  if(d&&d.scrollTimer){clearInterval(d.scrollTimer);d.scrollTimer=null;}
+  const _gh=document.getElementById('ed-drag-ghost');if(_gh)_gh.style.display='none';
+  const dl=document.getElementById('ed-drop-line');if(dl)dl.style.display='none';
+  if(!d)return;
+  d.nodes.forEach(x=>x.classList.remove('ed-blk-dragging'));
+  if(!d.moved)return;                       /* a click, not a drag → do nothing */
+  const ed=d.ed;
+  const delta=d.targetLevel-d.level;
+  /* move the block */
+  const frag=document.createDocumentFragment();
+  d.nodes.forEach(nn=>frag.appendChild(nn));
+  if(d.targetBefore&&d.targetBefore.parentNode===ed)ed.insertBefore(frag,d.targetBefore);
+  else ed.appendChild(frag);
+  /* clean display artefacts, then apply level shift to the block's headings */
+  ed.querySelectorAll('.ed-col-arr,.ed-col-grip,.ed-col-preview').forEach(n=>n.remove());
+  if(delta!==0){
+    d.nodes.filter(n=>/^H[1-4]$/.test(n.tagName)).forEach(h=>{
+      const nl=Math.max(1,Math.min(4,parseInt(h.tagName[1])+delta));
+      if(nl!==parseInt(h.tagName[1]))_edRetag(h,'h'+nl);
+    });
+  }
+  /* reordering changes heading indices → clear collapse state to avoid mis-hiding */
+  const art=DB.articles.find(a=>a.id===ST.article);if(art)art.sectionState={};
+  _edColInit(ed);
+  ed.dispatchEvent(new Event('input',{bubbles:true}));
+  toast('Section moved'+(delta?' · level '+(delta>0?'down':'up'):''));
 }
 function _edColToggle(arrEl){
   const ed=document.getElementById('ed');if(!ed||!arrEl)return;
@@ -10131,7 +10274,7 @@ async function initSync(cfg){
         DB=mergeDB(DB, remoteDB);                  /* MERGE — never replace, so nothing is lost */
         const after=(DB.articles||[]).length+(DB.folders||[]).length+(DB.trash||[]).length;
         _save();
-        render();
+        _renderPreserveEdit();
         if(remoteT>_lastSyncTime){_lastSyncTime=remoteT;localStorage.setItem(SYNC_TIME_SK,_lastSyncTime);}
         if(after>before) toast('☁ Merged entries from another device');
         setSyncStatus('live');
@@ -10165,7 +10308,7 @@ async function syncNow(){
       const before=(DB.articles||[]).length;
       DB=mergeDB(DB, remoteDB);
       added=(DB.articles||[]).length-before;
-      _save(); render();
+      _save(); _renderPreserveEdit();
     }
     const now=Date.now();
     _syncIgnoreNext=true;
