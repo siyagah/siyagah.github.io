@@ -1182,6 +1182,8 @@ sup.ann-sup:hover{text-decoration:underline}
 .jrn-cnt{margin-left:auto;font-size:10px;font-weight:400;background:rgba(255,255,255,.25);
   color:inherit;padding:1px 7px;border-radius:999px;flex-shrink:0}
 .jrn-mo-hd .jrn-cnt,.jrn-wk-hd .jrn-cnt,.jrn-fol-hd .jrn-cnt{background:var(--border2);color:var(--t3)}
+.jrn-evt-act{margin-left:5px;cursor:pointer;opacity:.5;font-size:12px;flex-shrink:0;line-height:1;transition:opacity .12s}
+.jrn-evt-act:hover{opacity:1}
 
 /* ── MyDatabase section ─────────────────────────────────────────────────── */
 .db-sec{margin-bottom:2px}
@@ -4033,8 +4035,9 @@ function openJournalPicker(aid,btn){
   if(!p){p=document.createElement('div');p.id='jrn-picker';document.body.appendChild(p);}
   p.dataset.aid=aid;
   p.innerHTML=renderJournalPickerBody(aid);
-  const r=btn.getBoundingClientRect(),mob=window.innerWidth<1200;
-  if(mob){p.style.cssText='bottom:60px;left:4px;right:4px;top:auto;width:auto';}
+  const mob=window.innerWidth<1200;
+  const r=(btn&&btn.getBoundingClientRect)?btn.getBoundingClientRect():null;
+  if(mob||!r){p.style.cssText='bottom:60px;left:4px;right:4px;top:auto;width:auto';}
   else{const top=Math.min(r.bottom+4,window.innerHeight-460),left=Math.max(4,Math.min(r.left-6,window.innerWidth-318));p.style.cssText=`top:${top}px;left:${left}px;bottom:auto;right:auto`;}
   p.classList.add('open');
   const _cl=e=>{const pp=document.getElementById('jrn-picker'),cx=document.getElementById('ctx');if(pp&&!pp.contains(e.target)&&!(cx&&cx.contains(e.target))){closeJournalPicker();document.removeEventListener('mousedown',_cl,true);document.removeEventListener('touchstart',_cl,true);}};
@@ -4386,6 +4389,47 @@ function quickJournalEntry(fid){
   if(window.innerWidth<1200)showPane('p3');
   setTimeout(()=>{const ed=document.getElementById('ed');if(ed)ed.focus();},80);
 }
+/* ── v03.12.00 MyJournal: add existing note to an event ─────────────────── */
+function openAddNoteToEvent(fid){
+  const fol=DB.folders.find(f=>f.id===fid);if(!fol)return;
+  const rows=DB.articles
+    .filter(a=>!(a.folderIds||[]).includes(fid))
+    .sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''))
+    .map(a=>`<div class="pr" data-aid="${esc(a.id)}" data-name="${esc((a.title||'').toLowerCase())}" onclick="addExistingNoteToEvent('${a.id}','${fid}')">`
+      +`<span style="font-size:12px">📄</span>`
+      +`<span class="pk-nm" style="font-size:13px;color:var(--t1)">${esc(a.title)||'<em style="color:var(--t3)">Untitled</em>'}</span></div>`).join('');
+  showModal(`<div class="mt">Add existing note to "${esc(fol.name)}"</div>
+    <input class="mi" id="aneSearch" placeholder="🔍 Search notes…" style="margin:0 0 8px;width:100%" oninput="_aneFilter(this.value)">
+    <div class="pl" id="aneList">${rows||'<div class="jrn-empty" style="padding:12px">All notes are already in this event.</div>'}</div>
+    <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn bp" onclick="closeModal()">Done</button></div>`);
+}
+function _aneFilter(q){
+  const list=document.getElementById('aneList');if(!list)return;
+  q=(q||'').trim().toLowerCase();
+  list.querySelectorAll('.pr').forEach(r=>{r.style.display=(!q||(r.dataset.name||'').includes(q))?'':'none';});
+}
+function addExistingNoteToEvent(aid,fid){
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return;
+  if(!a.folderIds)a.folderIds=[];
+  if(!a.folderIds.includes(fid))a.folderIds.push(fid);
+  _ensureJournalTag(a);
+  a.updatedAt=new Date().toISOString();
+  persist();
+  const sel=(window.CSS&&CSS.escape)?CSS.escape(aid):aid;
+  const row=document.querySelector('#aneList .pr[data-aid="'+sel+'"]');if(row)row.remove();
+  renderP2C();renderTree();
+  toast('📓 Note added to event');
+}
+/* Reorder journal events (only touches folder.order among journalMode folders;
+   entry ordering inside events stays date-based). */
+function moveJrnEvent(fid,dir){
+  const evs=DB.folders.filter(f=>f.journalMode).sort((a,b)=>(a.order||0)-(b.order||0));
+  evs.forEach((f,i)=>f.order=i+1);
+  const i=evs.findIndex(f=>f.id===fid),j=i+dir;
+  if(i<0||j<0||j>=evs.length)return;
+  const t=evs[i].order;evs[i].order=evs[j].order;evs[j].order=t;
+  persist();renderP2C();
+}
 function togJrnGrp(key){
   if(!ST.jGrp)ST.jGrp={};
   ST.jGrp[key]=!ST.jGrp[key];renderP2C();
@@ -4400,7 +4444,7 @@ function _buildJournalView(notes,fidKey,entryHtml){
     if(!byY[y])byY[y]={};if(!byY[y][mo])byY[y][mo]={};if(!byY[y][mo][wk])byY[y][mo][wk]=[];
     byY[y][mo][wk].push(a);
   });
-  let h='<div class="jrn-new-bar">'+entryHtml+'</div>';
+  let h=entryHtml?('<div class="jrn-new-bar">'+entryHtml+'</div>'):'';
   if(!notes.length){h+='<div class="jrn-empty">No journal entries yet.<br>Tap ✚ New Entry to begin.</div>';return h;}
   Object.keys(byY).sort((a,b)=>b-a).forEach(year=>{
     const yNum=parseInt(year),yk='y|'+fidKey+'|'+year,yOpen=ST.jGrp[yk]!==false;
@@ -4451,7 +4495,7 @@ function _renderJournalSmartView(){
   jFols.forEach(jf=>{
     const jNotes=allJrn.filter(a=>(a.folderIds||[]).includes(jf.id));
     jNotes.forEach(a=>handled.add(a.id));
-    const fk='jf|'+jf.id,fOpen=ST.jGrp[fk]!==false;
+    const fk='jf|'+jf.id,fOpen=ST.jGrp[fk]===true;
     const _js=jf.jrnStyle||{};
     const _hdSt='display:flex;align-items:center;cursor:pointer'+(_js.bg?';background:'+_js.bg:'');
     const _nmSt='flex:1;min-width:0'+(_js.fg?';color:'+_js.fg:'')+(_js.size?';font-size:'+_js.size+'px':'');
@@ -4459,19 +4503,22 @@ function _renderJournalSmartView(){
       +`<span class="sf-grp-tog">${fOpen?'▾':'▸'}</span>`
       +`<span id="jname-${jf.id}" style="${_nmSt}">📓 ${esc(jf.name)}</span>`
       +`<span class="jrn-cnt">${jNotes.length}</span>`
-      +`<span onclick="event.stopPropagation();_jrnStyleMenu(event,'${jf.id}')" title="Rename & style" style="margin-left:8px;cursor:pointer;opacity:.55">⚙</span>`
-      +`<span onclick="event.stopPropagation();confirmDel('folder','${jf.id}')" title="Delete event" style="margin-left:6px;cursor:pointer;opacity:.55">🗑</span>`
+      +`<span class="jrn-evt-act" onclick="event.stopPropagation();quickJournalEntry('${jf.id}')" title="New entry">✚</span>`
+      +`<span class="jrn-evt-act" onclick="event.stopPropagation();openAddNoteToEvent('${jf.id}')" title="Add an existing note">🔗</span>`
+      +`<span class="jrn-evt-act" onclick="event.stopPropagation();moveJrnEvent('${jf.id}',-1)" title="Move event up">▲</span>`
+      +`<span class="jrn-evt-act" onclick="event.stopPropagation();moveJrnEvent('${jf.id}',1)" title="Move event down">▼</span>`
+      +`<span class="jrn-evt-act" onclick="event.stopPropagation();_jrnStyleMenu(event,'${jf.id}')" title="Rename & style">⚙</span>`
+      +`<span class="jrn-evt-act" onclick="event.stopPropagation();confirmDel('folder','${jf.id}')" title="Delete event">🗑</span>`
       +`</div>`;
     if(fOpen){
-      const eBtn='<button class="btn bp" style="font-size:12px" onclick="quickJournalEntry(\''+jf.id+'\')">✚ New Entry</button>';
-      const _body = jNotes.length ? _buildJournalView(jNotes,'jf_'+jf.id,eBtn)
-        : '<div class="jrn-new-bar" style="padding:4px 0 2px">'+eBtn+'</div><div class="jrn-empty" style="padding:8px 14px">No entries yet — tap ✚ New Entry, or assign an existing note to this event.</div>';
+      const _body = jNotes.length ? _buildJournalView(jNotes,'jf_'+jf.id,'')
+        : '<div class="jrn-empty" style="padding:8px 14px">No entries yet — tap ✚ on the event bar to add one, or 🔗 to add an existing note.</div>';
       h+='<div class="jrn-evt-body je-'+jf.id+'">'+_jrnCardStyleTag(jf)+_body+'</div>';
     }
   });
   const other=allJrn.filter(a=>!handled.has(a.id));
   if(other.length){
-    const ok='jf|other',oOpen=ST.jGrp[ok]!==false;
+    const ok='jf|other',oOpen=ST.jGrp[ok]===true;
     h+='<div class="jrn-fol-hd" onclick="togJrnGrp(\''+ok+'\')">'
       +'<span class="sf-grp-tog">'+(oOpen?'▾':'▸')+'</span>'
       +'<span>📝 Other Journal Notes</span><span class="jrn-cnt">'+other.length+'</span></div>';
@@ -9338,6 +9385,7 @@ function _buildArtCtxMain(art,aid){
     +`<div class="ci" onclick="hideCtx();toggleArchive('${aid}')">${art.archived?'📤 Unarchive':'📦 Archive'}</div>`
     +`<div class="ci" onclick="hideCtx();${art.finalised?'unfinishNote':'finishNote'}('${aid}')">${art.finalised?'↺ Reopen':'✓ Finish'}</div>`
     +`<div class="ci" onclick="hideCtx();toggleTab('${aid}')">${inTab?'📑 Remove Tab':'📑 Add to Tab'}</div>`
+    +`<div class="ci" onclick="hideCtx();openJournalPicker('${aid}',null)">📓 Add to Journal event</div>`
     +`<div class="ci ci-sub" onclick="_ctxSub('${aid}','reminder')">🔔 Reminder<span class="ci-arr">▶</span></div>`
     +`<div class="csep"></div>`
     +`<div class="ci ci-sub" onclick="_ctxSub('${aid}','tags')">🏷 Tags<span class="ci-arr">▶</span></div>`
