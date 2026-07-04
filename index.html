@@ -1106,7 +1106,8 @@ sup.ann-sup:hover{text-decoration:underline}
 .p3h-edit-bar::-webkit-scrollbar{display:none}
 
 /* Bar 4 — Title bar: nav + FULL-WIDTH title input */
-.p3h-nav-bar{display:flex;align-items:center;gap:6px;padding:4px 10px;border-bottom:1px solid var(--border2);background:var(--paper);flex-shrink:0}
+.p3c-vt .tbt{font-size:15px;font-weight:600;padding:1px 0}
+.p3c-vt{cursor:default}
 .p3h-title-bar{display:flex;align-items:center;gap:6px;padding:5px 10px;
   border-bottom:1px solid var(--border2);min-height:40px;flex-shrink:0;
   background:var(--paper);width:100%;position:relative}
@@ -2157,6 +2158,14 @@ function renderP2C(){
   el.innerHTML=h;
 }
 
+/* v03.15.04 — shared nav buttons; ride with the title (below NTI) in edit mode */
+function _navBtnsHTML(){
+  if(window.innerWidth<1200)
+    return `<button class="btn bn bi" onclick="openP2()" style="font-size:18px;flex-shrink:0" title="Back to article list">◀</button><button class="btn bn bi" onclick="backFromP3()" style="font-size:24px;flex-shrink:0" title="Open folders">≡</button>`;
+  if(document.getElementById('sb')?.classList.contains('closed'))
+    return `<button class="btn bn bi" onclick="toggleSB()" style="font-size:14px" title="Open sidebar">☰</button>`;
+  return '';
+}
 function renderP3H(){
   const el=document.getElementById('p3h');
   const curA=DB.articles.find(a=>a.id===ST.article);
@@ -2230,11 +2239,7 @@ function renderP3H(){
     el.classList.add('editing');  /* scopes flex-direction:column to edit mode */
     const fc=ST.efolders.length;
     /* v03.15.03 — nav kept at the very top in its own bar; title moved to body (below NTI bar) */
-    const _navBtns = window.innerWidth<1200
-      ? `<button class="btn bn bi" onclick="openP2()" style="font-size:18px;flex-shrink:0" title="Back to article list">◀</button><button class="btn bn bi" onclick="backFromP3()" style="font-size:24px;flex-shrink:0" title="Open folders">≡</button>`
-      : (document.getElementById('sb')?.classList.contains('closed') ? `<button class="btn bn bi" onclick="toggleSB()" style="font-size:14px" title="Open sidebar">☰</button>` : '');
-    h=(_navBtns?`<div class="p3h-nav-bar">${_navBtns}</div>`:'')
-      +`<div class="p3h-tag-bar">`
+    h=`<div class="p3h-tag-bar">`
       +`<span class="tag-ed-lbl">🏷 Tags</span>`
       +`<div class="tag-editor" id="tag-editor" onclick="document.getElementById('tag-inp')?.focus()"></div>`
       +`<div class="p3h-eflx"></div>`
@@ -2305,7 +2310,7 @@ function renderP3H(){
     el.classList.remove('editing');  /* restore row layout for view mode */
     /* v03.NotePane.C9 — attached-folder list removed from the title bar; it
        still shows once below the NTI bar in the note body (avoids duplication). */
-    h+=`<div style="flex:1;min-width:0"><div class="tbt" title="Right-click to edit" oncontextmenu="event.preventDefault();event.stopPropagation();startEdit()">${esc(curA.title)||'<em style="color:var(--t3)">Untitled</em>'}</div></div>
+    h+=`<div style="flex:1;min-width:0"></div>
       <button class="btn bn bi" onclick="quickCapture()" title="Quick note (Primary folder)" style="padding:5px 7px;font-size:14px">✚</button>
       <button class="btn" onclick="startEdit()">✏️ Edit</button>
       <button class="btn bn modal-pop-btn" onclick="${ST.noteModal?'closeNoteModal':'openNoteModal'}()" title="${ST.noteModal?'Return to layout (Esc / Ctrl+Shift+P)':'Pop out note (Ctrl+Shift+P)'}">${ST.noteModal?'⊞':'⊡'}</button>
@@ -2341,7 +2346,7 @@ function renderP3C(){
     {const _le=document.getElementById('ed');
      if(_le&&_le.dataset.aid===curA.id){const _c=_le.cloneNode(true);_c.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());_edColClean(_c);curA.content=_c.innerHTML;if(ST.etitle!=null)curA.title=ST.etitle.trim();}}
     el.innerHTML=kindBarHTML(curA)
-      +`<div class="p3h-title-bar p3c-titlebar"><input id="ti" value="${esc(ST.etitle!=null?ST.etitle:(curA.title||''))}" placeholder="Article title…" oninput="ST.etitle=this.value"><span id="save-flash" class="save-flash">✓ Saved</span></div>`
+      +`<div class="p3h-title-bar p3c-titlebar">${_navBtnsHTML()}<input id="ti" value="${esc(ST.etitle!=null?ST.etitle:(curA.title||''))}" placeholder="Article title…" oninput="ST.etitle=this.value"><span id="save-flash" class="save-flash">✓ Saved</span></div>`
       +_edColToolbarHTML()+_dateLineHTML(curA)+`<div id="ed" data-aid="${curA.id}" contenteditable="true" spellcheck="true"></div>`;
     if(_tiF2){const _tin=document.getElementById('ti');if(_tin){_tin.focus({preventScroll:true});try{_tin.setSelectionRange(_s2,_e2);}catch(e){}}}
     const ed=document.getElementById('ed');ed.innerHTML=curA.content;if(_isPlaceholder(curA.content))ed.innerHTML='';initRichPaste(ed);
@@ -2363,6 +2368,7 @@ function renderP3C(){
     const tags=curA.folderIds.map(x=>{const p=pathOf(x);return p.length?`<span class="ftag ftag-nav" onclick="selFolder('${x}')" title="Go to this folder">${esc(p.map(f=>f.name).join(' › '))}</span>`:''}).join('');
     el.scrollTop=0;el.innerHTML=`<div class="avw"><div class="av">
       ${kindBarHTML(curA)}
+      <div class="p3h-title-bar p3c-titlebar p3c-vt"><div class="tbt" title="Right-click to edit" oncontextmenu="event.preventDefault();event.stopPropagation();startEdit()">${esc(curA.title)||'<em style="color:var(--t3)">Untitled</em>'}</div></div>
       ${reminderStripHTML(curA)}
       <div class="av-tags">${tags}</div>
       ${(curA.tags||[]).length
