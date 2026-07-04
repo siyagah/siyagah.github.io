@@ -1029,6 +1029,7 @@ sup.ann-sup:hover{text-decoration:underline}
 .nti-chip:hover{opacity:.8}
 .nti-chip.on{box-shadow:0 1px 3px rgba(0,0,0,.15)}
 .nti-no-type{font-size:11px;color:var(--t3);font-style:italic;white-space:nowrap;flex-shrink:0}
+/*save-accent*/.nti-save{background:var(--green)!important;border-color:var(--green)!important;color:#fff!important}
 .nti-picker-btn{font-size:11px;font-weight:600;padding:2px 9px;
   border:1.4px dashed var(--border2);border-radius:999px;
   background:transparent;color:var(--t2);cursor:pointer;
@@ -1105,6 +1106,7 @@ sup.ann-sup:hover{text-decoration:underline}
 .p3h-edit-bar::-webkit-scrollbar{display:none}
 
 /* Bar 4 — Title bar: nav + FULL-WIDTH title input */
+.p3h-nav-bar{display:flex;align-items:center;gap:6px;padding:4px 10px;border-bottom:1px solid var(--border2);background:var(--paper);flex-shrink:0}
 .p3h-title-bar{display:flex;align-items:center;gap:6px;padding:5px 10px;
   border-bottom:1px solid var(--border2);min-height:40px;flex-shrink:0;
   background:var(--paper);width:100%;position:relative}
@@ -2227,16 +2229,17 @@ function renderP3H(){
   if(ST.editing&&curA){
     el.classList.add('editing');  /* scopes flex-direction:column to edit mode */
     const fc=ST.efolders.length;
-    /* Bar 2 — Tag bar: tags left, Folder+Save+✕ pinned right */
-    h=`<div class="p3h-tag-bar">`
+    /* v03.15.03 — nav kept at the very top in its own bar; title moved to body (below NTI bar) */
+    const _navBtns = window.innerWidth<1200
+      ? `<button class="btn bn bi" onclick="openP2()" style="font-size:18px;flex-shrink:0" title="Back to article list">◀</button><button class="btn bn bi" onclick="backFromP3()" style="font-size:24px;flex-shrink:0" title="Open folders">≡</button>`
+      : (document.getElementById('sb')?.classList.contains('closed') ? `<button class="btn bn bi" onclick="toggleSB()" style="font-size:14px" title="Open sidebar">☰</button>` : '');
+    h=(_navBtns?`<div class="p3h-nav-bar">${_navBtns}</div>`:'')
+      +`<div class="p3h-tag-bar">`
       +`<span class="tag-ed-lbl">🏷 Tags</span>`
       +`<div class="tag-editor" id="tag-editor" onclick="document.getElementById('tag-inp')?.focus()"></div>`
       +`<div class="p3h-eflx"></div>`
       +`<div class="p3h-tag-bar-acts">`
-      +`<button class="btn" onclick="openPicker()" title="Assign folder">🏷 ${fc===1?'1 folder':fc+' folders'}</button>`
-      +`<button class="btn bn modal-pop-btn" onclick="${ST.noteModal?'closeNoteModal':'openNoteModal'}()" title="${ST.noteModal?'Return to layout (Esc / Ctrl+Shift+P)':'Pop out note (Ctrl+Shift+P)'}">${ST.noteModal?'⊞':'⊡'}</button>`
-      +`<button class="btn bp" onclick="saveArt()">💾 Save</button>`
-      +`<button class="btn bn bi" onclick="cancelEdit()">✕</button>`
+      +`<button class="btn bn bi" onclick="cancelEdit()" title="Cancel (Esc)">✕</button>`
       +'</div></div>';
     /* Bar 3 — Edit bar: format buttons only, scrollable */
     /* ── Edit bar: grouped on mobile, flat on desktop ── */
@@ -2252,6 +2255,7 @@ function renderP3H(){
       ];
       h+='<div class="p3h-edit-bar eb-mob">'
         +_grps.map(g=>`<button class="et eb-grp-btn${_eg===g.id?' on':''}" onmousedown="togEBGroup('${g.id}')" title="${g.label}">${g.icon}</button>`).join('')
+        +`<button class="et modal-pop-btn" onmousedown="event.preventDefault()" onclick="${ST.noteModal?'closeNoteModal':'openNoteModal'}()" title="Pop out note">${ST.noteModal?'⊞':'⊡'}</button>`
         +'</div>'
         +'<div class="p3h-edit-sub" id="eb-sub">'+_buildEBSub(_eg)+'</div>';
     } else {
@@ -2281,21 +2285,12 @@ function renderP3H(){
         +`<div class="esep"></div>`
         +`<button class="et" onmousedown="ec(event,'undo')" title="Undo (Ctrl+Z)">↩</button>`
         +`<button class="et" onmousedown="ec(event,'redo')" title="Redo">↪</button>`
+        +`<div class="esep"></div>`
+        +`<button class="et modal-pop-btn" onmousedown="event.preventDefault()" onclick="${ST.noteModal?'closeNoteModal':'openNoteModal'}()" title="${ST.noteModal?'Return to layout (Esc / Ctrl+Shift+P)':'Pop out note (Ctrl+Shift+P)'}">${ST.noteModal?'⊞':'⊡'}</button>`
         +'</div>';
     }
-    /* Bar 4 — Title bar: nav buttons + full-width title input */
-    h+=`<div class="p3h-title-bar">`
-      +(window.innerWidth<1200
-        ?`<button class="btn bn bi" onclick="openP2()" style="font-size:18px;flex-shrink:0">◀</button>`
-         +`<button class="btn bn bi" onclick="backFromP3()" style="font-size:24px;flex-shrink:0">≡</button>`
-        :(document.getElementById('sb')?.classList.contains('closed')
-          ?`<button class="btn bn bi" onclick="toggleSB()" style="font-size:14px">☰</button>`:''))
-      +`<input id="ti" value="${esc(ST.etitle)}" placeholder="Article title…" oninput="ST.etitle=this.value">`
-      +`<span id="save-flash" class="save-flash">✓ Saved</span>`
-      +'</div>';
     el.innerHTML=h;
     renderTagEditor();
-    if(_tiFoc&&ST.editing){const ti=document.getElementById('ti');if(ti){ti.focus({preventScroll:true});try{ti.setSelectionRange(_selS,_selE);}catch(e){}}}
     return;
   } else if(curA&&curA.contactData?.mode==='form'){
     el.classList.remove('editing');
@@ -2341,10 +2336,14 @@ function renderP3C(){
     return;
   }
   if(ST.editing&&curA){
+    const _af2=document.activeElement,_tiF2=!!(_af2&&_af2.id==='ti');let _s2=0,_e2=0;if(_tiF2){try{_s2=_af2.selectionStart;_e2=_af2.selectionEnd;}catch(e){}}
     /* Preserve any unsaved live edits before rebuilding the editor (fixes content loss on NTI/title/any re-render) */
     {const _le=document.getElementById('ed');
      if(_le&&_le.dataset.aid===curA.id){const _c=_le.cloneNode(true);_c.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());_edColClean(_c);curA.content=_c.innerHTML;if(ST.etitle!=null)curA.title=ST.etitle.trim();}}
-    el.innerHTML=kindBarHTML(curA)+_edColToolbarHTML()+_dateLineHTML(curA)+`<div id="ed" data-aid="${curA.id}" contenteditable="true" spellcheck="true"></div>`;
+    el.innerHTML=kindBarHTML(curA)
+      +`<div class="p3h-title-bar p3c-titlebar"><input id="ti" value="${esc(ST.etitle!=null?ST.etitle:(curA.title||''))}" placeholder="Article title…" oninput="ST.etitle=this.value"><span id="save-flash" class="save-flash">✓ Saved</span></div>`
+      +_edColToolbarHTML()+_dateLineHTML(curA)+`<div id="ed" data-aid="${curA.id}" contenteditable="true" spellcheck="true"></div>`;
+    if(_tiF2){const _tin=document.getElementById('ti');if(_tin){_tin.focus({preventScroll:true});try{_tin.setSelectionRange(_s2,_e2);}catch(e){}}}
     const ed=document.getElementById('ed');ed.innerHTML=curA.content;if(_isPlaceholder(curA.content))ed.innerHTML='';initRichPaste(ed);
     wireAnnEditor(ed,curA);
     if((curA.annMode||'inline')==='inline')injectInlineAnns(curA,ed,true);
@@ -10772,6 +10771,7 @@ function kindBarHTML(a){
     +`<div class="nti-chips">${chips||'<span class="nti-no-type">No type</span>'}</div>`
     +`<button class="nti-picker-btn" onclick="openNtiPicker('${a.id}',this)" title="Add / manage NTI types">🏷 Types</button>`
     +`<button class="nti-picker-btn" onclick="openJournalPicker('${a.id}',this)" title="Add this note to a My Journal event">📓 Journal</button>`
+    +((ST.editing&&ST.article===a.id)?`<button class="nti-picker-btn nti-editbtn" onclick="openPicker()" title="Assign folder">🏷 ${ST.efolders.length===1?'1 folder':ST.efolders.length+' folders'}</button><button class="nti-picker-btn nti-editbtn nti-save" onclick="saveArt()" title="Save note">💾 Save</button>`:'')
     +`<div class="kind-act">${statusHTML}${archIcon}</div>`
     +`</div>`;
 }
