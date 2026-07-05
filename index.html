@@ -15,7 +15,7 @@
 ║  Claude: preserve the embedded JSON data tag (id "nd") below      ║
 ╚═══════════════════════════════════════════════════════════════════╝
 -->
-<script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.ch0Jz-JlMrQ.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo_YD4KoV8fTh_kLhktsiThAm3yJ5A/cb=gapi.loaded_0?le=scs,fedcm_migration_mod" async=""></script><script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.ch0Jz-JlMrQ.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo_YD4KoV8fTh_kLhktsiThAm3yJ5A/cb=gapi.loaded_0?le=scs" async=""></script><script id="nd" type="application/json">{}</script>
+<script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.ch0Jz-JlMrQ.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo_YD4KoV8fTh_kLhktsiThAm3yJ5A/cb=gapi.loaded_0?le=scs,fedcm_migration_mod" async=""></script><script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.ch0Jz-JlMrQ.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo_YD4KoV8fTh_kLhktsiThAm3yJ5A/cb=gapi.loaded_0?le=scs" async=""></script><script id="nd" type="application/json">{"folders":[],"articles":[],"sections":[],"trash":[]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&amp;family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&amp;display=swap" rel="stylesheet">
 <style>
@@ -873,6 +873,8 @@ sup.ann-sup:hover{text-decoration:underline}
 .mw-sz-lg .mw-latest,.mw-sz-lg .mw-sort-lbl,.mw-sz-lg .mw-rel-date{font-size:15px!important}
 .mw-sz-lg .ar-t{font-size:18px!important}
 .mw-sz-lg .ar-snip,.mw-sz-lg .ar-m{font-size:15px!important}
+.mw-sz-md .wall-grp-hd{font-size:12.5px!important}
+.mw-sz-lg .wall-grp-hd{font-size:15px!important}
 .ar-snip-empty{color:var(--t3);font-style:italic;opacity:.7}
 .ar.expanded{padding:4px 6px 6px;border-radius:6px}
 @media(max-width:1199px){.mw-rel-date{font-size:11px}.mw-sort-lbl{display:none}}
@@ -1631,13 +1633,9 @@ sup.ann-sup:hover{text-decoration:underline}
           <!-- ─ Account ─ -->
           <div class="sb-mi" onclick="refreshApp();closeSBMenu()" title="Reload the app to get the latest version">🔄 Refresh App</div>
           <div class="sb-mi" onclick="openCalSettings();closeSBMenu()" title="Set your country for public holidays">📅 Calendar Country</div>
-          <div class="sb-mi" onclick="openHeadingStylesModal();closeSBMenu()" title="Customise H1–H4 heading border and background colours">🎨 Heading Styles</div>
   <div class="sb-mi" onclick="openCiteModal();closeSBMenu()" title="Insert Qurʿan or Hadith reference into note">📖 Insert Reference</div>
           <div class="sb-mi" onclick="toggleHijri();closeSBMenu()" title="Toggle Hijri dates in the calendar">☪ Hijri Dates</div>
           <div id="pwa-install-mi" class="sb-mi" style="display:none" onclick="installPWA();closeSBMenu()" title="Add Siyagah to Home Screen">📱 Install App</div>
-          <div class="sb-mi" onclick="setMwFontSize('sm');closeSBMenu()" title="MyWall text: Small (default)">📱 MyWall Text: Small</div>
-          <div class="sb-mi" onclick="setMwFontSize('md');closeSBMenu()" title="MyWall text: Medium (+25%)">📱 MyWall Text: Medium</div>
-          <div class="sb-mi" onclick="setMwFontSize('lg');closeSBMenu()" title="MyWall text: Large (+50%)">📱 MyWall Text: Large</div>
           <div class="sb-mi" onclick="syncKnowledgeBase();closeSBMenu()" title="Update the built-in guide notes to the latest version">📚 Sync Knowledge Base</div>
           <div class="sb-ms"></div>
           <div class="sb-mi" id="sync-menu-item" onclick="openSyncModal();closeSBMenu()">☁ Cloud Sync</div>
@@ -1688,7 +1686,7 @@ sup.ann-sup:hover{text-decoration:underline}
 <div id="rsz2" title="Drag to resize panes" class=""></div>
 
 <div id="p3" class="">
-  <div id="tab-bar" class="has-tabs" style="display: flex;"><div class="tab-it tab-cal" onclick="_calOpen()" title="Calendar">📅 Cal</div><div class="tab-it" onclick="tabSelect('mqm9612ghl6')" title="Saheeh Bukhari 3641: Where to Hijrah? The victorious group will be at Shyam"><span class="tab-lbl">Saheeh Bukhari 3641: W…</span><button class="tab-x" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();closeTab('mqm9612ghl6')" title="Close tab">✕</button></div><div class="tab-it" onclick="tabSelect('mqksc0z7ynx')" title="What generation are you raising? A generation which will revive Islam or a generation of the foam of the sea?"><span class="tab-lbl">What generation are yo…</span><button class="tab-x" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();closeTab('mqksc0z7ynx')" title="Close tab">✕</button></div><button class="tab-add-btn" onclick="openTabPicker(this)" title="Search &amp; add a note to the Tab bar">＋ Add Tab</button></div>
+  <div id="tab-bar" class="has-tabs" style="display: flex;"></div><div class="tab-it" onclick="tabSelect('mqm9612ghl6')" title="Saheeh Bukhari 3641: Where to Hijrah? The victorious group will be at Shyam"><span class="tab-lbl">Saheeh Bukhari 3641: W…</span><button class="tab-x" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();closeTab('mqm9612ghl6')" title="Close tab">✕</button></div><div class="tab-it" onclick="tabSelect('mqksc0z7ynx')" title="What generation are you raising? A generation which will revive Islam or a generation of the foam of the sea?"><span class="tab-lbl">What generation are yo…</span><button class="tab-x" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();closeTab('mqksc0z7ynx')" title="Close tab">✕</button></div><button class="tab-add-btn" onclick="openTabPicker(this)" title="Search &amp; add a note to the Tab bar">＋ Add Tab</button></div>
   <div id="p3h" class="editing"></div>
   <div id="p3c"></div>
 </div>
@@ -1910,7 +1908,105 @@ function trNode(f,depth){
     <span class="tr-ico">${open&&kids.length?'📂':'📁'}</span>
     ${f.color?`<span class="f-dot" style="background:${f.color}"></span>`:''}
     <span class="tr-name" ${(f.color||f.bold)?`style="${f.color?`color:${f.color};`:''}${f.bold?'font-weight:700':''}"`:''} >${esc(f.name)}</span>    ${cnt?`<span class="tr-cnt">${cnt}</span>`:''}
-  </div>${open?kids.map(c=>trNode(c,depth+1)).join(''):''}`;
+  </div>${open?trGroupedKids(f.id,depth+1):''}`;
+}
+
+/* ── MyWALL folder groups: purely-organisational layer over MyWALL's
+   direct child folders (e.g. "ToDOs", "BUY") — mirrors noteKindCats but
+   groups real folders instead of note kinds. Only ever applied to the
+   direct children of MYWALL_ROOT_ID; every other folder in the app is
+   completely unaffected and renders exactly as before. ─────────────── */
+const FOLDER_GROUP_DEFAULTS=[{id:'fg-general',name:'General',icon:'📁',order:0}];
+function ensureFolderGroups(){
+  if(!Array.isArray(DB.folderGroups)||!DB.folderGroups.length){
+    DB.folderGroups=FOLDER_GROUP_DEFAULTS.map(g=>({...g}));
+  }
+  return DB.folderGroups;
+}
+function folderGroups(){return ensureFolderGroups().slice().sort((a,b)=>(a.order||0)-(b.order||0));}
+function folderGroupOf(f){return f.groupId||'fg-general';}
+function trGroupedKids(parentId,depth){
+  const kids=chOf(parentId);
+  if(!kids.length)return '';
+  if(typeof MYWALL_ROOT_ID==='undefined'||parentId!==MYWALL_ROOT_ID){
+    return kids.map(c=>trNode(c,depth)).join('');
+  }
+  if(!ST.fgExp)ST.fgExp={};
+  const byGrp={};
+  kids.forEach(k=>{const gid=folderGroupOf(k);(byGrp[gid]=byGrp[gid]||[]).push(k);});
+  let h='';
+  folderGroups().forEach(g=>{
+    const arr=byGrp[g.id]||[];
+    if(!arr.length)return; /* empty groups stay hidden from the tree — still manageable via "New group" */
+    const gOpen=ST.fgExp[g.id]!==false; /* default OPEN so existing folders stay visible with zero clicks */
+    h+=`<div class="tr-row fg-hd" style="padding-left:${13+depth*13}px" data-fgid="${g.id}"
+      onclick="togFolderGroup('${g.id}')"
+      oncontextmenu="showFolderGroupCtx(event,'${g.id}')"
+      role="button">
+      <span class="tr-tog">${gOpen?'▾':'▸'}</span>
+      <span class="tr-ico">${g.icon||'📁'}</span>
+      <span class="tr-name" style="font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;opacity:.7">${esc(g.name)}</span>
+      <span class="tr-cnt">${arr.length}</span>
+    </div>`;
+    if(gOpen)h+=arr.map(c=>trNode(c,depth+1)).join('');
+  });
+  return h;
+}
+function togFolderGroup(gid){
+  if(!ST.fgExp)ST.fgExp={};
+  ST.fgExp[gid]=!(ST.fgExp[gid]!==false); /* flip, default-open */
+  renderTree();
+}
+function showFolderGroupCtx(ev,gid){
+  ev.preventDefault();ev.stopPropagation();
+  const g=folderGroups().find(x=>x.id===gid);if(!g)return;
+  const m=document.getElementById('ctx');
+  m.innerHTML=
+    `<div class="ci" onclick="hideCtx();addFolderGroup()">➕ New group</div>`+
+    `<div class="ci" onclick="hideCtx();renameFolderGroup('${gid}')">✏️ Rename</div>`+
+    (gid!=='fg-general'?`<div class="csep"></div><div class="ci d" onclick="hideCtx();deleteFolderGroup('${gid}')">🗑 Delete group</div>`:'');
+  m.style.display='block';
+  const vw=window.innerWidth,vh=window.innerHeight;
+  let x=ev.clientX,y=ev.clientY;
+  const mw=m.offsetWidth||165,mh=m.offsetHeight||120;
+  if(x+mw>vw)x=vw-mw-5;if(y+mh>vh)y=vh-mh-5;
+  m.style.left=x+'px';m.style.top=y+'px';
+}
+function addFolderGroup(){
+  const name=prompt('New group name:');if(!name?.trim())return;
+  const gs=ensureFolderGroups();
+  const id='fg-'+uid();
+  gs.push({id,name:name.trim(),icon:'📁',order:gs.length});
+  persist();renderTree();
+  toast('➕ Added group "'+name.trim()+'"');
+}
+function addFolderGroupThenMove(fid){
+  const name=prompt('New group name:');if(!name?.trim())return;
+  const gs=ensureFolderGroups();
+  const id='fg-'+uid();
+  gs.push({id,name:name.trim(),icon:'📁',order:gs.length});
+  const f=DB.folders.find(x=>x.id===fid);if(f)f.groupId=id;
+  persist();renderTree();
+  toast('➕ Created "'+name.trim()+'" and moved folder');
+}
+function renameFolderGroup(gid){
+  const g=ensureFolderGroups().find(x=>x.id===gid);if(!g)return;
+  const name=prompt('Rename group:',g.name);if(!name?.trim()||name.trim()===g.name)return;
+  g.name=name.trim();persist();renderTree();
+}
+function deleteFolderGroup(gid){
+  if(gid==='fg-general')return;
+  const g=ensureFolderGroups().find(x=>x.id===gid);if(!g)return;
+  if(!confirm(`Delete group "${g.name}"? Its folders move to General.`))return;
+  DB.folders.forEach(f=>{if(f.groupId===gid)f.groupId='fg-general';});
+  DB.folderGroups=DB.folderGroups.filter(x=>x.id!==gid);
+  persist();renderTree();
+  toast('🗑 Group deleted');
+}
+function moveFolderToGroup(fid,gid){
+  const f=DB.folders.find(x=>x.id===fid);if(!f)return;
+  f.groupId=gid;persist();renderTree();
+  toast('📦 Moved to '+(ensureFolderGroups().find(g=>g.id===gid)?.name||'group'));
 }
 
 function renderP2H(){
@@ -2002,7 +2098,9 @@ function renderP2H(){
   /* ── Regular folder header ── */
   const _jrnBtn=curF.journalMode
     ?`<button class="btn bp p2-new-btn" onclick="quickJournalEntry('${curF.id}')" title="New journal entry">✚ Entry</button>`
-    :newBtn;
+    :(isMyWallSubfolder(curF.id)
+      ?`<button class="btn bn p2-new-btn" onclick="openModal('folder','${curF.id}')" title="Add subfolder here">📁 Folder</button>${newBtn}`
+      :newBtn);
   el.innerHTML=ham
     +`<div style="flex:1;min-width:0;overflow:hidden" class="tbt">${esc(curF.name)}${curF.journalMode?'<span style="font-size:11px;margin-left:5px;opacity:.65">📓</span>':''}</div>`
     +_jrnBtn+(curF.journalMode?'':previewBtn)+cls;
@@ -3014,7 +3112,7 @@ function renderMyWallSubfolder(curF){
     const latestIso=arr[0]?.updatedAt||'';
     const relDate=latestIso?mwRelDate(latestIso):'';
     const isTop=(i===0); /* most recently active NIB gets accent border */
-    h+=`<div class="mwsub-hd${isTop?' mw-top':''}" onclick="togMwSubGrp('${curF.id}','${k.id}')" role="button">`
+    h+=`<div class="mwsub-hd${isTop?' mw-top':''}" onclick="togMwSubGrp('${curF.id}','${k.id}')" oncontextmenu="showWallKindCtx(event,'${k.id}')" role="button">`
       +`<span class="mw-tog">${isOpen?'▾':'▸'}</span>`
       +`<span class="mw-dot" style="background:${k.color}"></span>`
       +esc(k.name)
@@ -4241,7 +4339,8 @@ function generateBackupHTMLContent(){
   const _t2='</'+'script>';
   const _bkJson=JSON.stringify({folders:DB.folders,articles:DB.articles,
     sections:DB.sections,trash:DB.trash||[],
-    noteKinds:DB.noteKinds||[],noteKindCats:DB.noteKindCats||[]});
+    noteKinds:DB.noteKinds||[],noteKindCats:DB.noteKindCats||[],
+    folderGroups:DB.folderGroups||[]});
   const fullHtml=html.replace('</body>',_t1+_bkJson+_t2+'</body>');
   return {html:fullHtml,name:`Siyagah-Backup-${now.toISOString().slice(0,10)}.html`};
 }
@@ -4401,6 +4500,7 @@ function _replaceWithBackup(bk){
   DB.trash   =bk.trash||[];
   if(bk.noteKinds   )DB.noteKinds   =bk.noteKinds;
   if(bk.noteKindCats)DB.noteKindCats=bk.noteKindCats;
+  if(bk.folderGroups)DB.folderGroups=bk.folderGroups;
   /* Re-add KB notes so user keeps the guide */
   syncKnowledgeBase&&syncKnowledgeBase();
   persist(); renderTree(); renderP2C(); renderP3H(); renderP3C();
@@ -5671,7 +5771,7 @@ function openKindClrPicker(ev,kindId,aid){
   hideCtx();closeNtiPicker();
   const k=noteKinds().find(x=>x.id===kindId);
   _showClrPicker(ev,k?.color||'',hex=>{
-    if(k&&hex){k.color=hex;persist();renderTree();
+    if(k&&hex){k.color=hex;persist();renderTree();renderP2C();
       if(aid)renderP3H();
       const pk2=document.getElementById('nti-picker');
       if(pk2&&pk2.dataset.aid)pk2.innerHTML=renderNtiPickerBody(pk2.dataset.aid);}
@@ -6102,7 +6202,8 @@ function setMwFontSize(sz){
   persist();
   const labels={sm:'Small (default)',md:'Medium (+25%)',lg:'Large (+50%)'};
   toast('📱 MyWall text: '+(labels[sz]||sz));
-  renderP3C();
+  renderP2C();
+  renderThemeModal();
 }
 
 
@@ -8368,6 +8469,10 @@ function showCtx(ev,fid){
         ${ctxColorSwatches(fid)}
       </div>
     </div>
+    ${_f&&_f.parentId===MYWALL_ROOT_ID?`<div class="csep"></div>
+    <div class="ci" style="cursor:default;opacity:.65;font-size:11px;padding:4px 12px 0">📦 Move to group</div>
+    ${folderGroups().filter(g=>g.id!==folderGroupOf(_f)).map(g=>`<div class="ci" onclick="hideCtx();moveFolderToGroup('${fid}','${g.id}')">${g.icon||'📁'} → ${esc(g.name)}</div>`).join('')}
+    <div class="ci" onclick="hideCtx();addFolderGroupThenMove('${fid}')">➕ New group…</div>`:''}
     ${rootSectionMoves(fid)}
     ${_isSysFolder(fid)?'':`<div class="ci" onclick="hideCtx();convertFolderToSection('${fid}')">🗂 Convert to section</div>`}
     <div class="ci" onclick="hideCtx();toggleJournalMode('${fid}')">${_f&&_f.journalMode?'📓 Remove Journal mode':'📓 Set as Journal'}</div>
@@ -8914,6 +9019,26 @@ function renderThemeModal(){
   h+='<div class="ls-row">'+_lsOpts.map(o=>
     `<button class="ls-btn${_lsCur===o.k?' on':''}" onclick="setLineSpacing('${o.k}')">${o.l}</button>`
   ).join('')+'</div>';
+  h+='</div>';
+
+  /* MyWall text size */
+  h+='<div class="theme-divider"></div>';
+  h+='<div class="theme-sect">';
+  h+='<div class="theme-sect-lbl">MyWall text size</div>';
+  h+='<div class="fs-sub" style="margin:-2px 0 8px">Size of note-type headers &amp; cards in the MyWall view</div>';
+  const _mwCur=DB.theme?.mwFontSize||'sm';
+  const _mwOpts=[{k:'sm',l:'Small'},{k:'md',l:'Medium'},{k:'lg',l:'Large'}];
+  h+='<div class="ls-row">'+_mwOpts.map(o=>
+    `<button class="ls-btn${_mwCur===o.k?' on':''}" onclick="setMwFontSize('${o.k}')">${o.l}</button>`
+  ).join('')+'</div>';
+  h+='</div>';
+
+  /* Heading styles launcher */
+  h+='<div class="theme-divider"></div>';
+  h+='<div class="theme-sect">';
+  h+='<div class="theme-sect-lbl">Heading styles</div>';
+  h+='<div class="fs-sub" style="margin:-2px 0 8px">Border &amp; background colours for H1–H4 in the note pane</div>';
+  h+='<button class="theme-reset" style="width:auto;font-size:12px;padding:6px 14px" onclick="closeTheme();openHeadingStylesModal()">🎨 Customise Heading Styles…</button>';
   h+='</div>';
 
   /* Reset */
@@ -10792,7 +10917,9 @@ function renderMyWall(sf){
   const pendingArts=DB.articles.filter(isMyWallNote);
   const total=pendingArts.length;
 
-  let h='<div class="fv">'+`<div class="slbl">${sf.icon} ${esc(dispName)} `
+  const _mwSz=DB.theme?.mwFontSize||'sm';
+  const _mwSzCls=_mwSz!=='sm'?' mw-sz-'+_mwSz:'';
+  let h='<div class="fv'+_mwSzCls+'">'+`<div class="slbl">${sf.icon} ${esc(dispName)} `
     +(total?`<span class="wall-badge">${total} pending</span>`
            :`<span class="wall-badge wall-clear">all clear ✓</span>`)+`</div>`;
 
@@ -10828,7 +10955,7 @@ function renderMyWall(sf){
     const gkey='sf-mywall|'+k.id;
     const gOpen=ST.sfGrpOpen[gkey]===true; /* default CLOSED */
     const dot=`<span class="wall-dot" style="background:${k.color}"></span>`;
-    const handle=`<span class="wall-grp-handle" title="Drag to reorder · tap on mobile"
+    const handle=`<span class="wall-grp-handle" title="Drag to reorder · tap on mobile · right-click for options"
       onclick="event.stopPropagation()"
       ontouchstart="showWallKindCtx(event,'${k.id}')">⠿</span>`;
     h+=`<div class="slbl sf-grp sf-grp-hd wall-grp-hd" data-kid="${k.id}"
@@ -10838,6 +10965,7 @@ function renderMyWall(sf){
       ondragover="wallGrpDOver(event,'${k.id}')"
       ondragleave="wallGrpDLeave(event,'${k.id}')"
       ondrop="wallGrpDDrop(event,'${k.id}')"
+      oncontextmenu="showWallKindCtx(event,'${k.id}')"
       onclick="togSfGrp('${esc(gkey)}')" role="button">`
       +handle
       +`<span class="sf-grp-tog">${gOpen?'▾':'▸'}</span>${dot}${esc(k.name)} (${arr.length})</div>`;
@@ -10991,8 +11119,16 @@ function showWallKindCtx(ev,kid){
   ev.preventDefault();ev.stopPropagation();
   const m=document.getElementById('ctx');
   m.innerHTML=
+    `<div class="ci" onclick="hideCtx();renameNoteKind('${kid}')">✏️ Rename</div>`+
+    `<div class="ci" onclick="openKindClrPicker(event,'${kid}',null)">🎨 Change colour</div>`+
+    `<div class="ci" onclick="hideCtx();addNoteKindTab()">➕ Add category</div>`+
+    `<div class="csep"></div>`+
     `<div class="ci" onclick="moveWallKind('${kid}',-1)">⬆️ Move up</div>`+
-    `<div class="ci" onclick="moveWallKind('${kid}',1)">⬇️ Move down</div>`;
+    `<div class="ci" onclick="moveWallKind('${kid}',1)">⬇️ Move down</div>`+
+    `<div class="csep"></div>`+
+    `<div class="ci" onclick="hideCtx();openTheme()">🔠 Text size…</div>`+
+    `<div class="csep"></div>`+
+    `<div class="ci d" onclick="delNtiKind('${kid}',null)">🗑 Delete</div>`;
   m.style.display='block';
   const tx=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX||window.innerWidth/2;
   const ty=(ev.touches&&ev.touches[0])?ev.touches[0].clientY:ev.clientY||100;
@@ -11762,7 +11898,7 @@ document.getElementById('sb').addEventListener('contextmenu', e => {
       Sync is <strong style="color:var(--green)">active</strong>. Your notebook updates in real time across all devices.
       <br><br><strong>Notebook ID</strong> — use this on every device with the same Firebase config:
       <div style="display:flex;gap:6px;align-items:center;margin-top:6px">
-        <input class="mi" id="nb-ro" value="nb-mqeiw74v-n4uch7" readonly="" style="font-size:11px;font-family:monospace;flex:1">
+        <input class="mi" id="nb-ro" value="" readonly="" style="font-size:11px;font-family:monospace;flex:1">
         <button class="btn bp" onclick="navigator.clipboard.writeText(document.getElementById('nb-ro').value).then(()=&gt;toast('Notebook ID copied ✓'))">Copy</button>
       </div>
     </div>
@@ -11913,4 +12049,4 @@ document.getElementById('sb').addEventListener('contextmenu', e => {
     </div>
   </div>
 </div>
-<section id="id-recall-widget-root" style="all: initial;"></section><iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" tabindex="-1" vspace="0" width="100%" aria-hidden="true" id="I0_1782051874490" name="I0_1782051874490" src="https://aaas-notebook.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyBxrQ5uNrerOAFiCmUbUkUM8tjMpjKygsA&amp;appName=siyagah-main&amp;v=9.23.0&amp;eid=p&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.ch0Jz-JlMrQ.O%2Fd%3D1%2Frs%3DAHpOoo_YD4KoV8fTh_kLhktsiThAm3yJ5A%2Fm%3D__features__#id=I0_1782051874490&amp;_gfid=I0_1782051874490&amp;parent=https%3A%2F%2Fsiyagah.github.io&amp;pfname=&amp;rpctoken=16484655" style="position: absolute; top: -100px; width: 1px; height: 1px;"></iframe><div id="nti-picker" data-aid="mqpr0jmv7xk" class="" style="inset: 171.5px auto auto 1855.47px;"><div class="nti-pk-hd">🏷 NTI Types<button class="nti-pk-cls" onclick="closeNtiPicker()">✕</button></div><div class="nti-pk-scroll"><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-general')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">❓</span><span class="nti-pk-cat-name">Undecided</span><span class="nti-pk-cat-cnt">1</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-general')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-general','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind on" style="background:#6B7280;border-color:#6B7280;color:#fff" onclick="toggleNoteKind('mqpr0jmv7xk','general')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'general','cat-general','mqpr0jmv7xk')" title="General · tap to remove">General</button><button class="nti-pk-kind" style="color:#D946EF;border-color:#D946EF" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqeq87t8')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqeq87t8','cat-general','mqpr0jmv7xk')" title="Image · tap to add">Image</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-articles')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">📦</span><span class="nti-pk-cat-name">Preserve</span><span class="nti-pk-cat-cnt">1</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-articles')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-articles','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind on" style="background:#3B82F6;border-color:#3B82F6;color:#fff" onclick="toggleNoteKind('mqpr0jmv7xk','info')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'info','cat-articles','mqpr0jmv7xk')" title="Info · tap to remove">Info</button><button class="nti-pk-kind" style="color:#10B981;border-color:#10B981" onclick="toggleNoteKind('mqpr0jmv7xk','resource')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'resource','cat-articles','mqpr0jmv7xk')" title="Resources · tap to add">Resources</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-tasks')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">⚡</span><span class="nti-pk-cat-name">Action Needed</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-tasks')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-tasks','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind" style="color:#F97316;border-color:#F97316" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqezvg3b')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqezvg3b','cat-tasks','mqpr0jmv7xk')" title="Need REPLIES · tap to add">Need REPLIES</button><button class="nti-pk-kind" style="color:#8B5CF6;border-color:#8B5CF6" onclick="toggleNoteKind('mqpr0jmv7xk','di')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'di','cat-tasks','mqpr0jmv7xk')" title="Developing Idea · tap to add">Developing Idea</button><button class="nti-pk-kind" style="color:#EF4444;border-color:#EF4444" onclick="toggleNoteKind('mqpr0jmv7xk','article')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'article','cat-tasks','mqpr0jmv7xk')" title="Article · tap to add">Article</button><button class="nti-pk-kind" style="color:#84CC16;border-color:#84CC16" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqenqgon')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqenqgon','cat-tasks','mqpr0jmv7xk')" title="Agenda · tap to add">Agenda</button><button class="nti-pk-kind" style="color:#F43F5E;border-color:#F43F5E" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqeogl1c')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqeogl1c','cat-tasks','mqpr0jmv7xk')" title="Meeting · tap to add">Meeting</button><button class="nti-pk-kind" style="color:#14B8A6;border-color:#14B8A6" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqfuzeu9')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqfuzeu9','cat-tasks','mqpr0jmv7xk')" title="ToDO TODAY · tap to add">ToDO TODAY</button><button class="nti-pk-kind" style="color:#A855F7;border-color:#A855F7" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqfuzwm7')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqfuzwm7','cat-tasks','mqpr0jmv7xk')" title="ToDO NEXT · tap to add">ToDO NEXT</button><button class="nti-pk-kind" style="color:#EC4899;border-color:#EC4899" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqfv04a8')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqfv04a8','cat-tasks','mqpr0jmv7xk')" title="ToDO URGENT · tap to add">ToDO URGENT</button><button class="nti-pk-kind" style="color:#84CC16;border-color:#84CC16" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqfv0d2o')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqfv0d2o','cat-tasks','mqpr0jmv7xk')" title="ToDo TOMORROW · tap to add">ToDo TOMORROW</button><button class="nti-pk-kind" style="color:#0EA5E9;border-color:#0EA5E9" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqhi836v')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqhi836v','cat-tasks','mqpr0jmv7xk')" title="RESPONSE Waiting · tap to add">RESPONSE Waiting</button><button class="nti-pk-kind" style="color:#D946EF;border-color:#D946EF" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqix0039')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqix0039','cat-tasks','mqpr0jmv7xk')" title="ToDO NOW · tap to add">ToDO NOW</button><button class="nti-pk-kind" style="color:#F97316;border-color:#F97316" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqixswso')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqixswso','cat-tasks','mqpr0jmv7xk')" title="FollowUP · tap to add">FollowUP</button><button class="nti-pk-kind" style="color:#F59E0B;border-color:#F59E0B" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqlkew1rl0b')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqlkew1rl0b','cat-tasks','mqpr0jmv7xk')" title="ToDo · tap to add">ToDo</button><button class="nti-pk-kind" style="color:#EC4899;border-color:#EC4899" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqp5tih2usj')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqp5tih2usj','cat-tasks','mqpr0jmv7xk')" title="Task for Children · tap to add">Task for Children</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-appts')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">🗑</span><span class="nti-pk-cat-name">Temporary</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-appts')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-appts','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind" style="color:#F59E0B;border-color:#F59E0B" onclick="toggleNoteKind('mqpr0jmv7xk','quick')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'quick','cat-appts','mqpr0jmv7xk')" title="Quick Note · tap to add">Quick Note</button><button class="nti-pk-kind" style="color:#0EA5E9;border-color:#0EA5E9" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqeovonq')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqeovonq','cat-appts','mqpr0jmv7xk')" title="Daily Journal/ Diary · tap to add">Daily Journal/ Diary</button><button class="nti-pk-kind" style="color:#F43F5E;border-color:#F43F5E" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqhi4jo6')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqhi4jo6','cat-appts','mqpr0jmv7xk')" title="Appointment · tap to add">Appointment</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-mqkn72h4779')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">📝</span><span class="nti-pk-cat-name">Dawah</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-mqkn72h4779')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-mqkn72h4779','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><span class="nti-pk-empty">Empty — tap ＋ to add</span></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-mqkn7ef1y4v')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">📝</span><span class="nti-pk-cat-name">Media</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-mqkn7ef1y4v')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind" style="color:#6366F1;border-color:#6366F1" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqkn803rdoh')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqkn803rdoh','cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Posted · tap to add">Posted</button><button class="nti-pk-kind" style="color:#6B7280;border-color:#6B7280" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqkn8m32ye3')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqkn8m32ye3','cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Ready to Post · tap to add">Ready to Post</button><button class="nti-pk-kind" style="color:#10B981;border-color:#10B981" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqkvyn29pjs')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqkvyn29pjs','cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Post to HORSE group · tap to add">Post to HORSE group</button><button class="nti-pk-kind" style="color:#EF4444;border-color:#EF4444" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqnu74bi3ml')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqnu74bi3ml','cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Article for 'Hijrah Made Easy' · tap to add">Article for 'Hijrah Made Easy'</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-mqkvecmwt8u')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">📝</span><span class="nti-pk-cat-name">Study Organising</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-mqkvecmwt8u')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-mqkvecmwt8u','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind" style="color:#3B82F6;border-color:#3B82F6" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqkvgcbj16x')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqkvgcbj16x','cat-mqkvecmwt8u','mqpr0jmv7xk')" title="Organise to Mapping · tap to add">Organise to Mapping</button><button class="nti-pk-kind" style="color:#8B5CF6;border-color:#8B5CF6" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqnnyrcbpbs')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqnnyrcbpbs','cat-mqkvecmwt8u','mqpr0jmv7xk')" title="Health Study · tap to add">Health Study</button></div></div><div class="nti-pk-add-cat" onclick="addNtiCat()">＋ Add new category</div></div></div></body></html>
+<section id="id-recall-widget-root" style="all: initial;"></section><iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" tabindex="-1" vspace="0" width="100%" aria-hidden="true" id="I0_1782051874490" name="I0_1782051874490" src="https://aaas-notebook.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyBxrQ5uNrerOAFiCmUbUkUM8tjMpjKygsA&amp;appName=siyagah-main&amp;v=9.23.0&amp;eid=p&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.ch0Jz-JlMrQ.O%2Fd%3D1%2Frs%3DAHpOoo_YD4KoV8fTh_kLhktsiThAm3yJ5A%2Fm%3D__features__#id=I0_1782051874490&amp;_gfid=I0_1782051874490&amp;parent=https%3A%2F%2Fsiyagah.github.io&amp;pfname=&amp;rpctoken=16484655" style="position: absolute; top: -100px; width: 1px; height: 1px;"></iframe><div id="nti-picker" data-aid="mqpr0jmv7xk" class="" style="inset: 171.5px auto auto 1855.47px;"></div><div class="nti-pk-scroll"><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-general')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">❓</span><span class="nti-pk-cat-name">Undecided</span><span class="nti-pk-cat-cnt">1</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-general')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-general','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind on" style="background:#6B7280;border-color:#6B7280;color:#fff" onclick="toggleNoteKind('mqpr0jmv7xk','general')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'general','cat-general','mqpr0jmv7xk')" title="General · tap to remove">General</button><button class="nti-pk-kind" style="color:#D946EF;border-color:#D946EF" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqeq87t8')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqeq87t8','cat-general','mqpr0jmv7xk')" title="Image · tap to add">Image</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-articles')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">📦</span><span class="nti-pk-cat-name">Preserve</span><span class="nti-pk-cat-cnt">1</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-articles')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-articles','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind on" style="background:#3B82F6;border-color:#3B82F6;color:#fff" onclick="toggleNoteKind('mqpr0jmv7xk','info')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'info','cat-articles','mqpr0jmv7xk')" title="Info · tap to remove">Info</button><button class="nti-pk-kind" style="color:#10B981;border-color:#10B981" onclick="toggleNoteKind('mqpr0jmv7xk','resource')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'resource','cat-articles','mqpr0jmv7xk')" title="Resources · tap to add">Resources</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-tasks')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">⚡</span><span class="nti-pk-cat-name">Action Needed</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-tasks')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-tasks','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind" style="color:#F97316;border-color:#F97316" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqezvg3b')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqezvg3b','cat-tasks','mqpr0jmv7xk')" title="Need REPLIES · tap to add">Need REPLIES</button><button class="nti-pk-kind" style="color:#8B5CF6;border-color:#8B5CF6" onclick="toggleNoteKind('mqpr0jmv7xk','di')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'di','cat-tasks','mqpr0jmv7xk')" title="Developing Idea · tap to add">Developing Idea</button><button class="nti-pk-kind" style="color:#EF4444;border-color:#EF4444" onclick="toggleNoteKind('mqpr0jmv7xk','article')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'article','cat-tasks','mqpr0jmv7xk')" title="Article · tap to add">Article</button><button class="nti-pk-kind" style="color:#84CC16;border-color:#84CC16" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqenqgon')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqenqgon','cat-tasks','mqpr0jmv7xk')" title="Agenda · tap to add">Agenda</button><button class="nti-pk-kind" style="color:#F43F5E;border-color:#F43F5E" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqeogl1c')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqeogl1c','cat-tasks','mqpr0jmv7xk')" title="Meeting · tap to add">Meeting</button><button class="nti-pk-kind" style="color:#14B8A6;border-color:#14B8A6" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqfuzeu9')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqfuzeu9','cat-tasks','mqpr0jmv7xk')" title="ToDO TODAY · tap to add">ToDO TODAY</button><button class="nti-pk-kind" style="color:#A855F7;border-color:#A855F7" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqfuzwm7')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqfuzwm7','cat-tasks','mqpr0jmv7xk')" title="ToDO NEXT · tap to add">ToDO NEXT</button><button class="nti-pk-kind" style="color:#EC4899;border-color:#EC4899" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqfv04a8')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqfv04a8','cat-tasks','mqpr0jmv7xk')" title="ToDO URGENT · tap to add">ToDO URGENT</button><button class="nti-pk-kind" style="color:#84CC16;border-color:#84CC16" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqfv0d2o')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqfv0d2o','cat-tasks','mqpr0jmv7xk')" title="ToDo TOMORROW · tap to add">ToDo TOMORROW</button><button class="nti-pk-kind" style="color:#0EA5E9;border-color:#0EA5E9" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqhi836v')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqhi836v','cat-tasks','mqpr0jmv7xk')" title="RESPONSE Waiting · tap to add">RESPONSE Waiting</button><button class="nti-pk-kind" style="color:#D946EF;border-color:#D946EF" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqix0039')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqix0039','cat-tasks','mqpr0jmv7xk')" title="ToDO NOW · tap to add">ToDO NOW</button><button class="nti-pk-kind" style="color:#F97316;border-color:#F97316" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqixswso')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqixswso','cat-tasks','mqpr0jmv7xk')" title="FollowUP · tap to add">FollowUP</button><button class="nti-pk-kind" style="color:#F59E0B;border-color:#F59E0B" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqlkew1rl0b')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqlkew1rl0b','cat-tasks','mqpr0jmv7xk')" title="ToDo · tap to add">ToDo</button><button class="nti-pk-kind" style="color:#EC4899;border-color:#EC4899" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqp5tih2usj')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqp5tih2usj','cat-tasks','mqpr0jmv7xk')" title="Task for Children · tap to add">Task for Children</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-appts')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">🗑</span><span class="nti-pk-cat-name">Temporary</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-appts')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-appts','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind" style="color:#F59E0B;border-color:#F59E0B" onclick="toggleNoteKind('mqpr0jmv7xk','quick')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'quick','cat-appts','mqpr0jmv7xk')" title="Quick Note · tap to add">Quick Note</button><button class="nti-pk-kind" style="color:#0EA5E9;border-color:#0EA5E9" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqeovonq')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqeovonq','cat-appts','mqpr0jmv7xk')" title="Daily Journal/ Diary · tap to add">Daily Journal/ Diary</button><button class="nti-pk-kind" style="color:#F43F5E;border-color:#F43F5E" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqhi4jo6')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqhi4jo6','cat-appts','mqpr0jmv7xk')" title="Appointment · tap to add">Appointment</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-mqkn72h4779')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">📝</span><span class="nti-pk-cat-name">Dawah</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-mqkn72h4779')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-mqkn72h4779','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><span class="nti-pk-empty">Empty — tap ＋ to add</span></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-mqkn7ef1y4v')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">📝</span><span class="nti-pk-cat-name">Media</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-mqkn7ef1y4v')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind" style="color:#6366F1;border-color:#6366F1" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqkn803rdoh')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqkn803rdoh','cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Posted · tap to add">Posted</button><button class="nti-pk-kind" style="color:#6B7280;border-color:#6B7280" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqkn8m32ye3')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqkn8m32ye3','cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Ready to Post · tap to add">Ready to Post</button><button class="nti-pk-kind" style="color:#10B981;border-color:#10B981" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqkvyn29pjs')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqkvyn29pjs','cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Post to HORSE group · tap to add">Post to HORSE group</button><button class="nti-pk-kind" style="color:#EF4444;border-color:#EF4444" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqnu74bi3ml')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqnu74bi3ml','cat-mqkn7ef1y4v','mqpr0jmv7xk')" title="Article for 'Hijrah Made Easy' · tap to add">Article for 'Hijrah Made Easy'</button></div></div><div class="nti-pk-cat"><div class="nti-pk-cat-hd" onclick="togNtiCat('cat-mqkvecmwt8u')"><span class="nti-pk-cat-tog">▾</span><span class="nti-pk-cat-icon">📝</span><span class="nti-pk-cat-name">Study Organising</span><span class="nti-pk-cat-acts"><button onclick="event.stopPropagation();addKindInCat('mqpr0jmv7xk','cat-mqkvecmwt8u')" title="Add type">＋</button><button onclick="event.stopPropagation();showNtiCatMenu(event,'cat-mqkvecmwt8u','mqpr0jmv7xk')" title="Options">⋯</button></span></div><div class="nti-pk-kinds"><button class="nti-pk-kind" style="color:#3B82F6;border-color:#3B82F6" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqkvgcbj16x')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqkvgcbj16x','cat-mqkvecmwt8u','mqpr0jmv7xk')" title="Organise to Mapping · tap to add">Organise to Mapping</button><button class="nti-pk-kind" style="color:#8B5CF6;border-color:#8B5CF6" onclick="toggleNoteKind('mqpr0jmv7xk','k_mqnnyrcbpbs')" oncontextmenu="event.preventDefault();showNtiKindMenu(event,'k_mqnnyrcbpbs','cat-mqkvecmwt8u','mqpr0jmv7xk')" title="Health Study · tap to add">Health Study</button></div></div><div class="nti-pk-add-cat" onclick="addNtiCat()">＋ Add new category</div></div></div></body></html>
