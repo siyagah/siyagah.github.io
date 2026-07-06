@@ -1901,6 +1901,18 @@ function descOf(fid){const ids=[fid];function go(p){chOf(p).forEach(c=>{ids.push
 function pathOf(fid){const p=[];let id=fid;while(id){const f=DB.folders.find(x=>x.id===id);if(!f)break;p.unshift(f);id=f.parentId;}return p;}
 function cntOf(fid){const ids=descOf(fid);return DB.articles.filter(a=>a.folderIds.some(x=>ids.includes(x))).length;}
 function artsIn(fid){return DB.articles.filter(a=>a.folderIds.includes(fid));}
+/* Once a note is deliberately filed into a real folder (or journal event),
+   it should leave the 'Primary' quick-capture catch-all automatically —
+   Primary is meant to be a temporary inbox, not a permanent home. Tracked
+   by ID (DB.theme.quickCaptureFolderId, set by quickCapture()), so this
+   keeps working even if the user renames "Primary" later. Never leaves a
+   note with zero folders. */
+function _autoLeavePrimary(folderIdsArr){
+  const pfid=DB.theme&&DB.theme.quickCaptureFolderId;
+  if(!pfid||!folderIdsArr||!folderIdsArr.includes(pfid))return folderIdsArr;
+  const others=folderIdsArr.filter(id=>id!==pfid);
+  return others.length?others:folderIdsArr;
+}
 
 /* ── Render ──────────────────────────────────────────────────────── */
 function render(){renderTree();renderP2H();renderP2C();renderP3H();renderP3C();renderTabBar();updateTrashBtn();adjustP3Layout();_applyHeadingStyles();}
@@ -4289,7 +4301,7 @@ function toggleNoteJournal(aid,fid){
   if(!a.folderIds)a.folderIds=[];
   const i=a.folderIds.indexOf(fid);
   if(i>=0){ a.folderIds.splice(i,1); toast('Removed from journal event'); }
-  else { a.folderIds.push(fid); _ensureJournalTag(a); toast('📓 Added to journal event'); }
+  else { a.folderIds.push(fid); a.folderIds=_autoLeavePrimary(a.folderIds); _ensureJournalTag(a); toast('📓 Added to journal event'); }
   a.updatedAt=new Date().toISOString();
   persist();
   const p=document.getElementById('jrn-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderJournalPickerBody(aid);
@@ -4632,7 +4644,7 @@ function _aneFilter(q){
 function addExistingNoteToEvent(aid,fid){
   const a=DB.articles.find(x=>x.id===aid);if(!a)return;
   if(!a.folderIds)a.folderIds=[];
-  if(!a.folderIds.includes(fid))a.folderIds.push(fid);
+  if(!a.folderIds.includes(fid)){a.folderIds.push(fid);a.folderIds=_autoLeavePrimary(a.folderIds);}
   _ensureJournalTag(a);
   a.updatedAt=new Date().toISOString();
   persist();
@@ -8545,6 +8557,7 @@ function dDrop(ev,fid){
     const folder=DB.folders.find(f=>f.id===fid);
     if(art && folder && !art.folderIds.includes(fid)){
       art.folderIds.push(fid);
+      art.folderIds=_autoLeavePrimary(art.folderIds);
       persist();
       renderP2C(); renderP3H(); renderP3C();
       toast(`"${art.title.slice(0,30)}" now also in "${folder.name.slice(0,25)}" ✓`);
@@ -8956,11 +8969,17 @@ function _pkFilter(q){
   });
 }
 function togglePick(fid){
+  const _pfidBefore=DB.theme&&DB.theme.quickCaptureFolderId;
+  const _hadPrimaryBefore=_pfidBefore&&ST.efolders.includes(_pfidBefore);
   if(ST.efolders.includes(fid))ST.efolders=ST.efolders.filter(x=>x!==fid);
-  else ST.efolders.push(fid);
+  else {ST.efolders.push(fid);ST.efolders=_autoLeavePrimary(ST.efolders);}
   const row=_pkRow(fid);
   if(!row){openPicker();return;}
   const pc=row.querySelector('.pc');const on=ST.efolders.includes(fid);pc.classList.toggle('on',on);pc.textContent=on?'\u2713':'';
+  if(_hadPrimaryBefore&&!ST.efolders.includes(_pfidBefore)){
+    const pRow=_pkRow(_pfidBefore);
+    if(pRow){const ppc=pRow.querySelector('.pc');if(ppc){ppc.classList.remove('on');ppc.textContent='';}}
+  }
   const cnt=document.getElementById('pkCount');if(cnt)cnt.textContent=ST.efolders.length+' selected';
 }
 
@@ -10108,12 +10127,13 @@ function createFolderFromPicker(aid){
     const art=DB.articles.find(a=>a.id===aid);
     if(art&&!art.folderIds.includes(nid)){
       art.folderIds.push(nid);
+      art.folderIds=_autoLeavePrimary(art.folderIds);
       persist();
       renderP2C();renderP3H();renderP3C();
     }
     showArtFolderPicker(aid);   // re-open picker with new folder checked
   } else {
-    if(!ST.efolders.includes(nid))ST.efolders.push(nid);
+    if(!ST.efolders.includes(nid)){ST.efolders.push(nid);ST.efolders=_autoLeavePrimary(ST.efolders);}
     renderP3H();                // refresh 🏷 folder count in edit header
     openPicker();               // re-open picker with new folder checked
   }
@@ -10167,6 +10187,7 @@ function toggleArtFolder(aid,fid){
     art.folderIds=art.folderIds.filter(x=>x!==fid);
   } else {
     art.folderIds.push(fid);
+    art.folderIds=_autoLeavePrimary(art.folderIds);
   }
   persist();
   renderP2C();renderP3H();renderP3C();
