@@ -200,6 +200,12 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 #paste-pop .ci,#men-dd .ci,#item-menu .ci{font-size:13px}
 #item-menu{max-height:320px;overflow-y:auto}
 /* ── MyWALL subfolder type groups ────────────────────────────────────────── */
+.wall-cat-hd{opacity:.85;border-top:1px solid var(--border2);margin-top:4px}
+.wall-cat-hd:first-of-type{border-top:none;margin-top:0}
+.mwsub-cat-hd{display:flex;align-items:center;gap:6px;padding:8px 10px 4px 12px;cursor:pointer;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);user-select:none;-webkit-user-select:none}
+.mwsub-cat-hd:hover{color:var(--t1)}
+.mwsub-cat-hd .mw-tog{font-size:10px;flex-shrink:0;min-width:10px}
+@media(max-width:1199px){.mwsub-cat-hd{padding:10px 12px 6px;font-size:11.5px}}
 .mwsub-hd{display:flex;align-items:center;gap:6px;padding:7px 10px 7px 12px;cursor:pointer;
   border-bottom:1px solid var(--border2);font-size:13px;font-weight:600;
   background:var(--paper);color:var(--t1);user-select:none;-webkit-user-select:none;
@@ -3136,8 +3142,15 @@ function togMwSubGrp(fid,kid){
   ST.mwSubGrpOpen[k]=!(ST.mwSubGrpOpen[k]===true);
   renderP2C();
 }
+function togMwSubCat(fid,catId){
+  if(!ST.mwSubCatOpen)ST.mwSubCatOpen={};
+  const k=fid+'|cat|'+catId;
+  ST.mwSubCatOpen[k]=!(ST.mwSubCatOpen[k]!==false); /* flip, default-open */
+  renderP2C();
+}
 function renderMyWallSubfolder(curF){
   if(!ST.mwSubGrpOpen)ST.mwSubGrpOpen={};
+  if(!ST.mwSubCatOpen)ST.mwSubCatOpen={};
   /* Reset to closed when switching to a different subfolder */
   if(ST.mwSubGrpLast&&ST.mwSubGrpLast!==curF.id){
     Object.keys(ST.mwSubGrpOpen).forEach(k=>{
@@ -3178,21 +3191,17 @@ function renderMyWallSubfolder(curF){
     artKinds(a).forEach(kid=>{(byKind[kid]=byKind[kid]||[]).push(a);});
   });
 
-  /* Sort kind groups: most-recently-edited note in each group sorts first */
-  const kinds=noteKinds()
-    .filter(k=>byKind[k.id]&&byKind[k.id].length)
-    .sort((a,b)=>{
-      /* Most pending notes first; latest edited as tiebreaker */
-      const cntA=(byKind[a.id]||[]).length;
-      const cntB=(byKind[b.id]||[]).length;
-      /* Latest-edited PRIMARY, most-notes tiebreaker */
-      const la=(byKind[a.id]||[]).reduce((m,x)=>x.updatedAt>m?x.updatedAt:m,'');
-      const lb=(byKind[b.id]||[]).reduce((m,x)=>x.updatedAt>m?x.updatedAt:m,'');
-      const dc=lb.localeCompare(la);if(dc!==0)return dc;
-      return (byKind[b.id]||[]).length-(byKind[a.id]||[]).length;
-    });
+  /* Sort kind groups: most-recently-edited note in each group sorts first
+     (unchanged) — used both to rank within a category and to find the
+     single globally-freshest kind for the "isTop" accent marker below. */
+  const _kindLatest=k=>(byKind[k.id]||[]).reduce((m,x)=>x.updatedAt>m?x.updatedAt:m,'');
+  const _sortKinds=(a,b)=>{
+    const dc=_kindLatest(b).localeCompare(_kindLatest(a));if(dc!==0)return dc;
+    return (byKind[b.id]||[]).length-(byKind[a.id]||[]).length;
+  };
+  const sortedKinds=noteKinds().filter(k=>byKind[k.id]&&byKind[k.id].length).sort(_sortKinds);
 
-  if(!kinds.length){
+  if(!sortedKinds.length){
     /* Fallback: notes have unknown kinds — show flat */
     h+='<div class="al">';
     allArts.forEach(a=>{h+=artCard(a,ST.article===a.id,true);});
@@ -3200,25 +3209,39 @@ function renderMyWallSubfolder(curF){
     return h+'</div>';
   }
 
-  kinds.forEach((k,i)=>{
-    const arr=(byKind[k.id]||[]).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
-    const gkey=curF.id+'|'+k.id;
-    const isOpen=ST.mwSubGrpOpen[gkey]===true; /* default CLOSED */
-    const latestIso=arr[0]?.updatedAt||'';
-    const relDate=latestIso?mwRelDate(latestIso):'';
-    const isTop=(i===0); /* most recently active NIB gets accent border */
-    h+=`<div class="mwsub-hd${isTop?' mw-top':''}" onclick="togMwSubGrp('${curF.id}','${k.id}')" oncontextmenu="showWallKindCtx(event,'${k.id}')" role="button">`
-      +`<span class="mw-tog">${isOpen?'▾':'▸'}</span>`
-      +`<span class="mw-dot" style="background:${k.color}"></span>`
-      +esc(k.name)
-      +`<span class="mw-cnt">${arr.length}</span>`
-      +(relDate?`<span class="mw-rel-date">· ${relDate}</span>`:'')
-      +'</div>';
-    if(isOpen){
-      h+='<div class="al">';
-      arr.forEach(a=>{h+=artCard(a,ST.article===a.id,true);});
-      h+='</div>';
-    }
+  const topKindId=sortedKinds[0].id; /* the single most-recently-active kind overall */
+  if(!ST.mwSubCatOpen)ST.mwSubCatOpen={};
+
+  noteKindCats().forEach(cat=>{
+    const kinds=kindsInCat(cat.id).filter(k=>byKind[k.id]&&byKind[k.id].length).sort(_sortKinds);
+    if(!kinds.length)return; /* categories with nothing here are hidden entirely */
+    const catKey=curF.id+'|cat|'+cat.id;
+    const catOpen=ST.mwSubCatOpen[catKey]!==false; /* default OPEN */
+    h+=`<div class="mwsub-cat-hd" onclick="togMwSubCat('${curF.id}','${cat.id}')" role="button">`
+      +`<span class="mw-tog">${catOpen?'▾':'▸'}</span>`
+      +`<span>${esc(cat.icon||'📝')}</span> ${esc(cat.name)}</div>`;
+    if(!catOpen)return;
+
+    kinds.forEach(k=>{
+      const arr=(byKind[k.id]||[]).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+      const gkey=curF.id+'|'+k.id;
+      const isOpen=ST.mwSubGrpOpen[gkey]===true; /* default CLOSED */
+      const latestIso=arr[0]?.updatedAt||'';
+      const relDate=latestIso?mwRelDate(latestIso):'';
+      const isTop=(k.id===topKindId); /* most recently active NIB, overall, gets accent border */
+      h+=`<div class="mwsub-hd${isTop?' mw-top':''}" style="padding-left:26px" onclick="togMwSubGrp('${curF.id}','${k.id}')" oncontextmenu="showWallKindCtx(event,'${k.id}')" role="button">`
+        +`<span class="mw-tog">${isOpen?'▾':'▸'}</span>`
+        +`<span class="mw-dot" style="background:${k.color}"></span>`
+        +esc(k.name)
+        +`<span class="mw-cnt">${arr.length}</span>`
+        +(relDate?`<span class="mw-rel-date">· ${relDate}</span>`:'')
+        +'</div>';
+      if(isOpen){
+        h+='<div class="al">';
+        arr.forEach(a=>{h+=artCard(a,ST.article===a.id,true);});
+        h+='</div>';
+      }
+    });
   });
   return h+'</div>';
 }
@@ -11263,6 +11286,7 @@ function kindBarHTML(a){
 function renderMyWall(sf){
   const dispName=(DB.sfItems?.[sf.id]?.name)||sf.name;
   if(!ST.sfGrpOpen)ST.sfGrpOpen={};
+  if(!ST.mwCatOpen)ST.mwCatOpen={};
 
   /* Only notes that are neither Finished nor Archived */
   const pendingArts=DB.articles.filter(isMyWallNote);
@@ -11286,45 +11310,51 @@ function renderMyWall(sf){
     artKinds(a).forEach(kid=>{(byKind[kid]=byKind[kid]||[]).push(a);});
   });
 
-  /* Sort: most pending notes first → latest edited as tiebreaker.
-     Skip NTI kinds with zero pending notes. */
-  const kinds=noteKinds()
-    .filter(k=>byKind[k.id]&&byKind[k.id].length)
-    .sort((a,b)=>{
-      const cntA=(byKind[a.id]||[]).length;
-      const cntB=(byKind[b.id]||[]).length;
-      /* Latest-edited PRIMARY, most-notes tiebreaker */
-      const la=(byKind[a.id]||[]).reduce((m,x)=>x.updatedAt>m?x.updatedAt:m,'');
-      const lb=(byKind[b.id]||[]).reduce((m,x)=>x.updatedAt>m?x.updatedAt:m,'');
-      const dc=lb.localeCompare(la);if(dc!==0)return dc;
-      return (byKind[b.id]||[]).length-(byKind[a.id]||[]).length;
-    });
+  /* Sort kinds within a category: most pending notes first → latest edited
+     as tiebreaker (unchanged from before — only the outer grouping is new). */
+  const _kindLatest=k=>(byKind[k.id]||[]).reduce((m,x)=>x.updatedAt>m?x.updatedAt:m,'');
+  const _sortKinds=(a,b)=>{
+    const dc=_kindLatest(b).localeCompare(_kindLatest(a));if(dc!==0)return dc;
+    return (byKind[b.id]||[]).length-(byKind[a.id]||[]).length;
+  };
 
-  kinds.forEach(k=>{
-    const arr=(byKind[k.id]||[]).slice()
-      .sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
-    const gkey='sf-mywall|'+k.id;
-    const gOpen=ST.sfGrpOpen[gkey]===true; /* default CLOSED */
-    const dot=`<span class="wall-dot" style="background:${k.color}"></span>`;
-    const handle=`<span class="wall-grp-handle" title="Drag to reorder · tap on mobile · right-click for options"
-      onclick="event.stopPropagation()"
-      ontouchstart="showWallKindCtx(event,'${k.id}')">⠿</span>`;
-    h+=`<div class="slbl sf-grp sf-grp-hd wall-grp-hd" data-kid="${k.id}"
-      draggable="true"
-      ondragstart="wallGrpDStart(event,'${k.id}')"
-      ondragend="wallGrpDEnd(event)"
-      ondragover="wallGrpDOver(event,'${k.id}')"
-      ondragleave="wallGrpDLeave(event,'${k.id}')"
-      ondrop="wallGrpDDrop(event,'${k.id}')"
-      oncontextmenu="showWallKindCtx(event,'${k.id}')"
-      onclick="togSfGrp('${esc(gkey)}')" role="button">`
-      +handle
-      +`<span class="sf-grp-tog">${gOpen?'▾':'▸'}</span>${dot}${esc(k.name)} (${arr.length})</div>`;
-    if(gOpen){
-      h+='<div class="al">';
-      arr.forEach(a=>{h+=artCard(a,ST.article===a.id,true,true);});
-      h+='</div>';
-    }
+  noteKindCats().forEach(cat=>{
+    const kinds=kindsInCat(cat.id).filter(k=>byKind[k.id]&&byKind[k.id].length).sort(_sortKinds);
+    if(!kinds.length)return; /* categories with nothing pending are hidden from MyWALL entirely */
+    const catCnt=kinds.reduce((s,k)=>s+(byKind[k.id]||[]).length,0);
+    const cOpen=ST.mwCatOpen[cat.id]!==false; /* default OPEN */
+    h+=`<div class="slbl sf-grp sf-grp-hd wall-cat-hd" data-catid="${cat.id}"
+      onclick="togMwCat('${cat.id}')" role="button">
+      <span class="sf-grp-tog">${cOpen?'▾':'▸'}</span>
+      <span style="font-size:11px">${esc(cat.icon||'📝')}</span> ${esc(cat.name)} <span style="font-weight:400">(${catCnt})</span></div>`;
+    if(!cOpen)return;
+
+    kinds.forEach(k=>{
+      const arr=(byKind[k.id]||[]).slice()
+        .sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+      const gkey='sf-mywall|'+k.id;
+      const gOpen=ST.sfGrpOpen[gkey]===true; /* default CLOSED */
+      const dot=`<span class="wall-dot" style="background:${k.color}"></span>`;
+      const handle=`<span class="wall-grp-handle" title="Drag to reorder · tap on mobile · right-click for options"
+        onclick="event.stopPropagation()"
+        ontouchstart="showWallKindCtx(event,'${k.id}')">⠿</span>`;
+      h+=`<div class="slbl sf-grp sf-grp-hd wall-grp-hd" data-kid="${k.id}" style="padding-left:22px"
+        draggable="true"
+        ondragstart="wallGrpDStart(event,'${k.id}')"
+        ondragend="wallGrpDEnd(event)"
+        ondragover="wallGrpDOver(event,'${k.id}')"
+        ondragleave="wallGrpDLeave(event,'${k.id}')"
+        ondrop="wallGrpDDrop(event,'${k.id}')"
+        oncontextmenu="showWallKindCtx(event,'${k.id}')"
+        onclick="togSfGrp('${esc(gkey)}')" role="button">`
+        +handle
+        +`<span class="sf-grp-tog">${gOpen?'▾':'▸'}</span>${dot}${esc(k.name)} (${arr.length})</div>`;
+      if(gOpen){
+        h+='<div class="al">';
+        arr.forEach(a=>{h+=artCard(a,ST.article===a.id,true,true);});
+        h+='</div>';
+      }
+    });
   });
   return h+'</div>';
 }
@@ -11408,6 +11438,11 @@ function togSfGrp(gkey){
   if(!ST.sfGrpOpen)ST.sfGrpOpen={};
   /* flip: undefined/false → true (open), true → false (close) */
   ST.sfGrpOpen[gkey]=!(ST.sfGrpOpen[gkey]===true);
+  renderP2C();
+}
+function togMwCat(catId){
+  if(!ST.mwCatOpen)ST.mwCatOpen={};
+  ST.mwCatOpen[catId]=!(ST.mwCatOpen[catId]!==false); /* flip, default-open */
   renderP2C();
 }
 
