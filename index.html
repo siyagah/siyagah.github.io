@@ -156,6 +156,15 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .et{padding:3px 7px;background:none;border:1px solid var(--border2);border-radius:5px;cursor:pointer;font-size:12.5px;color:var(--t2);min-width:26px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-family:var(--ui)}
 .et:hover{background:var(--paper)}
 .esep{width:1px;background:var(--border);margin:0 2px;align-self:stretch}
+.al-ic{display:flex;flex-direction:column;gap:2px;width:14px}
+.al-ic span{display:block;height:2px;background:currentColor;border-radius:1px}
+.al-l{align-items:flex-start}
+.al-l span:nth-child(1){width:100%}.al-l span:nth-child(2){width:70%}.al-l span:nth-child(3){width:85%}
+.al-c{align-items:center}
+.al-c span:nth-child(1){width:100%}.al-c span:nth-child(2){width:60%}.al-c span:nth-child(3){width:80%}
+.al-r{align-items:flex-end}
+.al-r span:nth-child(1){width:100%}.al-r span:nth-child(2){width:70%}.al-r span:nth-child(3){width:85%}
+.al-j span{width:100%}
 #ed{flex:1;padding:24px 38px;outline:none;font-family:var(--body);font-size:var(--fs-content);line-height:var(--lh-content);color:#2A261E;overflow-y:auto;max-width:750px;margin:0 auto;width:100%;min-height:0}
 #ed h2{font-size:var(--fs-h2);font-weight:600;margin:16px 0 6px;color:var(--t1)}
 #ed h3{font-size:var(--fs-h3);font-weight:600;margin:12px 0 4px;color:var(--t1)}
@@ -293,6 +302,8 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .sr:hover{background:rgba(255,255,255,.04)}
 .sr.on{background:rgba(27,122,70,.15);color:#B8E8C4}
 .srl{padding:4px 12px 5px;font-size:10px;color:#4A5A4C;text-transform:uppercase;letter-spacing:.06em}
+.sr-grp-hd{padding:8px 12px 3px;font-size:10px;color:#4A5A4C;text-transform:uppercase;letter-spacing:.06em;font-weight:700;border-top:1px solid rgba(255,255,255,.06);margin-top:4px}
+.sr-grp-hd:first-of-type{border-top:none;margin-top:0}
 #ti{flex:1;font-size:14px;font-weight:500;border:none;outline:none;background:transparent;color:var(--t1);font-family:var(--ui)}
 .toast-err{background:#c0392b!important;}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1B7A46;color:#fff;padding:9px 18px;border-radius:14px;font-size:13px;z-index:99999;pointer-events:none;transition:opacity .3s;white-space:normal;word-break:break-word;max-width:min(420px,88vw);text-align:center;line-height:1.5}
@@ -1120,6 +1131,7 @@ sup.ann-sup:hover{text-decoration:underline}
   transition:opacity .25s ease;white-space:nowrap;z-index:3}
 .save-flash.show{opacity:.92}
 .tx-done{opacity:.42;transition:opacity .15s}
+.tx-boxed{border:1.5px solid var(--border2,#ccc);border-radius:8px;padding:10px 12px;margin:6px 0;background:var(--paper,#fff)}
 .tx-done:hover{opacity:.6}
 .clr-pop{position:fixed;z-index:9999;background:var(--paper,#fff);
   border:1px solid var(--border2,#ccc);border-radius:10px;padding:8px;
@@ -1668,7 +1680,7 @@ sup.ann-sup:hover{text-decoration:underline}
   <div class="sb-s">
     <div class="sb-si">
       <span style="color:#4A5A4C;font-size:13px">🔍</span>
-      <input type="text" id="sq" placeholder="Search articles…" oninput="doSearch(this.value)" autocomplete="off">
+      <input type="text" id="sq" placeholder="Search notes, folders, tags, types…" oninput="doSearch(this.value)" autocomplete="off">
       <span id="sqx" onclick="clearSearch()" style="color:#4A5A4C;cursor:pointer;display:none;font-size:12px">✕</span>
     </div>
   </div>
@@ -1904,14 +1916,43 @@ function _renderPreserveEdit(){
   render();
 }
 
+function _searchWords(q){return q.toLowerCase().split(/\s+/).filter(Boolean);}
+function _matchesAllWords(text,words){const t=text.toLowerCase();return words.every(w=>t.includes(w));}
 function renderTree(){
   const el=document.getElementById('tree');updateAccordionBtn();
-  if(ST.search){
-    const q=ST.search.toLowerCase();
-    const hits=DB.articles.filter(a=>a.title.toLowerCase().includes(q)||strip(a.content).toLowerCase().includes(q));
-    el.innerHTML=`<div class="srl">${hits.length} result${hits.length!==1?'s':''}</div>`+
-      hits.map(a=>`<div class="sr${ST.article===a.id?' on':''}" onclick="selArt('${a.id}')">${esc(a.title)}</div>`).join('')+
-      (!hits.length?'<div class="sr" style="color:#4A5A4C;cursor:default">No results</div>':'');
+  if(ST.search&&ST.search.trim()){
+    const words=_searchWords(ST.search);
+    const noteHits=DB.articles.filter(a=>_matchesAllWords(a.title+' '+strip(a.content),words));
+    const folderHits=DB.folders.filter(f=>_matchesAllWords(f.name,words));
+    const tagHits=getAllTags().filter(t=>_matchesAllWords(t.tag,words));
+    const kindHits=noteKinds().filter(k=>_matchesAllWords(k.name,words));
+    const total=noteHits.length+folderHits.length+tagHits.length+kindHits.length;
+    let h=`<div class="srl">${total} result${total!==1?'s':''}</div>`;
+    if(!total){
+      h+='<div class="sr" style="color:#4A5A4C;cursor:default">No results</div>';
+    } else {
+      if(folderHits.length){
+        h+='<div class="sr-grp-hd">📁 Folders</div>'+folderHits.map(f=>{
+          const p=pathOf(f.id);
+          const crumb=p.length>1?esc(p.slice(0,-1).map(x=>x.name).join(' › '))+' › ':'';
+          return `<div class="sr" onclick="clearSearch();selFolder('${f.id}')">${crumb}<b>${esc(f.name)}</b></div>`;
+        }).join('');
+      }
+      if(tagHits.length){
+        h+='<div class="sr-grp-hd">🏷 Tags</div>'+tagHits.map(t=>
+          `<div class="sr" onclick="clearSearch();selTag('${esc(t.tag)}')">#${esc(t.tag)} <span class="tr-cnt">${t.count}</span></div>`
+        ).join('');
+      }
+      if(kindHits.length){
+        h+='<div class="sr-grp-hd">🔖 Note Types</div>'+kindHits.map(k=>
+          `<div class="sr" onclick="clearSearch();selKind('${k.id}')"><span class="nti-dot" style="background:${k.color}"></span> ${esc(k.name)}</div>`
+        ).join('');
+      }
+      if(noteHits.length){
+        h+='<div class="sr-grp-hd">📄 Notes</div>'+noteHits.map(a=>`<div class="sr${ST.article===a.id?' on':''}" onclick="selArt('${a.id}')">${esc(a.title)}</div>`).join('');
+      }
+    }
+    el.innerHTML=h;
     return;
   }
   // Render sections then tags inline
@@ -2396,8 +2437,14 @@ function renderP3H(){
       h+=`<div class="p3h-edit-bar">`
         +`<button class="et" onmousedown="ec(event,'bold')"><b>B</b></button>`
         +`<button class="et" onmousedown="ec(event,'italic')"><i>I</i></button>`
+        +`<button class="et" onmousedown="ec(event,'underline')" title="Underline"><u>U</u></button>`
+        +`<button class="et" onmousedown="ec(event,'strikeThrough')" title="Strikethrough"><s>S</s></button>`
         +`<button class="et" onmousedown="edMarkDone(event)" title="Mark done — dim/grey this line, toggle">✓</button>`
+        +`<button class="et" onmousedown="edBoundary(event)" title="Boundary box — frame this paragraph, toggle">▢</button>`
         +`<button class="et" onmousedown="edColorBtn(event)" title="Text & highlight colour">🎨</button>`
+        +`<button class="et" onmousedown="ec(event,'removeFormat')" title="Clear formatting">✗A</button>`
+        +`<div class="esep"></div>`
+        +_alignBtnsHTML()
         +`<div class="esep"></div>`
         +`<button class="et" onmousedown="fb(event,'h1')" style="font-size:12px;font-weight:800">H1</button>`
         +`<button class="et" onmousedown="fb(event,'h2')" style="font-size:11px;font-weight:700">H2</button>`
@@ -2608,6 +2655,12 @@ function saveArt(){
 function doSearch(q){ST.search=q;const x=document.getElementById('sqx');if(x)x.style.display=q?'block':'none';renderTree();}
 function clearSearch(){if(!ST.search)return;ST.search='';const i=document.getElementById('sq');if(i)i.value='';const x=document.getElementById('sqx');if(x)x.style.display='none';renderTree();}
 function ec(ev,cmd){ev.preventDefault();document.execCommand(cmd,false,null);document.getElementById('ed')?.focus();}
+function _alignBtnsHTML(){
+  return '<button class="et" onmousedown="ec(event,\'justifyLeft\')" title="Align left"><span class="al-ic al-l"><span></span><span></span><span></span></span></button>'
+    +'<button class="et" onmousedown="ec(event,\'justifyCenter\')" title="Align center"><span class="al-ic al-c"><span></span><span></span><span></span></span></button>'
+    +'<button class="et" onmousedown="ec(event,\'justifyRight\')" title="Align right"><span class="al-ic al-r"><span></span><span></span><span></span></span></button>'
+    +'<button class="et" onmousedown="ec(event,\'justifyFull\')" title="Justify"><span class="al-ic al-j"><span></span><span></span><span></span></span></button>';
+}
 function fb(ev,tag){
   ev.preventDefault();
   const ed=document.getElementById('ed');if(!ed)return;
@@ -6263,8 +6316,13 @@ function _buildEBSub(g){
     text:[
       '<button class="et" onmousedown="ec(event,\'bold\')"><b>B</b></button>',
       '<button class="et" onmousedown="ec(event,\'italic\')"><i>I</i></button>',
+      '<button class="et" onmousedown="ec(event,\'underline\')" title="Underline"><u>U</u></button>',
+      '<button class="et" onmousedown="ec(event,\'strikeThrough\')" title="Strikethrough"><s>S</s></button>',
       '<button class="et" onmousedown="edMarkDone(event)" title="Mark done (toggle)">\u2713</button>',
+      '<button class="et" onmousedown="edBoundary(event)" title="Boundary box (toggle)">\u25a2</button>',
       '<button class="et" onmousedown="edColorBtn(event)" title="Colour">\ud83c\udfa8</button>',
+      '<button class="et" onmousedown="ec(event,\'removeFormat\')" title="Clear formatting">\u2717A</button>',
+      _alignBtnsHTML(),
     ],
     heads:[
       '<button class="et" onmousedown="fb(event,\'h1\')" style="font-size:12px;font-weight:800">H1</button>',
@@ -7815,6 +7873,17 @@ function _edBlocksInSel(){
   if(hit.length)return hit;
   let n=sel.anchorNode;while(n&&n.parentNode&&n.parentNode!==ed)n=n.parentNode;
   return (n&&n.parentNode===ed&&n.nodeType===1)?[n]:[];
+}
+/* Toggle a bordered/framed "boundary box" around the selected line(s)/block(s). Fully reversible. */
+function edBoundary(ev){
+  if(ev&&ev.preventDefault)ev.preventDefault();
+  const ed=document.getElementById('ed');if(!ed)return;
+  const blocks=_edBlocksInSel();
+  if(!blocks.length){ed.focus();return;}
+  const allBoxed=blocks.every(function(b){return b.classList&&b.classList.contains('tx-boxed');});
+  blocks.forEach(function(b){if(b.classList)b.classList.toggle('tx-boxed',!allBoxed);});
+  ed.focus();
+  _edAutoSave();
 }
 /* Toggle "done" dimming on the selected line(s)/block(s). Fully reversible. */
 function edMarkDone(ev){
@@ -9677,6 +9746,35 @@ function updateUndoRedoBtns(){
 
 /* ── Trash (soft-delete) ─────────────────────────────────────────────── */
 
+/* ── Persistent deletion tombstones ─────────────────────────────────────
+   DB.trash is what the user SEES and can freely clear for tidiness/storage.
+   DB.tombstones is a separate, permanent, tiny {id,deletedAt} log that is
+   NEVER cleared by emptying/permanently-deleting Trash — this is what
+   mergeDB actually relies on to stop a deletion from resurrecting when an
+   older/offline device that never received the delete syncs back in. */
+function _addTombstones(ids,at){
+  if(!DB.tombstones)DB.tombstones=[];
+  const now=at||new Date().toISOString();
+  (Array.isArray(ids)?ids:[ids]).forEach(id=>{
+    if(id==null)return;
+    const t=DB.tombstones.find(x=>x.id===id);
+    if(t){ if(now>t.deletedAt)t.deletedAt=now; }
+    else DB.tombstones.push({id,deletedAt:now});
+  });
+}
+/* Ensure a trash entry's item (+ subtree, for folders) has durable
+   tombstones before it's ever removed from the visible Trash list —
+   covers both new deletions and legacy trash items from before this fix. */
+function _tombstoneTrashEntry(t){
+  if(!t)return;
+  const at=t.deletedAt||new Date().toISOString();
+  const rid=t.item&&t.item.id!=null?t.item.id:t.id;
+  _addTombstones([rid],at);
+  if(t.subtree){
+    _addTombstones((t.subtree.folders||[]).map(f=>f&&f.id),at);
+    _addTombstones((t.subtree.articles||[]).map(a=>a&&a.id),at);
+  }
+}
 function trashFolder(id){
   if(!id) return;
   const ids = descOf(id);
@@ -9688,6 +9786,7 @@ function trashFolder(id){
     .map(a=>JSON.parse(JSON.stringify(a)));
 
   if(!DB.trash) DB.trash=[];
+  const _delAt=new Date().toISOString();
   DB.trash.push({
     id: uid(), type:'folder',
     item: rootF,
@@ -9695,8 +9794,9 @@ function trashFolder(id){
       folders: savedFolders.filter(f=>f.id!==id),
       articles: savedArts
     },
-    deletedAt: new Date().toISOString()
+    deletedAt: _delAt
   });
+  _addTombstones([id,...savedFolders.filter(f=>f.id!==id).map(f=>f.id),...savedArts.map(a=>a.id)],_delAt);
 
   DB.folders = DB.folders.filter(f=>!ids.includes(f.id));
   DB.articles.forEach(a=>{ a.folderIds=a.folderIds.filter(x=>!ids.includes(x)); });
@@ -9708,7 +9808,9 @@ function trashArt(id){
   const art = DB.articles.find(a=>a.id===id);
   if(!art) return;
   if(!DB.trash) DB.trash=[];
-  DB.trash.push({id:uid(), type:'article', item:JSON.parse(JSON.stringify(art)), deletedAt:new Date().toISOString()});
+  const _delAt=new Date().toISOString();
+  DB.trash.push({id:uid(), type:'article', item:JSON.parse(JSON.stringify(art)), deletedAt:_delAt});
+  _addTombstones([id],_delAt);
   DB.articles = DB.articles.filter(a=>a.id!==id);
   if(ST.article===id){ST.article=null;ST.editing=false;}
   persist(); render();
@@ -9760,15 +9862,22 @@ function restoreItem(tid){
   const entry = DB.trash.find(t=>t.id===tid);
   if(!entry){renderTrashModal();return;}
   DB.trash = DB.trash.filter(t=>t.id!==tid);
+  const _now=new Date().toISOString();
+  const _restoredIds=[entry.item&&entry.item.id!=null?entry.item.id:entry.id,
+    ...((entry.subtree?.folders||[]).map(f=>f&&f.id)),
+    ...((entry.subtree?.articles||[]).map(a=>a&&a.id))];
+  if(DB.tombstones)DB.tombstones=DB.tombstones.filter(t=>!_restoredIds.includes(t.id));
 
   if(entry.type==='article'){
     if(!DB.articles.find(a=>a.id===entry.item.id)){
       entry.item.folderIds = entry.item.folderIds.filter(fid=>DB.folders.find(f=>f.id===fid));
+      entry.item.updatedAt=_now;
       DB.articles.push(entry.item);
     }
   } else {
     // Restore root folder
     const rf = entry.item;
+    rf.updatedAt=_now;
     if(rf.parentId && !DB.folders.find(f=>f.id===rf.parentId)){
       rf.parentId=null;
       const sec=[...DB.sections||[]].sort((a,b)=>a.order-b.order)[0];
@@ -9777,6 +9886,7 @@ function restoreItem(tid){
     if(!DB.folders.find(f=>f.id===rf.id)) DB.folders.push(rf);
     // Restore descendant folders
     (entry.subtree?.folders||[]).forEach(f=>{
+      f.updatedAt=_now;
       if(!DB.folders.find(x=>x.id===f.id)) DB.folders.push(f);
     });
     // Restore/re-link articles
@@ -9787,7 +9897,9 @@ function restoreItem(tid){
         saved.folderIds.filter(fid=>restoredIds.includes(fid)).forEach(fid=>{
           if(!live.folderIds.includes(fid)) live.folderIds.push(fid);
         });
+        live.updatedAt=_now;
       } else {
+        saved.updatedAt=_now;
         DB.articles.push(saved);
       }
     });
@@ -9800,6 +9912,8 @@ function restoreItem(tid){
 }
 
 function permDeleteItem(tid){
+  const t=DB.trash.find(x=>x.id===tid);
+  _tombstoneTrashEntry(t);
   DB.trash = DB.trash.filter(t=>t.id!==tid);
   persist(); renderTrashModal();
 }
@@ -9807,6 +9921,7 @@ function permDeleteItem(tid){
 function emptyTrash(){
   if(!DB.trash?.length) return;
   if(!confirm('Permanently delete all items in Trash? This cannot be undone.')) return;
+  DB.trash.forEach(_tombstoneTrashEntry);
   DB.trash=[];
   persist(); renderTrashModal();
 }
@@ -10356,8 +10471,20 @@ function closeP2(){
    One tap to start writing.  Creates a blank article in the "Primary"
    folder (creates the folder if it doesn't exist yet). */
 function quickCapture(){
-  /* 1. Get or create the "Primary" top-level folder */
-  var pf=DB.folders.find(function(f){return f.name==='Primary'&&!f.parentId;});
+  /* 1. Get or create the quick-capture folder.
+     Tracked by a persisted ID (DB.theme.quickCaptureFolderId) so it can
+     never be "lost" — previously this matched by exact name 'Primary',
+     which broke the moment the app's own auto-numbering feature renamed
+     it to "(05) Primary" after any other folder was created, silently
+     creating a fresh duplicate "Primary" folder every single time. */
+  var pf=DB.folders.find(function(f){return f.id===(DB.theme&&DB.theme.quickCaptureFolderId);});
+  if(!pf){
+    /* Tolerant one-time fallback: find a folder literally named "Primary",
+       optionally already auto-numbered like "(05) Primary" — so upgrading
+       from the old buggy behavior reuses the existing folder instead of
+       creating yet another duplicate on top of it. */
+    pf=DB.folders.find(function(f){return !f.parentId&&/^(\(\d+(\.\d+)*\)\s*)?Primary$/.test(f.name);});
+  }
   if(!pf){
     var _sec=DB.sections&&DB.sections.length
       ?[...DB.sections].sort(function(a,b){return a.order-b.order;})[0].id
@@ -10366,6 +10493,8 @@ function quickCapture(){
     pf={id:uid(),name:'Primary',parentId:null,sectionId:_sec,order:_ord};
     DB.folders.push(pf);
   }
+  if(!DB.theme)DB.theme={};
+  DB.theme.quickCaptureFolderId=pf.id;
   /* 2. Create blank article directly (bypass mkArt which requires a title) */
   var _now=new Date().toISOString();
   var art={id:uid(),title:'',content:'',folderIds:[pf.id],
@@ -10667,14 +10796,21 @@ function mergeDB(local, remote){
   ["articles","folders","sections","calEvents","calCategories","noteKinds","noteKindCats","myFavCats"]
     .forEach(k=>{ out[k]=_mergeById(local[k], remote[k], "updatedAt"); });
   out.trash=_mergeById(local.trash, remote.trash, "deletedAt");
+  out.tombstones=_mergeById(local.tombstones, remote.tombstones, "deletedAt");
   out.globalTags=_mergeStrs(local.globalTags, remote.globalTags);
   out.tabs=_mergeStrs(local.tabs, remote.tabs); /* v03.08.01 — tabs are string ids; union-dedupe (were duplicating on every sync via _mergeById) */
   /* reconcile records active on one side but trashed on the other.
      v03.07.01 — key tombstones by the DELETED RECORD id (t.item.id and any
      subtree folder/article ids) instead of the trash entry's own uid, so
-     deletions no longer resurrect on cross-device sync. Now covers folders too. */
+     deletions no longer resurrect on cross-device sync. Now covers folders too.
+     v03.26.01 — ALSO seed from the permanent DB.tombstones log, not just the
+     user-visible Trash list. Previously, emptying/permanently-clearing Trash
+     erased the only record of a deletion, so a stale device that hadn't yet
+     synced that delete would resurrect the item on its next sync. Tombstones
+     now survive Trash being cleared, closing that hole for good. */
   const tomb={};
   const _tadd=(rid,at)=>{ if(rid==null||at==null) return; if(!tomb[rid]||at>tomb[rid]) tomb[rid]=at; };
+  (out.tombstones||[]).forEach(t=>{ if(t&&t.id!=null) _tadd(t.id,t.deletedAt); });
   (out.trash||[]).forEach(t=>{
     if(!t) return; const at=t.deletedAt;
     _tadd(t.item&&t.item.id!=null?t.item.id:t.id, at);
