@@ -3873,6 +3873,16 @@ function renderTabBar(){
 }
 function tabSelect(aid){
   if(ST.article===aid&&!ST.editing)return; /* already viewing */
+  /* "Settle" the note we're leaving into the Tab Bar, so it's never lost —
+     switching via the Tab Bar shouldn't require re-finding a note that
+     wasn't already tabbed/pinned. */
+  if(ST.article&&ST.article!=='cal'&&ST.article!==aid){
+    if(!DB.tabs)DB.tabs=[];
+    if(!DB.tabs.includes(ST.article)&&DB.articles.some(a=>a.id===ST.article)){
+      DB.tabs.push(ST.article);
+      persist();
+    }
+  }
   ST.article=aid;ST.editing=false;
   if(window.innerWidth<1200)showPane('p3');
   renderP3H();renderP3C();renderTabBar();renderP2C();
@@ -7526,11 +7536,17 @@ function _pinPanelInject(){
     panel.ondragover=_pinPanelDragOver;
     panel.ondragleave=_pinPanelDragLeave;
     panel.ondrop=_pinPanelDrop;
+    const _rh=document.createElement('div');_rh.className='pin-resize-h';
+    _rh.onmousedown=_pinStartResize;panel.appendChild(_rh);
+    const _pic=document.createElement('div');_pic.className='pin-inner';panel.appendChild(_pic);
+    const _pw=(DB.theme&&DB.theme.pinPanelWidth)||200;
+    panel.style.width=_pw+'px';
     p3&&p3.appendChild(panel);
   }
   panel.classList.toggle('pin-left',pinSide==='left');
   panel.classList.toggle('pin-right',pinSide==='right');
-  panel.innerHTML=inner;
+  const _pinInner=panel.querySelector('.pin-inner')||panel;
+  _pinInner.innerHTML=inner;
 
   const p3h=document.getElementById('p3h');
   const tb=document.getElementById('tab-bar');
@@ -7543,6 +7559,27 @@ function _pinPanelInject(){
   }
   panel.style.bottom='8px';
   _syncP3CPadding();
+}
+function _pinStartResize(e){
+  if(e.button!==0)return;
+  e.preventDefault();
+  var startX=e.clientX;
+  var panel=document.getElementById('pin-panel');if(!panel)return;
+  var startW=panel.offsetWidth||200;
+  var isLeft=panel.classList.contains('pin-left');
+  function onMove(ev){
+    var nw=Math.max(150,Math.min(420,isLeft?startW+(ev.clientX-startX):startW-(ev.clientX-startX)));
+    panel.style.width=nw+'px';
+    _syncP3CPadding();
+  }
+  function onUp(){
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+    if(!DB.theme)DB.theme={};
+    DB.theme.pinPanelWidth=panel.offsetWidth;persist();
+  }
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
 }
 function _pinPanelDestroy(){
   document.getElementById('pin-panel')?.remove();
@@ -12622,6 +12659,10 @@ document.getElementById('sb').addEventListener('contextmenu', e => {
 
 /* ── Pinned Tabs sidepane (popped-out note only) ─────────────────────────── */
 #pin-panel{position:absolute;width:200px;overflow-y:auto;background:var(--paper);z-index:9}
+.pin-resize-h{position:absolute;top:0;bottom:0;width:6px;cursor:col-resize;z-index:5;background:transparent}
+.pin-resize-h:hover,.pin-resize-h:active{background:rgba(99,102,241,.2)}
+#pin-panel.pin-left .pin-resize-h{right:0}
+#pin-panel.pin-right .pin-resize-h{left:0}
 #pin-panel.pin-left{left:0;border-right:1.5px solid var(--border2)}
 #pin-panel.pin-right{right:0;border-left:1.5px solid var(--border2)}
 #pin-panel.pin-drop-over{background:rgba(99,102,241,.06)}
