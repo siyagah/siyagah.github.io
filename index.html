@@ -7417,13 +7417,78 @@ function _pinPanelToggleSide(){
   persist();
   _pinPanelInject();
 }
-function _pinCardHTML(a){
-  const snip=_wordSnippet(a.content,100);
-  return `<div class="pin-card" onclick="tabSelect('${a.id}')" title="${esc(a.title||'Untitled')}">`
-    +`<div class="pin-card-t">${esc(a.title)||'<em style="color:var(--t3)">Untitled</em>'}`
-    +`<button class="pin-card-x" onclick="event.stopPropagation();unpinTab('${a.id}')" title="Unpin">✕</button></div>`
-    +(snip?`<div class="pin-card-snip">${esc(snip)}</div>`:'')
+/* Parse h1–h4 out of a note's stored HTML (works for ANY note, not just the
+   one currently open in the editor) — each heading also captures the HTML
+   that follows it up to the next heading, for the drill-down preview. */
+function _extractHeadingsFromHTML(html){
+  if(!html)return [];
+  const div=document.createElement('div');
+  div.innerHTML=html;
+  const heads=[];
+  let cur=null;
+  Array.from(div.children).forEach(node=>{
+    const tag=node.tagName;
+    if(tag&&/^H[1-4]$/.test(tag)){
+      cur={level:parseInt(tag[1]),text:node.textContent.trim()||'(Heading)',bodyParts:[]};
+      heads.push(cur);
+    } else if(cur){
+      cur.bodyParts.push(node.outerHTML||node.textContent||'');
+    }
+  });
+  return heads.map(h=>({level:h.level,text:h.text,bodyHtml:h.bodyParts.join('')}));
+}
+function togPinExpand(aid){
+  if(!ST.pinExpand)ST.pinExpand={};
+  ST.pinExpand[aid]=!ST.pinExpand[aid];
+  _pinPanelInject();
+}
+function togPinCardMode(aid){
+  if(!ST.pinCardMode)ST.pinCardMode={};
+  ST.pinCardMode[aid]=!ST.pinCardMode[aid];
+  _pinPanelInject();
+}
+function togPinHeadExpand(aid,idx){
+  if(!ST.pinHeadExpand)ST.pinHeadExpand={};
+  const key=aid+'|h'+idx;
+  ST.pinHeadExpand[key]=!ST.pinHeadExpand[key];
+  _pinPanelInject();
+}
+function _pinHeadsTreeHTML(aid,heads){
+  return heads.map((h,i)=>{
+    const key=aid+'|h'+i;
+    const hOpen=!!(ST.pinHeadExpand&&ST.pinHeadExpand[key]);
+    const snip=_wordSnippet(h.bodyHtml,100);
+    return `<div class="pin-head-item pin-head-l${h.level}">`
+      +`<div class="pin-head-row" onclick="event.stopPropagation();togPinHeadExpand('${aid}',${i})">`
+      +`<span class="pin-exp-arrow-sm">${hOpen?'▾':'▸'}</span><span>${esc(h.text)}</span></div>`
+      +(hOpen?`<div class="pin-head-body">${snip?esc(snip):'<em style="color:var(--t3)">Empty</em>'}</div>`:'')
+      +`</div>`;
+  }).join('');
+}
+function _pinCardHTML(a,isCurrent){
+  const expanded=!!(ST.pinExpand&&ST.pinExpand[a.id]);
+  const cardMode=!!(ST.pinCardMode&&ST.pinCardMode[a.id]);
+  let h=`<div class="pin-card${isCurrent?' pin-current':''}" title="${esc(a.title||'Untitled')}">`;
+  h+=`<div class="pin-card-hd" onclick="togPinExpand('${a.id}')">`
+    +`<span class="pin-exp-arrow">${expanded?'▾':'▸'}</span>`
+    +`<span class="pin-card-t">${esc(a.title)||'<em style="color:var(--t3)">Untitled</em>'}${isCurrent?' <span class="pin-current-tag">current</span>':''}</span>`
+    +(isCurrent?'':`<button class="pin-card-x" onclick="event.stopPropagation();unpinTab('${a.id}')" title="Unpin">✕</button>`)
     +`</div>`;
+  if(expanded){
+    const heads=cardMode?[]:_extractHeadingsFromHTML(a.content);
+    h+='<div class="pin-card-body">';
+    h+=`<div class="pin-mode-row"><span class="pin-mode-tog" onclick="event.stopPropagation();togPinCardMode('${a.id}')">`
+      +`${cardMode?'📑 Show headings':'🗂 Show as card'}</span></div>`;
+    if(!cardMode&&heads.length){
+      h+=_pinHeadsTreeHTML(a.id,heads);
+    } else {
+      const snip=_wordSnippet(a.content,100);
+      h+=snip?`<div class="pin-card-snip">${esc(snip)}</div>`:'<div class="pin-card-snip"><em style="color:var(--t3)">No content yet…</em></div>';
+    }
+    h+=`<div class="pin-open-row" onclick="event.stopPropagation();tabSelect('${a.id}')">Open note →</div>`;
+    h+='</div>';
+  }
+  return h+'</div>';
 }
 function _pinPanelInject(){
   if(!ST.noteModal){document.getElementById('pin-panel')?.remove();return;}
@@ -7438,12 +7503,19 @@ function _pinPanelInject(){
   const ids=DB.theme.pinTabIds.filter(id=>DB.articles.some(a=>a.id===id));
   if(ids.length!==DB.theme.pinTabIds.length){DB.theme.pinTabIds=ids;persist();}
 
-  let inner='<div class="pin-hd"><span>📌 Pinned</span>'
+  let inner='<div class="pin-hd"><span>📌 Sidepane</span>'
     +`<button class="pin-side-btn" onclick="_pinPanelToggleSide()" title="${pos==='side'?'Move below Contents':'Move to opposite side'}">${pos==='side'?'⬇':'◫'}</button></div>`;
-  if(!ids.length){
-    inner+='<div class="pin-empty">Drag a tab here to pin it alongside this note</div>';
+
+  /* The currently-open note always appears first, so its headings are
+     browsable the same way as pinned notes — deduped if it's ALSO pinned. */
+  const curArt=(ST.article&&ST.article!=='cal')?DB.articles.find(a=>a.id===ST.article):null;
+  if(curArt)inner+=_pinCardHTML(curArt,true);
+
+  const others=ids.filter(id=>!curArt||id!==curArt.id);
+  if(!others.length){
+    inner+='<div class="pin-empty">Drag a tab here (or tap 📌 on a tab) to pin it alongside this note</div>';
   } else {
-    ids.forEach(id=>{const a=DB.articles.find(x=>x.id===id);if(a)inner+=_pinCardHTML(a);});
+    others.forEach(id=>{const a=DB.articles.find(x=>x.id===id);if(a)inner+=_pinCardHTML(a,false);});
   }
 
   let panel=document.getElementById('pin-panel');
@@ -12556,12 +12628,31 @@ document.getElementById('sb').addEventListener('contextmenu', e => {
 #pin-panel .pin-hd{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;padding:12px 14px 8px;border-bottom:1px solid var(--border2);margin-bottom:4px}
 #pin-panel .pin-side-btn{background:none;border:none;cursor:pointer;color:var(--t3);font-size:12px;padding:2px 4px;border-radius:4px;line-height:1;flex-shrink:0}
 #pin-panel .pin-empty{padding:16px 14px;font-size:12px;color:var(--t3);text-align:center;line-height:1.5;border:1.5px dashed var(--border2);border-radius:var(--rl);margin:0 10px}
-.pin-card{margin:0 8px 8px;padding:10px 11px;border:1px solid var(--border2);border-radius:var(--rl);cursor:pointer;background:var(--white);transition:box-shadow .12s,border-color .12s}
-.pin-card:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.pin-card .pin-card-t{font-size:12.5px;font-weight:600;color:var(--t1);white-space:normal;word-break:break-word;line-height:1.4;padding-right:16px;position:relative}
-.pin-card .pin-card-x{position:absolute;top:0;right:0;background:none;border:none;cursor:pointer;color:var(--t3);font-size:12px;padding:2px;line-height:1}
-.pin-card .pin-card-x:hover{color:var(--t1)}
-.pin-card .pin-card-snip{font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:5px;white-space:normal;word-break:break-word}
+.pin-card{margin:0 8px 8px;border:1px solid var(--border2);border-radius:var(--rl);background:var(--white);transition:box-shadow .12s,border-color .12s}
+.pin-card:hover{border-color:var(--accent)}
+.pin-card.pin-current{border-color:var(--forest,var(--accent));background:var(--paper2,var(--paper))}
+.pin-card-hd{display:flex;align-items:center;gap:6px;padding:9px 10px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.pin-exp-arrow{font-size:10px;color:var(--t3);flex-shrink:0;min-width:10px}
+.pin-card-t{font-size:12.5px;font-weight:600;color:var(--t1);white-space:normal;word-break:break-word;line-height:1.4;flex:1}
+.pin-current-tag{font-size:9.5px;font-weight:600;color:var(--forest,var(--accent));text-transform:uppercase;letter-spacing:.04em;margin-left:4px}
+.pin-card-x{background:none;border:none;cursor:pointer;color:var(--t3);font-size:12px;padding:2px;line-height:1;flex-shrink:0}
+.pin-card-x:hover{color:var(--t1)}
+.pin-card-body{padding:0 10px 10px 26px}
+.pin-mode-row{margin-bottom:6px}
+.pin-mode-tog{font-size:10.5px;color:var(--accent);cursor:pointer;user-select:none;-webkit-user-select:none}
+.pin-mode-tog:hover{text-decoration:underline}
+.pin-card-snip{font-size:11.5px;color:var(--t3);line-height:1.45;white-space:normal;word-break:break-word}
+.pin-open-row{font-size:10.5px;color:var(--accent);cursor:pointer;margin-top:7px;user-select:none;-webkit-user-select:none}
+.pin-open-row:hover{text-decoration:underline}
+.pin-head-item{margin:2px 0}
+.pin-head-row{display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11.5px;color:var(--t2);padding:3px 0;user-select:none;-webkit-user-select:none;line-height:1.35}
+.pin-head-row:hover{color:var(--t1)}
+.pin-exp-arrow-sm{font-size:9px;color:var(--t3);flex-shrink:0;min-width:9px}
+.pin-head-l1{font-weight:600}
+.pin-head-l2{padding-left:10px}
+.pin-head-l3{padding-left:20px;font-size:11px}
+.pin-head-l4{padding-left:30px;font-size:10.5px}
+.pin-head-body{font-size:11px;color:var(--t3);line-height:1.45;padding:2px 0 4px 14px;white-space:normal;word-break:break-word}
 </style>
 <!-- ── Reminder Modal ─────────────────────────────────────────────────────── -->
 <div id="rem-modal" onclick="if(event.target===this)closeReminderModal()">
