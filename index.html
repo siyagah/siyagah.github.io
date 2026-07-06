@@ -1853,6 +1853,11 @@ function mkDefaults(){
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const strip=h=>h.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+function _wordSnippet(html,n){
+  const words=strip(html||'').split(' ').filter(Boolean);
+  if(!words.length)return '';
+  return words.slice(0,n).join(' ')+(words.length>n?'…':'');
+}
 const fmtD=d=>new Date(d).toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'});
 const fmtDs=d=>{
   const dt=new Date(d);
@@ -2553,7 +2558,7 @@ function renderP3C(){
        from #ti and instantly dismisses the on-screen keyboard. */
     if(document.activeElement?.id!=='ti')ed.focus();
     /* TOC panel in pop-out edit mode */
-    if(ST.noteModal)setTimeout(_tocInject,50);
+    if(ST.noteModal){setTimeout(_tocInject,50);setTimeout(_pinPanelInject,55);}
     return;
   }
   if(curA){
@@ -2581,7 +2586,7 @@ function renderP3C(){
     }
     if(ST.mrjQ&&ST.mrjIdx<ST.mrjQ.length&&ST.article===ST.mrjQ[ST.mrjIdx])
       el.insertAdjacentHTML('beforeend',_mrjRenderFooter());
-    if(ST.noteModal)setTimeout(_tocInject,30);
+    if(ST.noteModal){setTimeout(_tocInject,30);setTimeout(_pinPanelInject,35);}
     else if(window.innerWidth<900)_tocMobileCheck();
     return;
   }
@@ -3856,9 +3861,11 @@ function renderTabBar(){
     const on=ST.article===id?' on':'';
     const _tbc=a.tabColor||'';
     return `<div class="tab-it${on}" style="${_tbc?`border-bottom:3px solid ${_tbc}`:''}"` +
+           ` draggable="true" ondragstart="pinTabDStart(event,'${id}')"` +
            ` onclick="tabSelect('${id}')" oncontextmenu="event.preventDefault();event.stopPropagation();openTabClrPicker(event,'${id}')"` +
            ` title="${esc(a.title||'Untitled')}">`
       +`<span class="tab-lbl" ${_tbc?`style="color:${_tbc}"`:''}>${esc(lbl)}</span>`
+      +`<button class="tab-x" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();pinTabToPanel('${id}')" title="Pin to sidepane">📌</button>`
       +`<button class="tab-x" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();closeTab('${id}')" title="Close tab">✕</button>`
       +'</div>';
   }).filter(Boolean).join('')
@@ -6180,6 +6187,7 @@ function openNoteModal(){
   });
   renderP3H();
   setTimeout(_tocInject,60);
+  setTimeout(_pinPanelInject,65);
 }
 function closeNoteModal(){
   /* Save position/size so next open restores it */
@@ -6192,6 +6200,7 @@ function closeNoteModal(){
     persist();
   }
   _tocDestroy();
+  _pinPanelDestroy();
   ST.noteModal=false;_mDrag=null;
   document.removeEventListener('mousemove',_modalDragMove);
   const p3=document.getElementById('p3');
@@ -7200,7 +7209,7 @@ function _tocInject(){
   const existing=document.getElementById('toc-panel');
   if(heads.length<3){
     if(existing){existing.remove();p3&&p3.classList.remove('has-toc');}
-    _tocUnbindScroll();return;
+    _tocUnbindScroll();_syncP3CPadding();return;
   }
   const _tocSideLbl=(DB.theme&&DB.theme.tocSide==='left')?'▶':'◄';
   let inner='<div class="toc-hd"><span>Contents</span>'+'<button class="toc-side-btn" onclick="_tocToggleSide()" title="Move panel to other side">'+_tocSideLbl+'</button></div>';
@@ -7241,6 +7250,7 @@ function _tocInject(){
     ed._tocBound=true;
   }
   _tocSetActive(0);
+  _syncP3CPadding();
 }
 
 function _tocBindScroll(){
@@ -7322,6 +7332,7 @@ function _tocToggleSide(){
   const _twt=(DB.theme&&DB.theme.tocWidth)||212;
   if(_p3ct){if(goLeft){_p3ct.style.paddingLeft=_twt+'px';_p3ct.style.paddingRight='';}
     else{_p3ct.style.paddingRight=_twt+'px';_p3ct.style.paddingLeft='';}}
+  _pinPanelInject(); /* pin-panel may need to flip sides too, if it's in 'opposite side' mode */
 }
 function _tocStartResize(e){
   if(e.button!==0)return;
@@ -7334,8 +7345,7 @@ function _tocStartResize(e){
   function onMove(ev){
     var nw=Math.max(120,Math.min(460,isLeft?startW+(ev.clientX-startX):startW-(ev.clientX-startX)));
     panel.style.width=nw+'px';
-    var p3c=document.getElementById('p3c');
-    if(p3c){if(isLeft)p3c.style.paddingLeft=nw+'px';else p3c.style.paddingRight=nw+'px';}
+    _syncP3CPadding();
   }
   function onUp(){
     document.removeEventListener('mousemove',onMove);
@@ -7355,7 +7365,132 @@ function _tocDestroy(){
   _tocUnbindScroll();
   _tocCloseMobile();
   document.getElementById('toc-float-btn')?.remove();
+  _syncP3CPadding();
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PINNED TABS SIDEPANE — drag any Tab Bar note into a side panel next to
+   the popped-out note, so you can jump between related notes without
+   leaving the pop-out. Independent of, and coexists with, the TOC panel:
+   user picks whether it sits on the opposite side of TOC, or stacked
+   below it on the same side. Desktop/tablet only (note pop-out itself
+   is gated to window.innerWidth>=900 already). ─────────────────────────── */
+let _pinDragAid=null;
+function pinTabDStart(ev,aid){
+  _pinDragAid=aid;
+  try{ev.dataTransfer.effectAllowed='copy';ev.dataTransfer.setData('text/plain',aid);}catch(e){}
+}
+function _pinPanelDragOver(ev){
+  ev.preventDefault();
+  document.getElementById('pin-panel')?.classList.add('pin-drop-over');
+}
+function _pinPanelDragLeave(ev){
+  document.getElementById('pin-panel')?.classList.remove('pin-drop-over');
+}
+function _pinPanelDrop(ev){
+  ev.preventDefault();
+  document.getElementById('pin-panel')?.classList.remove('pin-drop-over');
+  /* Accept a dragged Tab Bar item OR a dragged pane-2 article card */
+  const aid=_pinDragAid||_artDragId||(function(){try{return ev.dataTransfer.getData('text/plain');}catch(e){return null;}})();
+  _pinDragAid=null;
+  if(aid)pinTabToPanel(aid);
+}
+function pinTabToPanel(aid){
+  if(!DB.theme)DB.theme={};
+  if(!DB.theme.pinTabIds)DB.theme.pinTabIds=[];
+  if(!DB.articles.find(a=>a.id===aid))return;
+  if(DB.theme.pinTabIds.includes(aid)){toast('📌 Already pinned');return;}
+  DB.theme.pinTabIds.push(aid);
+  persist();
+  _pinPanelInject();
+  toast('📌 Pinned to sidepane');
+}
+function unpinTab(aid){
+  if(!DB.theme?.pinTabIds)return;
+  DB.theme.pinTabIds=DB.theme.pinTabIds.filter(x=>x!==aid);
+  persist();
+  _pinPanelInject();
+}
+function _pinPanelToggleSide(){
+  if(!DB.theme)DB.theme={};
+  DB.theme.pinPanelPos=(DB.theme.pinPanelPos==='side')?'below':'side';
+  persist();
+  _pinPanelInject();
+}
+function _pinCardHTML(a){
+  const snip=_wordSnippet(a.content,100);
+  return `<div class="pin-card" onclick="tabSelect('${a.id}')" title="${esc(a.title||'Untitled')}">`
+    +`<div class="pin-card-t">${esc(a.title)||'<em style="color:var(--t3)">Untitled</em>'}`
+    +`<button class="pin-card-x" onclick="event.stopPropagation();unpinTab('${a.id}')" title="Unpin">✕</button></div>`
+    +(snip?`<div class="pin-card-snip">${esc(snip)}</div>`:'')
+    +`</div>`;
+}
+function _pinPanelInject(){
+  if(!ST.noteModal){document.getElementById('pin-panel')?.remove();return;}
+  if(!DB.theme)DB.theme={};
+  if(!DB.theme.pinTabIds)DB.theme.pinTabIds=[];
+  const pos=DB.theme.pinPanelPos==='side'?'side':'below'; /* default: below */
+  const tocLeft=document.getElementById('p3')?.classList.contains('toc-left');
+  const tocSide=tocLeft?'left':'right';
+  /* 'side' = opposite of wherever TOC currently is; 'below' = same side, stacked under it */
+  const pinSide=pos==='side'?(tocSide==='left'?'right':'left'):tocSide;
+
+  const ids=DB.theme.pinTabIds.filter(id=>DB.articles.some(a=>a.id===id));
+  if(ids.length!==DB.theme.pinTabIds.length){DB.theme.pinTabIds=ids;persist();}
+
+  let inner='<div class="pin-hd"><span>📌 Pinned</span>'
+    +`<button class="pin-side-btn" onclick="_pinPanelToggleSide()" title="${pos==='side'?'Move below Contents':'Move to opposite side'}">${pos==='side'?'⬇':'◫'}</button></div>`;
+  if(!ids.length){
+    inner+='<div class="pin-empty">Drag a tab here to pin it alongside this note</div>';
+  } else {
+    ids.forEach(id=>{const a=DB.articles.find(x=>x.id===id);if(a)inner+=_pinCardHTML(a);});
+  }
+
+  let panel=document.getElementById('pin-panel');
+  const p3=document.getElementById('p3');
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='pin-panel';
+    panel.ondragover=_pinPanelDragOver;
+    panel.ondragleave=_pinPanelDragLeave;
+    panel.ondrop=_pinPanelDrop;
+    p3&&p3.appendChild(panel);
+  }
+  panel.classList.toggle('pin-left',pinSide==='left');
+  panel.classList.toggle('pin-right',pinSide==='right');
+  panel.innerHTML=inner;
+
+  const p3h=document.getElementById('p3h');
+  const tb=document.getElementById('tab-bar');
+  const baseTop=(p3h?p3h.offsetHeight:48)+(tb?tb.offsetHeight:32);
+  if(pos==='below'){
+    const toc=document.getElementById('toc-panel');
+    panel.style.top=(baseTop+(toc?toc.offsetHeight:0))+'px';
+  } else {
+    panel.style.top=baseTop+'px';
+  }
+  panel.style.bottom='8px';
+  _syncP3CPadding();
+}
+function _pinPanelDestroy(){
+  document.getElementById('pin-panel')?.remove();
+  _syncP3CPadding();
+}
+/* Recompute #p3c side padding from whichever of TOC / Pinned panels are
+   currently present — keeps the note body from ever rendering underneath
+   either sidepane, regardless of which combination is showing. */
+function _syncP3CPadding(){
+  const p3c=document.getElementById('p3c');if(!p3c)return;
+  const toc=document.getElementById('toc-panel');
+  const pin=document.getElementById('pin-panel');
+  const p3=document.getElementById('p3');
+  let left=0,right=0;
+  if(toc){ if(p3&&p3.classList.contains('toc-left'))left+=toc.offsetWidth; else right+=toc.offsetWidth; }
+  if(pin){ if(pin.classList.contains('pin-left'))left+=pin.offsetWidth; else right+=pin.offsetWidth; }
+  p3c.style.paddingLeft=left?left+'px':'';
+  p3c.style.paddingRight=right?right+'px':'';
+}
+
 
 /* ── Mobile TOC ── */
 function _tocMobileCheck(){
@@ -12412,6 +12547,21 @@ document.getElementById('sb').addEventListener('contextmenu', e => {
 .toc-resize-h:hover,.toc-resize-h:active{background:rgba(99,102,241,.2)}
 #p3.toc-right .toc-resize-h{left:0}
 #p3.toc-left .toc-resize-h{right:0}
+
+/* ── Pinned Tabs sidepane (popped-out note only) ─────────────────────────── */
+#pin-panel{position:absolute;width:200px;overflow-y:auto;background:var(--paper);z-index:9}
+#pin-panel.pin-left{left:0;border-right:1.5px solid var(--border2)}
+#pin-panel.pin-right{right:0;border-left:1.5px solid var(--border2)}
+#pin-panel.pin-drop-over{background:rgba(99,102,241,.06)}
+#pin-panel .pin-hd{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;padding:12px 14px 8px;border-bottom:1px solid var(--border2);margin-bottom:4px}
+#pin-panel .pin-side-btn{background:none;border:none;cursor:pointer;color:var(--t3);font-size:12px;padding:2px 4px;border-radius:4px;line-height:1;flex-shrink:0}
+#pin-panel .pin-empty{padding:16px 14px;font-size:12px;color:var(--t3);text-align:center;line-height:1.5;border:1.5px dashed var(--border2);border-radius:var(--rl);margin:0 10px}
+.pin-card{margin:0 8px 8px;padding:10px 11px;border:1px solid var(--border2);border-radius:var(--rl);cursor:pointer;background:var(--white);transition:box-shadow .12s,border-color .12s}
+.pin-card:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.pin-card .pin-card-t{font-size:12.5px;font-weight:600;color:var(--t1);white-space:normal;word-break:break-word;line-height:1.4;padding-right:16px;position:relative}
+.pin-card .pin-card-x{position:absolute;top:0;right:0;background:none;border:none;cursor:pointer;color:var(--t3);font-size:12px;padding:2px;line-height:1}
+.pin-card .pin-card-x:hover{color:var(--t1)}
+.pin-card .pin-card-snip{font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:5px;white-space:normal;word-break:break-word}
 </style>
 <!-- ── Reminder Modal ─────────────────────────────────────────────────────── -->
 <div id="rem-modal" onclick="if(event.target===this)closeReminderModal()">
