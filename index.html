@@ -2138,9 +2138,11 @@ function renderP2H(){
       'sf-murajaa':`<button class="btn bp p2-new-btn" onclick="mrjStart()" title="Start Murājaʿah review session">▶ Review</button>`,
     };
     const _sfBtn=_sfNewBtns[_sfDef.id]||newBtn;
+    const _mwCatBtn=_sfDef.id==='sf-mywall'
+      ?`<button class="btn bn p2-new-btn" onclick="addNtiCat()" title="Add a new Note-Type category">📁 Category</button>`:'';
     el.innerHTML=ham
       +`<span class="tbt" style="flex:1;min-width:0;overflow:hidden">${_sfDef.icon} ${esc(_sfDef.name)}</span>`
-      +_sfBtn+previewBtn+cls;
+      +_sfBtn+_mwCatBtn+previewBtn+cls;
     return;
   }
   const ham=window.innerWidth<1200
@@ -2154,6 +2156,7 @@ function renderP2H(){
       +`<span class="nti-dot" style="background:${k.color};margin-left:2px"></span>`
       +`<span class="tbt" style="flex:1;min-width:0;overflow:hidden">${esc(k.name)}</span>`
       +newBtn+previewBtn
+      +`<button class="btn bn bi" onclick="backToMyWallCat('${k.catId||'cat-general'}')" style="font-size:12px" title="Back to MyWALL — opens this Note-Type's category">🧱⬅</button>`
       +`<button class="btn bn bi" onclick="selKind(null)" style="font-size:13px" title="Clear type filter">✕</button>`
       +cls;
     return;
@@ -3221,10 +3224,10 @@ function renderMyWallSubfolder(curF){
     const kinds=kindsInCat(cat.id).filter(k=>byKind[k.id]&&byKind[k.id].length).sort(_sortKinds);
     if(!kinds.length)return; /* categories with nothing here are hidden entirely */
     const catKey=curF.id+'|cat|'+cat.id;
-    const catOpen=ST.mwSubCatOpen[catKey]===true; /* default CLOSED */
+    const catOpen=ST.mwSubCatOpen[catKey]!==undefined?ST.mwSubCatOpen[catKey]===true:!!(DB.theme&&DB.theme.mwCatDefaultOpen);
     h+=`<div class="mwsub-cat-hd" onclick="togMwSubCat('${curF.id}','${cat.id}')" oncontextmenu="event.preventDefault();showNtiCatMenu(event,'${cat.id}','')" role="button">`
       +`<span class="mw-tog">${catOpen?'▾':'▸'}</span>`
-      +`<span>${esc(cat.icon||'📝')}</span> <span style="${cat.color?`color:${cat.color}`:''}">${esc(cat.name)}</span></div>`;
+      +`<span>${esc(cat.icon||'📝')}</span> <span style="${catTextStyle(cat)}">${esc(cat.name)}</span></div>`;
     if(!catOpen)return;
 
     kinds.forEach(k=>{
@@ -4363,7 +4366,7 @@ function newJournalEventForNote(aid){
 }
 function togNtiCat(catId){if(!ST.ntiCatOpen)ST.ntiCatOpen={};ST.ntiCatOpen[catId]=!(ST.ntiCatOpen[catId]!==false);const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
 function _ctxPos(m,ev){m.style.display='block';const vw=window.innerWidth,vh=window.innerHeight;let x=ev.clientX,y=ev.clientY;setTimeout(()=>{const mw=m.offsetWidth,mh=m.offsetHeight;if(x+mw>vw)x=vw-mw-4;if(y+mh>vh)y=vh-mh-4;m.style.left=x+'px';m.style.top=y+'px';},0);}
-function addNtiCat(){const name=prompt('Category name:');if(!name?.trim())return;const icon=prompt('Icon (emoji):','📝')||'📝';if(!DB.noteKindCats)DB.noteKindCats=[];const id='cat-'+uid();DB.noteKindCats.push({id,name:name.trim(),icon,order:DB.noteKindCats.length});persist();renderTree();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
+function addNtiCat(){const name=prompt('Category name:');if(!name?.trim())return;const icon=prompt('Icon (emoji):','📝')||'📝';if(!DB.noteKindCats)DB.noteKindCats=[];const id='cat-'+uid();DB.noteKindCats.push({id,name:name.trim(),icon,order:DB.noteKindCats.length});persist();renderTree();renderP2C();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid);toast('📁 Category "'+name.trim()+'" created — find it in the sidebar under Note Types, or in the 🏷 TYPE picker while editing a note. Add a Note-Type to it and it will appear on MyWALL automatically.');}
 function openCatClrPicker(ev,catId){
   hideCtx();
   const cat=noteKindCats().find(c=>c.id===catId);
@@ -4373,7 +4376,17 @@ function openCatClrPicker(ev,catId){
       if(p&&p.dataset.aid)p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
   });
 }
-function showNtiCatMenu(ev,catId,aid){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;const m=document.getElementById('ctx');m.innerHTML=`<div class="ci" onclick="renNtiCat('${catId}','${aid}')">✏ Rename</div><div class="ci" onclick="openCatClrPicker(event,'${catId}')">🎨 Change colour</div><div class="csep"></div><div class="ci d" onclick="delNtiCat('${catId}','${aid}')">🗑 Delete</div>`;_ctxPos(m,ev);}
+function catTextStyle(cat){
+  const parts=[];
+  if(cat.color)parts.push('color:'+cat.color);
+  if(cat.bold)parts.push('font-weight:800');
+  const sizePx={sm:'',md:'13px',lg:'15px'}[cat.fontSize||'sm'];
+  if(sizePx)parts.push('font-size:'+sizePx);
+  return parts.join(';');
+}
+function toggleNtiCatBold(catId){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;cat.bold=!cat.bold;persist();renderTree();renderP2C();}
+function setNtiCatSize(catId,sz){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;cat.fontSize=sz;persist();renderTree();renderP2C();}
+function showNtiCatMenu(ev,catId,aid){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;const m=document.getElementById('ctx');m.innerHTML=`<div class="ci" onclick="renNtiCat('${catId}','${aid}')">✏ Rename</div><div class="ci" onclick="openCatClrPicker(event,'${catId}')">🎨 Change colour</div><div class="ci" onclick="toggleNtiCatBold('${catId}')">${cat.bold?'☑':'☐'} Bold</div><div class="csep"></div><div class="ci" style="cursor:default;opacity:.65;font-size:11px;padding:4px 12px 0">Text size</div><div class="ci" onclick="setNtiCatSize('${catId}','sm')">${(!cat.fontSize||cat.fontSize==='sm')?'●':'○'} Small</div><div class="ci" onclick="setNtiCatSize('${catId}','md')">${cat.fontSize==='md'?'●':'○'} Medium</div><div class="ci" onclick="setNtiCatSize('${catId}','lg')">${cat.fontSize==='lg'?'●':'○'} Large</div><div class="csep"></div><div class="ci d" onclick="delNtiCat('${catId}','${aid}')">🗑 Delete</div>`;_ctxPos(m,ev);}
 function renNtiCat(catId,aid){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;const name=prompt('New name:',cat.name);if(!name?.trim()||name.trim()===cat.name)return;cat.name=name.trim();persist();renderTree();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
 function delNtiCat(catId,aid){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;if(catId==='cat-general'){toast('⚠ Cannot delete General');return;}if(!confirm(`Delete "${cat.name}"?
 Its types move to General.`))return;noteKinds().forEach(k=>{if((k.catId||'cat-general')===catId)k.catId='cat-general';});DB.noteKindCats=DB.noteKindCats.filter(c=>c.id!==catId);persist();renderTree();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid||aid);}
@@ -9306,6 +9319,11 @@ function toggleTagPanel(){
    Surfaces the existing note-kind engine in the sidebar: tap a type to filter
    the note list to that type; right-click / long-press for rename / colour /
    move-to-group / delete. Groups (categories) get add / rename / delete. */
+function backToMyWallCat(catId){
+  if(!ST.mwCatOpen)ST.mwCatOpen={};
+  if(catId)ST.mwCatOpen[catId]=true; /* ensure the relevant category is expanded on arrival */
+  selFolder('sf-mywall');
+}
 function selKind(kindId){
   if(ST.editing)saveArt();
   ST.kind=(ST.kind===kindId)?null:kindId;
@@ -9329,7 +9347,7 @@ function renderNTISection(){
         +`onclick="togNtiCatSB('${cat.id}')" oncontextmenu="showNtiCatMenu(event,'${cat.id}','')">`
         +`<span class="tr-tog">${co?'▾':'▸'}</span>`
         +`<span class="tr-ico" style="font-size:11px">${esc(cat.icon||'📝')}</span>`
-        +`<span class="tr-name">${esc(cat.name)}</span>`
+        +`<span class="tr-name" style="${catTextStyle(cat)}">${esc(cat.name)}</span>`
         +`<span class="sec-acts">`
         +`<span class="sec-act" onclick="event.stopPropagation();addKindInCat('','${cat.id}')" title="Add type">＋</span>`
         +`<span class="sec-act" onclick="event.stopPropagation();showNtiCatMenu(event,'${cat.id}','')" title="Options">⋯</span>`
@@ -11546,10 +11564,31 @@ function kindBarHTML(a){
 
 /* Title-pane render for the MyWall smart view: one collapsible sub-folder
    per character, with a backlog badge and "untouched N days" on nag notes */
+function mwCatIsOpen(catId){
+  if(ST.mwCatOpen&&ST.mwCatOpen[catId]!==undefined)return ST.mwCatOpen[catId]===true;
+  return !!(DB.theme&&DB.theme.mwCatDefaultOpen);
+}
+function mwToggleAllCats(){
+  if(!ST.mwCatOpen)ST.mwCatOpen={};
+  const cats=noteKindCats();
+  const anyClosed=cats.some(c=>!mwCatIsOpen(c.id));
+  cats.forEach(c=>{ST.mwCatOpen[c.id]=anyClosed;});
+  if(!DB.theme)DB.theme={};
+  DB.theme.mwCatDefaultOpen=anyClosed; /* remember as the preference for next time MyWALL opens */
+  persist();
+  renderP2C();
+}
+function mwToggleViewMode(){
+  if(!DB.theme)DB.theme={};
+  DB.theme.mwViewMode=(DB.theme.mwViewMode==='preview')?'compact':'preview';
+  persist();
+  renderP2C();
+}
 function renderMyWall(sf){
   const dispName=(DB.sfItems?.[sf.id]?.name)||sf.name;
   if(!ST.sfGrpOpen)ST.sfGrpOpen={};
   if(!ST.mwCatOpen)ST.mwCatOpen={};
+  const mwPreview=DB.theme?.mwViewMode==='preview';
 
   /* Only notes that are neither Finished nor Archived */
   const pendingArts=DB.articles.filter(isMyWallNote);
@@ -11559,7 +11598,11 @@ function renderMyWall(sf){
   const _mwSzCls=_mwSz!=='sm'?' mw-sz-'+_mwSz:'';
   let h='<div class="fv'+_mwSzCls+'">'+`<div class="slbl">${sf.icon} ${esc(dispName)} `
     +(total?`<span class="wall-badge">${total} pending</span>`
-           :`<span class="wall-badge wall-clear">all clear ✓</span>`)+`</div>`;
+           :`<span class="wall-badge wall-clear">all clear ✓</span>`)
+    +`<span style="float:right;display:flex;gap:4px">`
+    +`<button class="btn bn" style="font-size:10.5px;padding:2px 6px" onclick="mwToggleAllCats()" title="Expand or collapse every category">⇅ All</button>`
+    +`<button class="btn bn" style="font-size:10.5px;padding:2px 6px" onclick="mwToggleViewMode()" title="Compact = category/type names only · Preview = peek the top note under each type">${mwPreview?'👁 Preview':'▤ Compact'}</button>`
+    +`</span></div>`;
 
   h+=_renderComingUp();
   if(!total){
@@ -11585,7 +11628,7 @@ function renderMyWall(sf){
     const kinds=kindsInCat(cat.id).filter(k=>byKind[k.id]&&byKind[k.id].length).sort(_sortKinds);
     if(!kinds.length)return; /* categories with nothing pending are hidden from MyWALL entirely */
     const catCnt=kinds.reduce((s,k)=>s+(byKind[k.id]||[]).length,0);
-    const cOpen=ST.mwCatOpen[cat.id]===true; /* default CLOSED */
+    const cOpen=mwCatIsOpen(cat.id);
     h+=`<div class="slbl sf-grp sf-grp-hd wall-cat-hd" data-catid="${cat.id}"
       draggable="true"
       ondragstart="wallCatDStart(event,'${cat.id}')"
@@ -11597,7 +11640,7 @@ function renderMyWall(sf){
       onclick="togMwCat('${cat.id}')" role="button">
       <span class="sf-grp-tog">${cOpen?'▾':'▸'}</span>
       <span style="font-size:11px">${esc(cat.icon||'📝')}</span>
-      <span style="${cat.color?`color:${cat.color}`:''}">${esc(cat.name)}</span>
+      <span style="${catTextStyle(cat)}">${esc(cat.name)}</span>
       <span style="font-weight:400">(${catCnt})</span></div>`;
     if(!cOpen)return;
 
@@ -11610,6 +11653,8 @@ function renderMyWall(sf){
       const handle=`<span class="wall-grp-handle" title="Drag to reorder · tap on mobile · right-click for options"
         onclick="event.stopPropagation()"
         ontouchstart="showWallKindCtx(event,'${k.id}')">⠿</span>`;
+      const peek=(mwPreview&&!gOpen&&arr[0])
+        ?`<div class="wall-peek" style="padding-left:44px">→ ${esc((arr[0].title||'Untitled').slice(0,60))}</div>`:'';
       h+=`<div class="slbl sf-grp sf-grp-hd wall-grp-hd" data-kid="${k.id}" style="padding-left:22px"
         draggable="true"
         ondragstart="wallGrpDStart(event,'${k.id}')"
@@ -11620,7 +11665,8 @@ function renderMyWall(sf){
         oncontextmenu="showWallKindCtx(event,'${k.id}')"
         onclick="togSfGrp('${esc(gkey)}')" role="button">`
         +handle
-        +`<span class="sf-grp-tog">${gOpen?'▾':'▸'}</span>${dot}<span style="color:${k.color}">${esc(k.name)}</span> (${arr.length})</div>`;
+        +`<span class="sf-grp-tog">${gOpen?'▾':'▸'}</span>${dot}<span style="color:${k.color}">${esc(k.name)}</span> (${arr.length})</div>`
+        +peek;
       if(gOpen){
         h+='<div class="al">';
         arr.forEach(a=>{h+=artCard(a,ST.article===a.id,true,true);});
@@ -12644,6 +12690,7 @@ document.getElementById('sb').addEventListener('contextmenu', e => {
 .kind-finish{font-size:11.5px;font-weight:700;padding:3px 12px;border:0;border-radius:999px;background:#15803d;color:#fff;cursor:pointer}
 .kind-finish:hover{background:#166534}
 .wall-badge{display:inline-block;font-size:11px;font-weight:600;color:#b45309;background:#fef3c7;padding:1px 9px;border-radius:999px;margin-left:6px;vertical-align:middle}
+.wall-peek{font-size:11.5px;color:var(--t3);padding:2px 12px 6px;font-style:italic;white-space:normal;word-break:break-word}
 .wall-badge.wall-clear{color:#15803d;background:#dcfce7}
 .wall-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 7px 0 2px;vertical-align:middle}
 .wall-pending{font-size:10.5px;font-weight:600;color:#b45309;background:#fef3c7;padding:1px 8px;border-radius:999px;margin-left:8px}
