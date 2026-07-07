@@ -3221,10 +3221,10 @@ function renderMyWallSubfolder(curF){
     const kinds=kindsInCat(cat.id).filter(k=>byKind[k.id]&&byKind[k.id].length).sort(_sortKinds);
     if(!kinds.length)return; /* categories with nothing here are hidden entirely */
     const catKey=curF.id+'|cat|'+cat.id;
-    const catOpen=ST.mwSubCatOpen[catKey]!==false; /* default OPEN */
-    h+=`<div class="mwsub-cat-hd" onclick="togMwSubCat('${curF.id}','${cat.id}')" role="button">`
+    const catOpen=ST.mwSubCatOpen[catKey]===true; /* default CLOSED */
+    h+=`<div class="mwsub-cat-hd" onclick="togMwSubCat('${curF.id}','${cat.id}')" oncontextmenu="event.preventDefault();showNtiCatMenu(event,'${cat.id}','')" role="button">`
       +`<span class="mw-tog">${catOpen?'▾':'▸'}</span>`
-      +`<span>${esc(cat.icon||'📝')}</span> ${esc(cat.name)}</div>`;
+      +`<span>${esc(cat.icon||'📝')}</span> <span style="${cat.color?`color:${cat.color}`:''}">${esc(cat.name)}</span></div>`;
     if(!catOpen)return;
 
     kinds.forEach(k=>{
@@ -3237,7 +3237,7 @@ function renderMyWallSubfolder(curF){
       h+=`<div class="mwsub-hd${isTop?' mw-top':''}" style="padding-left:26px" onclick="togMwSubGrp('${curF.id}','${k.id}')" oncontextmenu="showWallKindCtx(event,'${k.id}')" role="button">`
         +`<span class="mw-tog">${isOpen?'▾':'▸'}</span>`
         +`<span class="mw-dot" style="background:${k.color}"></span>`
-        +esc(k.name)
+        +`<span style="color:${k.color}">${esc(k.name)}</span>`
         +`<span class="mw-cnt">${arr.length}</span>`
         +(relDate?`<span class="mw-rel-date">· ${relDate}</span>`:'')
         +'</div>';
@@ -4364,7 +4364,16 @@ function newJournalEventForNote(aid){
 function togNtiCat(catId){if(!ST.ntiCatOpen)ST.ntiCatOpen={};ST.ntiCatOpen[catId]=!(ST.ntiCatOpen[catId]!==false);const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
 function _ctxPos(m,ev){m.style.display='block';const vw=window.innerWidth,vh=window.innerHeight;let x=ev.clientX,y=ev.clientY;setTimeout(()=>{const mw=m.offsetWidth,mh=m.offsetHeight;if(x+mw>vw)x=vw-mw-4;if(y+mh>vh)y=vh-mh-4;m.style.left=x+'px';m.style.top=y+'px';},0);}
 function addNtiCat(){const name=prompt('Category name:');if(!name?.trim())return;const icon=prompt('Icon (emoji):','📝')||'📝';if(!DB.noteKindCats)DB.noteKindCats=[];const id='cat-'+uid();DB.noteKindCats.push({id,name:name.trim(),icon,order:DB.noteKindCats.length});persist();renderTree();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
-function showNtiCatMenu(ev,catId,aid){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;const m=document.getElementById('ctx');m.innerHTML=`<div class="ci" onclick="renNtiCat('${catId}','${aid}')">✏ Rename</div><div class="csep"></div><div class="ci d" onclick="delNtiCat('${catId}','${aid}')">🗑 Delete</div>`;_ctxPos(m,ev);}
+function openCatClrPicker(ev,catId){
+  hideCtx();
+  const cat=noteKindCats().find(c=>c.id===catId);
+  _showClrPicker(ev,cat?.color||'',hex=>{
+    if(cat&&hex){cat.color=hex;persist();renderTree();renderP2C();
+      const p=document.getElementById('nti-picker');
+      if(p&&p.dataset.aid)p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
+  });
+}
+function showNtiCatMenu(ev,catId,aid){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;const m=document.getElementById('ctx');m.innerHTML=`<div class="ci" onclick="renNtiCat('${catId}','${aid}')">✏ Rename</div><div class="ci" onclick="openCatClrPicker(event,'${catId}')">🎨 Change colour</div><div class="csep"></div><div class="ci d" onclick="delNtiCat('${catId}','${aid}')">🗑 Delete</div>`;_ctxPos(m,ev);}
 function renNtiCat(catId,aid){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;const name=prompt('New name:',cat.name);if(!name?.trim()||name.trim()===cat.name)return;cat.name=name.trim();persist();renderTree();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
 function delNtiCat(catId,aid){hideCtx();const cat=noteKindCats().find(c=>c.id===catId);if(!cat)return;if(catId==='cat-general'){toast('⚠ Cannot delete General');return;}if(!confirm(`Delete "${cat.name}"?
 Its types move to General.`))return;noteKinds().forEach(k=>{if((k.catId||'cat-general')===catId)k.catId='cat-general';});DB.noteKindCats=DB.noteKindCats.filter(c=>c.id!==catId);persist();renderTree();const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid||aid);}
@@ -7222,8 +7231,17 @@ function _tocInject(){
     _tocUnbindScroll();_syncP3CPadding();return;
   }
   const _tocSideLbl=(DB.theme&&DB.theme.tocSide==='left')?'▶':'◄';
+  const curArt=(ST.article&&ST.article!=='cal')?DB.articles.find(a=>a.id===ST.article):null;
+  const titleOpen=ST.tocTitleOpen!==false; /* default OPEN */
   let inner='<div class="toc-hd"><span>Contents</span>'+'<button class="toc-side-btn" onclick="_tocToggleSide()" title="Move panel to other side">'+_tocSideLbl+'</button></div>';
-  heads.forEach(function(h){inner+=_tocItemHTML(h,'_toc');});
+  if(curArt){
+    inner+=`<div class="toc-title-row" onclick="togTocTitle()">`
+      +`<span class="toc-title-arrow">${titleOpen?'▾':'▸'}</span>`
+      +`<span class="toc-title-txt">${esc(curArt.title||'Untitled')}</span></div>`;
+  }
+  if(titleOpen){
+    heads.forEach(function(h){inner+=_tocItemHTML(h,'_toc');});
+  }
   if(existing){
     /* Update content only — preserve the resize handle */
     const _etw=existing.querySelector('div:not(.toc-resize-h)')||existing;
@@ -7246,10 +7264,6 @@ function _tocInject(){
     const _side=DB.theme&&DB.theme.tocSide==='left'?'left':'right';
     p3&&p3.classList.toggle('toc-left',_side==='left');
     p3&&p3.classList.toggle('toc-right',_side==='right');
-    /* Inline #p3c padding based on actual width */
-    const _p3ci=document.getElementById('p3c');
-    if(_p3ci){if(_side==='left'){_p3ci.style.paddingLeft=_tw+'px';_p3ci.style.paddingRight='';}
-      else{_p3ci.style.paddingRight=_tw+'px';_p3ci.style.paddingLeft='';}}
     _tocBindScroll();
   }
   /* Bind editor input → debounced refresh */
@@ -7261,6 +7275,10 @@ function _tocInject(){
   }
   _tocSetActive(0);
   _syncP3CPadding();
+}
+function togTocTitle(){
+  ST.tocTitleOpen=!(ST.tocTitleOpen!==false);
+  _tocInject();
 }
 
 function _tocBindScroll(){
@@ -7337,12 +7355,13 @@ function _tocToggleSide(){
     if(goLeft){panel.style.borderLeft='none';panel.style.borderRight='1.5px solid var(--border2)';}
     else{panel.style.borderRight='none';panel.style.borderLeft='1.5px solid var(--border2)';}
   }
-  /* Sync #p3c padding to current panel width */
-  const _p3ct=document.getElementById('p3c');
-  const _twt=(DB.theme&&DB.theme.tocWidth)||212;
-  if(_p3ct){if(goLeft){_p3ct.style.paddingLeft=_twt+'px';_p3ct.style.paddingRight='';}
-    else{_p3ct.style.paddingRight=_twt+'px';_p3ct.style.paddingLeft='';}}
+  /* Sync #p3c padding to current panel widths — single source of truth,
+     accounts for BOTH panels (previously this set padding using only the
+     TOC panel's own width, which could leave stale/incorrect padding when
+     a pin-panel was also present, causing the note body to render at the
+     wrong width after repositioning). */
   _pinPanelInject(); /* pin-panel may need to flip sides too, if it's in 'opposite side' mode */
+  _syncP3CPadding();
 }
 function _tocStartResize(e){
   if(e.button!==0)return;
@@ -7467,7 +7486,7 @@ function _pinHeadsTreeHTML(aid,heads){
   return heads.map((h,i)=>{
     const key=aid+'|h'+i;
     const hOpen=!!(ST.pinHeadExpand&&ST.pinHeadExpand[key]);
-    const snip=_wordSnippet(h.bodyHtml,100);
+    const snip=strip(h.bodyHtml||'');
     return `<div class="pin-head-item pin-head-l${h.level}">`
       +`<div class="pin-head-row" onclick="event.stopPropagation();togPinHeadExpand('${aid}',${i})">`
       +`<span class="pin-exp-arrow-sm">${hOpen?'▾':'▸'}</span><span>${esc(h.text)}</span></div>`
@@ -7492,7 +7511,7 @@ function _pinCardHTML(a,isCurrent){
     if(!cardMode&&heads.length){
       h+=_pinHeadsTreeHTML(a.id,heads);
     } else {
-      const snip=_wordSnippet(a.content,100);
+      const snip=strip(a.content||'');
       h+=snip?`<div class="pin-card-snip">${esc(snip)}</div>`:'<div class="pin-card-snip"><em style="color:var(--t3)">No content yet…</em></div>';
     }
     h+=`<div class="pin-open-row" onclick="event.stopPropagation();tabSelect('${a.id}')">Open note →</div>`;
@@ -7504,7 +7523,7 @@ function _pinPanelInject(){
   if(!ST.noteModal){document.getElementById('pin-panel')?.remove();return;}
   if(!DB.theme)DB.theme={};
   if(!DB.theme.pinTabIds)DB.theme.pinTabIds=[];
-  const pos=DB.theme.pinPanelPos==='side'?'side':'below'; /* default: below */
+  const pos=DB.theme.pinPanelPos==='below'?'below':'side'; /* default: side (opposite of TOC) */
   const tocLeft=document.getElementById('p3')?.classList.contains('toc-left');
   const tocSide=tocLeft?'left':'right';
   /* 'side' = opposite of wherever TOC currently is; 'below' = same side, stacked under it */
@@ -11566,11 +11585,20 @@ function renderMyWall(sf){
     const kinds=kindsInCat(cat.id).filter(k=>byKind[k.id]&&byKind[k.id].length).sort(_sortKinds);
     if(!kinds.length)return; /* categories with nothing pending are hidden from MyWALL entirely */
     const catCnt=kinds.reduce((s,k)=>s+(byKind[k.id]||[]).length,0);
-    const cOpen=ST.mwCatOpen[cat.id]!==false; /* default OPEN */
+    const cOpen=ST.mwCatOpen[cat.id]===true; /* default CLOSED */
     h+=`<div class="slbl sf-grp sf-grp-hd wall-cat-hd" data-catid="${cat.id}"
+      draggable="true"
+      ondragstart="wallCatDStart(event,'${cat.id}')"
+      ondragend="wallCatDEnd(event)"
+      ondragover="wallCatDOver(event,'${cat.id}')"
+      ondragleave="wallCatDLeave(event,'${cat.id}')"
+      ondrop="wallCatDDrop(event,'${cat.id}')"
+      oncontextmenu="event.preventDefault();showNtiCatMenu(event,'${cat.id}','')"
       onclick="togMwCat('${cat.id}')" role="button">
       <span class="sf-grp-tog">${cOpen?'▾':'▸'}</span>
-      <span style="font-size:11px">${esc(cat.icon||'📝')}</span> ${esc(cat.name)} <span style="font-weight:400">(${catCnt})</span></div>`;
+      <span style="font-size:11px">${esc(cat.icon||'📝')}</span>
+      <span style="${cat.color?`color:${cat.color}`:''}">${esc(cat.name)}</span>
+      <span style="font-weight:400">(${catCnt})</span></div>`;
     if(!cOpen)return;
 
     kinds.forEach(k=>{
@@ -11592,7 +11620,7 @@ function renderMyWall(sf){
         oncontextmenu="showWallKindCtx(event,'${k.id}')"
         onclick="togSfGrp('${esc(gkey)}')" role="button">`
         +handle
-        +`<span class="sf-grp-tog">${gOpen?'▾':'▸'}</span>${dot}${esc(k.name)} (${arr.length})</div>`;
+        +`<span class="sf-grp-tog">${gOpen?'▾':'▸'}</span>${dot}<span style="color:${k.color}">${esc(k.name)}</span> (${arr.length})</div>`;
       if(gOpen){
         h+='<div class="al">';
         arr.forEach(a=>{h+=artCard(a,ST.article===a.id,true,true);});
@@ -11695,6 +11723,65 @@ function togMwCat(catId){
    Mobile (touch-only): tap the ⠿ handle to get a small "Move up /
    Move down" menu via the existing ctx element.              ─────── */
 let _wallDragKid=null;
+let _wallDragCatId=null;
+function wallCatDStart(ev,catId){
+  ev.stopPropagation();
+  _wallDragCatId=catId;
+  ev.dataTransfer.effectAllowed='move';
+  ev.dataTransfer.setData('text','wallcat:'+catId);
+  setTimeout(()=>{
+    document.querySelectorAll('.wall-cat-hd[data-catid="'+catId+'"]')
+      .forEach(el=>el.classList.add('wg-dragging'));
+  },0);
+}
+function wallCatDEnd(ev){
+  _wallDragCatId=null;
+  document.querySelectorAll('.wg-dragging,.wg-over,.wg-cat-over')
+    .forEach(el=>el.classList.remove('wg-dragging','wg-over','wg-cat-over'));
+}
+function wallCatDOver(ev,catId){
+  if(!_wallDragKid&&!_wallDragCatId)return;
+  if(_wallDragCatId===catId)return;
+  ev.preventDefault();ev.stopPropagation();
+  ev.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.wg-over,.wg-cat-over').forEach(el=>el.classList.remove('wg-over','wg-cat-over'));
+  document.querySelectorAll('.wall-cat-hd[data-catid="'+catId+'"]')
+    .forEach(el=>el.classList.add(_wallDragCatId?'wg-over':'wg-cat-over'));
+}
+function wallCatDLeave(ev,catId){
+  document.querySelectorAll('.wall-cat-hd[data-catid="'+catId+'"]')
+    .forEach(el=>el.classList.remove('wg-over','wg-cat-over'));
+}
+function wallCatDDrop(ev,catId){
+  ev.preventDefault();ev.stopPropagation();
+  if(_wallDragCatId&&_wallDragCatId!==catId){
+    /* Reorder categories */
+    const cats=noteKindCats();
+    const fromIdx=cats.findIndex(c=>c.id===_wallDragCatId);
+    const toIdx=cats.findIndex(c=>c.id===catId);
+    if(fromIdx>-1&&toIdx>-1){
+      const moved=cats.splice(fromIdx,1)[0];
+      const insertAt=cats.findIndex(c=>c.id===catId);
+      cats.splice(insertAt,0,moved);
+      cats.forEach((c,i)=>{c.order=i;});
+      DB.noteKindCats=cats;
+      persist();renderP2C();renderTree();
+    }
+  } else if(_wallDragKid){
+    /* NTI names interchangeable among categories: drop a kind directly onto
+       a category header to move it there. */
+    const ks=noteKinds();
+    const k=ks.find(x=>x.id===_wallDragKid);
+    if(k&&k.catId!==catId){
+      k.catId=catId;
+      const maxOrd=Math.max(0,...ks.filter(x=>x.catId===catId&&x.id!==k.id).map(x=>x.order||0));
+      k.order=maxOrd+1;
+      persist();renderP2C();renderTree();
+      toast('📦 Moved to '+(noteKindCats().find(c=>c.id===catId)?.name||'category'));
+    }
+  }
+  wallCatDEnd(ev);
+}
 function wallGrpDStart(ev,kid){
   _wallDragKid=kid;
   ev.dataTransfer.effectAllowed='move';
@@ -11729,11 +11816,15 @@ function wallGrpDDrop(ev,kid){
   const toIdx=ks.findIndex(k=>k.id===kid);
   if(fromIdx<0||toIdx<0){wallGrpDEnd(ev);return;}
   const moved=ks.splice(fromIdx,1)[0];
+  const target=ks.find(k=>k.id===kid);
+  const catChanged=target&&moved.catId!==target.catId;
+  if(catChanged)moved.catId=target.catId;
   const insertAt=ks.findIndex(k=>k.id===kid);
   ks.splice(insertAt,0,moved);
   ks.forEach((k,i)=>{k.order=i+1;});
   wallGrpDEnd(ev);
   persist();renderP2C();
+  if(catChanged)toast('📦 Moved to '+(noteKindCats().find(c=>c.id===target.catId)?.name||'category'));
 }
 function moveWallKind(kid,dir){
   hideCtx();
@@ -12563,6 +12654,9 @@ document.getElementById('sb').addEventListener('contextmenu', e => {
 .wall-grp-hd[draggable]{user-select:none;-webkit-user-select:none}
 .wall-grp-hd.wg-dragging{opacity:.35}
 .wall-grp-hd.wg-over{background:var(--sel,rgba(102,163,98,.14));border-radius:6px;outline:2px dashed var(--accent,#66a362);outline-offset:-1px}
+.wall-cat-hd.wg-dragging{opacity:.35}
+.wall-cat-hd.wg-over{background:var(--sel,rgba(102,163,98,.14));border-radius:6px;outline:2px dashed var(--accent,#66a362);outline-offset:-1px}
+.wall-cat-hd.wg-cat-over{background:rgba(139,92,246,.12);border-radius:6px;outline:2px dashed #8B5CF6;outline-offset:-1px}
 .mrj-footer{background:var(--paper);border-top:2px solid var(--accent);padding:10px 14px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;position:sticky;bottom:0;z-index:30}
 .mrj-prompt{font-size:12px;color:var(--t3);text-align:center;font-style:italic}
 .mrj-btn-row{display:flex;gap:8px}
@@ -12598,6 +12692,10 @@ document.getElementById('sb').addEventListener('contextmenu', e => {
 #p3.modal-mode.has-toc.toc-left #toc-panel{right:auto;left:0;border-left:none;border-right:1.5px solid var(--border2)}
 #toc-panel{position:absolute;right:0;bottom:8px;width:212px;overflow-y:auto;border-left:1.5px solid var(--border2);background:var(--paper);z-index:10;padding:0 0 12px}
 #toc-panel .toc-hd{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;padding:12px 14px 8px;border-bottom:1px solid var(--border2);margin-bottom:4px}
+#toc-panel .toc-title-row{display:flex;align-items:center;gap:6px;padding:6px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--t1);border-bottom:1px solid var(--border2);margin-bottom:4px;user-select:none}
+#toc-panel .toc-title-row:hover{background:var(--hover)}
+#toc-panel .toc-title-arrow{font-size:11px;color:var(--t3);flex-shrink:0}
+#toc-panel .toc-title-txt{white-space:normal;word-break:break-word;line-height:1.35}
 .toc-side-btn{background:none;border:none;cursor:pointer;color:var(--t3);font-size:12px;padding:2px 4px;border-radius:4px;line-height:1;flex-shrink:0}
 .toc-side-btn:hover{color:var(--accent);background:var(--paper2)}
 #toc-panel .toc-item{display:block;padding:5px 14px;font-size:12.5px;color:var(--t2);cursor:pointer;border-left:2px solid transparent;white-space:normal;word-break:break-word;line-height:1.4;transition:color .1s,background .1s}
