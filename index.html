@@ -136,6 +136,14 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .av-h1{font-family:var(--body);font-size:var(--fs-h1);font-weight:600;color:var(--t1);margin:0 0 4px;line-height:1.25}
 .av-meta{font-size:11px;color:var(--t3);margin-bottom:8px}
  .note-dateline{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:11px;color:var(--t3);font-family:var(--body);margin:0}
+ .fld-panel{display:flex;flex-direction:column;gap:6px;padding:10px 12px;margin:0 0 10px;background:var(--paper);border:1px solid var(--border2);border-radius:var(--rl,8px)}
+ .fld-row{display:flex;align-items:center;gap:8px}
+ .fld-lbl{font-size:11.5px;font-weight:600;color:var(--t2);min-width:88px;flex-shrink:0}
+ .fld-inp{flex:1;min-width:0;font-size:13px;padding:4px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--white);color:var(--t1);font-family:inherit}
+ .fld-chk{width:16px;height:16px;flex-shrink:0}
+ .fld-link-open{flex-shrink:0;text-decoration:none;font-size:13px;padding:2px 6px;border-radius:5px;background:var(--greenlt);color:var(--green2)}
+ .fld-chips{display:flex;flex-wrap:wrap;gap:4px;padding:0 12px 8px 34px;margin-top:-4px}
+ .fld-chip{font-size:10.5px;color:var(--t2);background:var(--paper);border:1px solid var(--border2);border-radius:999px;padding:1px 8px}
  .note-dateline .dl-div{opacity:.45}
  .note-dateline-hr{border:none;border-top:1px solid var(--border);height:0;margin:6px 0 14px}
  #ed:empty::before{content:'Start writing here…';color:var(--t3);opacity:.55;font-style:italic;pointer-events:none}
@@ -2330,6 +2338,9 @@ function renderP2C(){
     return;
   }
   if(!curF){el.innerHTML='<div class="empty"><div class="emi">📁</div><div class="ems">Select a folder from the sidebar</div></div>';return;}
+  if(curF.pinHash&&!(ST.unlockedFolders&&ST.unlockedFolders.has(curF.id))){
+    el.innerHTML=_pinLockHTML(curF.id);return;
+  }
   /* MyWALL subfolders: group notes by type, collapsed by default */
   if(isMyWallSubfolder(curF.id)){el.innerHTML=renderMyWallSubfolder(curF);return;}
   if(curF.journalMode){el.innerHTML=_renderJournalFolder(curF);return;}
@@ -2353,7 +2364,7 @@ function renderP2C(){
     h+=`<div style="padding:22px 14px;text-align:center;background:var(--paper);border:1.5px dashed var(--border2);border-radius:var(--rl)"><div style="color:var(--t3);font-size:13px;margin-bottom:10px">No articles yet</div><button class="btn bp" onclick="openModal('art','${curF.id}')" style="font-size:12px">Add article</button></div>`;
   } else {
     h+='<div class="al">';
-    arts.forEach(a=>{ h+=artCard(a,ST.article===a.id,true); });
+    arts.forEach(a=>{ h+=artCard(a,ST.article===a.id,true); if(curF.structured)h+=_fieldChipsHTML(a,curF); });
     h+='</div>';
   }
   h+='</div>';
@@ -2555,7 +2566,7 @@ function renderP3C(){
      if(_le&&_le.dataset.aid===curA.id){const _c=_le.cloneNode(true);_c.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());_edColClean(_c);curA.content=_c.innerHTML;if(ST.etitle!=null)curA.title=ST.etitle.trim();}}
     el.innerHTML=kindBarHTML(curA)
       +`<div class="p3h-title-bar p3c-titlebar">${_navBtnsHTML()}<input id="ti" value="${esc(ST.etitle!=null?ST.etitle:(curA.title||''))}" placeholder="Article title…" oninput="ST.etitle=this.value"><span id="save-flash" class="save-flash">✓ Saved</span></div>`
-      +_edColToolbarHTML()+_dateLineHTML(curA)+`<div id="ed" data-aid="${curA.id}" contenteditable="true" spellcheck="true"></div>`;
+      +_edColToolbarHTML()+_dateLineHTML(curA)+_fieldsPanelHTML(curA)+`<div id="ed" data-aid="${curA.id}" contenteditable="true" spellcheck="true"></div>`;
     if(_tiF2){const _tin=document.getElementById('ti');if(_tin){_tin.focus({preventScroll:true});try{_tin.setSelectionRange(_s2,_e2);}catch(e){}}}
     const ed=document.getElementById('ed');ed.innerHTML=curA.content;if(_isPlaceholder(curA.content))ed.innerHTML='';initRichPaste(ed);
     wireAnnEditor(ed,curA);
@@ -2582,7 +2593,7 @@ function renderP3C(){
       ${(curA.tags||[]).length
         ?`<div class="art-tags">${(curA.tags||[]).map(t=>{const _tc=(DB.tagColors||{})[t];const _ts=_tc?` style="background:${_tc}1a;color:${_tc};border-color:${_tc}40"`:'';return `<span class="art-tag"${_ts} onclick="selTag('${esc(t)}')" oncontextmenu="event.preventDefault();showTagClrPicker(event,'${esc(t)}')">🏷 ${esc(t)}</span>`;}).join('')}</div>`
         :''}
-      <div class="av-body">${_dateLineHTML(curA)}${curA.content}</div>
+      <div class="av-body">${_dateLineHTML(curA)}${_fieldsPanelHTML(curA)}${curA.content}</div>
       ${annPanelHTML(curA)}
       ${backlinksHTML(curA)}
     </div></div>`;
@@ -9040,6 +9051,203 @@ function doRenumber(parentId,digits,useRange,rangeW){
 }
 
 /* ── CRUD ────────────────────────────────────────────────────────── */
+/* ══ Structured (Custom Fields) Folders ═══════════════════════════════════
+   A folder can be marked "structured" and given a list of custom fields
+   (text/link/category/checkbox/date). Notes filed in it get a small form
+   above their content (in both view and edit mode) for those fields, and
+   a compact chip summary on their card in the 2nd-pane list. This is a
+   thin layer on top of the existing article model — folderIds, tags,
+   kinds, search, MyWALL etc. all keep working exactly as before; a
+   structured note is still a completely normal note, just with an extra
+   `fieldValues` object attached. ─────────────────────────────────────── */
+function toggleFolderStructured(fid){
+  hideCtx();
+  const f=DB.folders.find(x=>x.id===fid);if(!f)return;
+  f.structured=!f.structured;
+  if(f.structured&&(!f.fields||!f.fields.length)){
+    f.fields=[
+      {id:uid(),label:'Category',type:'select',options:[]},
+      {id:uid(),label:'Link',type:'link',options:[]}
+    ];
+  }
+  persist();
+  renderTree();renderP2C();renderP3C();
+  if(f.structured)openFieldBuilder(fid);
+  else toast('Structured mode turned off for "'+f.name+'"');
+}
+function openFieldBuilder(fid){
+  hideCtx();
+  const f=DB.folders.find(x=>x.id===fid);if(!f)return;
+  if(!f.fields)f.fields=[];
+  showModal(_fieldBuilderHTML(f));
+}
+function _fieldBuilderHTML(f){
+  let h='<div class="mt">🗂 Structured Folder — '+esc(f.name)+'</div>';
+  h+='<div style="font-size:12px;color:var(--t3);margin:-4px 0 10px">Define the fields every note in this folder should show. Changes apply immediately.</div>';
+  h+='<div id="fb-list">';
+  (f.fields||[]).forEach(fld=>{h+=_fieldRowHTML(f.id,fld);});
+  if(!f.fields||!f.fields.length)h+='<div style="font-size:12px;color:var(--t3);padding:6px 0">No fields yet.</div>';
+  h+='</div>';
+  h+='<button class="btn bn" style="margin-top:6px" onclick="addFieldRow(\''+f.id+'\')">➕ Add field</button>';
+  h+='<div style="display:flex;justify-content:flex-end;gap:6px;margin-top:14px">'
+    +'<button class="btn bp" onclick="closeModal()">Done</button></div>';
+  return h;
+}
+function _fieldRowHTML(fid,fld){
+  return `<div class="fb-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+    <input class="mi" style="flex:1;min-width:100px" value="${esc(fld.label)}" placeholder="Field name" onchange="updField('${fid}','${fld.id}','label',this.value)">
+    <select class="mi" style="width:120px" onchange="updField('${fid}','${fld.id}','type',this.value)">
+      <option value="text"${fld.type==='text'?' selected':''}>Text</option>
+      <option value="link"${fld.type==='link'?' selected':''}>Link</option>
+      <option value="select"${fld.type==='select'?' selected':''}>Category</option>
+      <option value="checkbox"${fld.type==='checkbox'?' selected':''}>Checkbox</option>
+      <option value="date"${fld.type==='date'?' selected':''}>Date</option>
+    </select>
+    ${fld.type==='select'?`<input class="mi" style="flex:1;min-width:140px" value="${esc((fld.options||[]).join(', '))}" placeholder="Options, comma-separated" onchange="updField('${fid}','${fld.id}','options',this.value)">`:''}
+    <button class="btn bn" onclick="removeFieldRow('${fid}','${fld.id}')" title="Remove field">🗑</button>
+  </div>`;
+}
+function addFieldRow(fid){
+  const f=DB.folders.find(x=>x.id===fid);if(!f)return;
+  if(!f.fields)f.fields=[];
+  f.fields.push({id:uid(),label:'Field '+(f.fields.length+1),type:'text',options:[]});
+  persist();
+  showModal(_fieldBuilderHTML(f));
+  renderP2C();renderP3C();
+}
+function removeFieldRow(fid,fieldId){
+  const f=DB.folders.find(x=>x.id===fid);if(!f)return;
+  if(!confirm('Remove this field? Any values already saved for it will no longer be shown.'))return;
+  f.fields=(f.fields||[]).filter(x=>x.id!==fieldId);
+  persist();
+  showModal(_fieldBuilderHTML(f));
+  renderP2C();renderP3C();
+}
+function updField(fid,fieldId,key,val){
+  const f=DB.folders.find(x=>x.id===fid);if(!f)return;
+  const fld=(f.fields||[]).find(x=>x.id===fieldId);if(!fld)return;
+  if(key==='options')fld.options=val.split(',').map(s=>s.trim()).filter(Boolean);
+  else fld[key]=val;
+  persist();
+  if(key==='type')showModal(_fieldBuilderHTML(f)); /* rebuild to show/hide the options input */
+  renderP2C();renderP3C();
+}
+function _structuredFolderOf(a){
+  return (a.folderIds||[]).map(id=>DB.folders.find(f=>f.id===id)).find(f=>f&&f.structured)||null;
+}
+function fieldInputHTML(aid,f,v){
+  const onch=`onchange="saveFieldValue('${aid}','${f.id}',this.type==='checkbox'?this.checked:this.value)"`;
+  if(f.type==='link'){
+    return `<input type="url" class="fld-inp" placeholder="https://…" value="${esc(v||'')}" ${onch} onclick="event.stopPropagation()">`
+      +(v?`<a href="${esc(v)}" target="_blank" rel="noopener" class="fld-link-open" onclick="event.stopPropagation()" title="Open link">↗</a>`:'');
+  }
+  if(f.type==='select'){
+    const opts=(f.options||[]).map(o=>`<option value="${esc(o)}"${v===o?' selected':''}>${esc(o)}</option>`).join('');
+    return `<select class="fld-inp" ${onch} onclick="event.stopPropagation()"><option value="">—</option>${opts}</select>`;
+  }
+  if(f.type==='checkbox'){
+    return `<input type="checkbox" class="fld-chk" ${v?'checked':''} ${onch} onclick="event.stopPropagation()">`;
+  }
+  if(f.type==='date'){
+    return `<input type="date" class="fld-inp" value="${esc(v||'')}" ${onch} onclick="event.stopPropagation()">`;
+  }
+  return `<input type="text" class="fld-inp" value="${esc(v||'')}" ${onch} onclick="event.stopPropagation()">`;
+}
+function saveFieldValue(aid,fieldId,value){
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return;
+  if(!a.fieldValues)a.fieldValues={};
+  a.fieldValues[fieldId]=value;
+  a.updatedAt=new Date().toISOString();
+  persist();
+  renderP2C();
+}
+function _fieldsPanelHTML(a){
+  if(!a)return '';
+  const folder=_structuredFolderOf(a);
+  if(!folder||!folder.fields||!folder.fields.length)return '';
+  const vals=a.fieldValues||{};
+  let h='<div class="fld-panel" contenteditable="false">';
+  folder.fields.forEach(f=>{
+    h+=`<div class="fld-row"><span class="fld-lbl">${esc(f.label)}</span>${fieldInputHTML(a.id,f,vals[f.id])}</div>`;
+  });
+  h+='</div>';
+  return h;
+}
+function _fieldChipsHTML(a,folder){
+  const vals=a.fieldValues||{};
+  const chips=(folder.fields||[]).map(f=>{
+    const v=vals[f.id];
+    if(v===undefined||v===''||v===false)return '';
+    if(f.type==='checkbox')return `<span class="fld-chip">✓ ${esc(f.label)}</span>`;
+    if(f.type==='link')return `<span class="fld-chip">🔗 ${esc(f.label)}</span>`;
+    return `<span class="fld-chip">${esc(f.label)}: ${esc(String(v).slice(0,30))}</span>`;
+  }).filter(Boolean).join('');
+  return chips?`<div class="fld-chips">${chips}</div>`:'';
+}
+
+/* ══ Folder PIN-lock (privacy screen, NOT encryption) ═════════════════════
+   Stores a SHA-256 hash of the PIN, never the PIN itself — so a casual
+   look at the file won't reveal it. IMPORTANT: this hides a folder's
+   content from casual viewing only. The underlying note data is still
+   stored as plain text in the file (same as everything else in Siyagah);
+   anyone with real access to the file/browser storage could still read it
+   with developer tools. It stops someone picking up your phone, not a
+   determined attacker. If real encryption is ever wanted, that's a
+   separate, bigger feature (and unrecoverable if the PIN is forgotten). */
+async function _sha256Hex(str){
+  const enc=new TextEncoder().encode(str);
+  const buf=await crypto.subtle.digest('SHA-256',enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function setFolderPin(fid){
+  hideCtx();
+  const f=DB.folders.find(x=>x.id===fid);if(!f)return;
+  const pin=prompt('Set a PIN for "'+f.name+'" (at least 4 characters):');
+  if(pin==null)return;
+  if(pin.trim().length<4){toast('⚠ PIN must be at least 4 characters');return;}
+  const confirm2=prompt('Confirm PIN:');
+  if(confirm2!==pin){toast('⚠ PINs did not match — not saved');return;}
+  f.pinHash=await _sha256Hex(pin.trim());
+  if(!ST.unlockedFolders)ST.unlockedFolders=new Set();
+  ST.unlockedFolders.add(fid); /* don't lock the person out of the folder they're literally setting this in */
+  persist();
+  renderTree();renderP2C();
+  toast('🔒 PIN set for "'+f.name+'" — this hides content from casual viewing, not full encryption.');
+}
+function removeFolderPin(fid){
+  hideCtx();
+  const f=DB.folders.find(x=>x.id===fid);if(!f)return;
+  if(!confirm('Remove PIN protection from "'+f.name+'"?'))return;
+  delete f.pinHash;
+  persist();
+  renderTree();renderP2C();
+  toast('🔓 PIN removed from "'+f.name+'"');
+}
+function _pinLockHTML(fid){
+  const f=DB.folders.find(x=>x.id===fid);
+  return `<div class="fv" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:20px">
+    <div style="font-size:40px;margin-bottom:10px">🔒</div>
+    <div style="font-weight:600;margin-bottom:14px">"${esc(f?f.name:'')}" is PIN-protected</div>
+    <input type="password" inputmode="numeric" id="pin-inp" maxlength="24" placeholder="Enter PIN" class="mi" style="width:160px;text-align:center;letter-spacing:4px;font-size:18px" onkeydown="if(event.key==='Enter')tryUnlockFolder('${fid}')">
+    <button class="btn bp" style="margin-top:12px" onclick="tryUnlockFolder('${fid}')">Unlock</button>
+    <div id="pin-err" style="color:#c0392b;font-size:12px;margin-top:8px;min-height:16px"></div>
+  </div>`;
+}
+async function tryUnlockFolder(fid){
+  const f=DB.folders.find(x=>x.id===fid);if(!f)return;
+  const inp=document.getElementById('pin-inp');
+  const val=inp?inp.value:'';
+  const hash=await _sha256Hex(val);
+  if(hash===f.pinHash){
+    if(!ST.unlockedFolders)ST.unlockedFolders=new Set();
+    ST.unlockedFolders.add(fid);
+    renderP2C();
+  } else {
+    const err=document.getElementById('pin-err');
+    if(err)err.textContent='Incorrect PIN';
+    if(inp){inp.value='';inp.focus();}
+  }
+}
 function mkFolder(pid,name){
   if(!name?.trim())return;
   const _newF={id:uid(),name:name.trim(),parentId:pid||null};
@@ -9101,6 +9309,10 @@ function showCtx(ev,fid){
     ${_isSysFolder(fid)?'':`<div class="ci" onclick="hideCtx();convertFolderToSection('${fid}')">🗂 Convert to section</div>`}
     <div class="ci" onclick="hideCtx();toggleJournalMode('${fid}')">${_f&&_f.journalMode?'📓 Remove Journal mode':'📓 Set as Journal'}</div>
     ${_f&&_f.journalMode&&_f.sectionId!=='db-section'?`<div class="ci" onclick="hideCtx();moveToMyJournal('${fid}')">📓 Move to My Journal</div>`:''}
+    <div class="csep"></div>
+    <div class="ci" onclick="toggleFolderStructured('${fid}')">${_f&&_f.structured?'🗂 Turn off Structured mode':'🗂 Make Structured Folder'}</div>
+    ${_f&&_f.structured?`<div class="ci" onclick="openFieldBuilder('${fid}')">✏ Edit Fields</div>`:''}
+    <div class="ci" onclick="${_f&&_f.pinHash?'removeFolderPin':'setFolderPin'}('${fid}')">${_f&&_f.pinHash?'🔓 Remove PIN':'🔒 Set PIN'}</div>
     <div class="csep"></div>
     <div class="ci d" onclick="hideCtx();confirmDel('folder','${fid}')">🗑 Delete folder</div>`;
   m.style.display='block';
