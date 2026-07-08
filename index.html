@@ -136,6 +136,12 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .av-h1{font-family:var(--body);font-size:var(--fs-h1);font-weight:600;color:var(--t1);margin:0 0 4px;line-height:1.25}
 .av-meta{font-size:11px;color:var(--t3);margin-bottom:8px}
  .note-dateline{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:11px;color:var(--t3);font-family:var(--body);margin:0}
+ .ver-strip{display:flex;flex-wrap:wrap;gap:6px;padding:6px 12px 8px;align-items:center}
+ .ver-pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:500;color:var(--t2);background:var(--paper);border:1px solid var(--border2);border-radius:999px;padding:4px 11px;cursor:pointer;white-space:nowrap;transition:background .1s,border-color .1s}
+ .ver-pill:hover{background:var(--hover)}
+ .ver-pill.on{background:var(--greenlt,#e8f5e9);border-color:var(--green2,#2e7d32);color:var(--green2,#2e7d32);font-weight:700;cursor:default}
+ .ver-pill.ver-add{color:var(--t3);border-style:dashed}
+ .ver-here{font-size:8px;color:var(--green2,#2e7d32)}
  .fld-panel{display:flex;flex-direction:column;gap:6px;padding:10px 12px;margin:0 0 10px;background:var(--paper);border:1px solid var(--border2);border-radius:var(--rl,8px)}
  .fld-row{display:flex;align-items:center;gap:8px}
  .fld-lbl{font-size:11.5px;font-weight:600;color:var(--t2);min-width:88px;flex-shrink:0}
@@ -2566,6 +2572,7 @@ function renderP3C(){
      if(_le&&_le.dataset.aid===curA.id){const _c=_le.cloneNode(true);_c.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());_edColClean(_c);curA.content=_c.innerHTML;if(ST.etitle!=null)curA.title=ST.etitle.trim();}}
     el.innerHTML=kindBarHTML(curA)
       +`<div class="p3h-title-bar p3c-titlebar">${_navBtnsHTML()}<input id="ti" value="${esc(ST.etitle!=null?ST.etitle:(curA.title||''))}" placeholder="Article title…" oninput="ST.etitle=this.value"><span id="save-flash" class="save-flash">✓ Saved</span></div>`
+      +_versionStripHTML(curA)
       +_edColToolbarHTML()+_dateLineHTML(curA)+_fieldsPanelHTML(curA)+`<div id="ed" data-aid="${curA.id}" contenteditable="true" spellcheck="true"></div>`;
     if(_tiF2){const _tin=document.getElementById('ti');if(_tin){_tin.focus({preventScroll:true});try{_tin.setSelectionRange(_s2,_e2);}catch(e){}}}
     const ed=document.getElementById('ed');ed.innerHTML=curA.content;if(_isPlaceholder(curA.content))ed.innerHTML='';initRichPaste(ed);
@@ -2588,6 +2595,7 @@ function renderP3C(){
     el.scrollTop=0;el.innerHTML=`<div class="avw"><div class="av">
       ${kindBarHTML(curA)}
       <div class="p3h-title-bar p3c-titlebar p3c-vt"><div class="tbt" title="Right-click to edit" oncontextmenu="event.preventDefault();event.stopPropagation();startEdit()">${esc(curA.title)||'<em style="color:var(--t3)">Untitled</em>'}</div></div>
+      ${_versionStripHTML(curA)}
       ${reminderStripHTML(curA)}
       <div class="av-tags">${tags}</div>
       ${(curA.tags||[]).length
@@ -9247,6 +9255,106 @@ async function tryUnlockFolder(fid){
     if(err)err.textContent='Incorrect PIN';
     if(inp){inp.value='';inp.focus();}
   }
+}
+/* ══ Article Versions ══════════════════════════════════════════════════
+   Lets one conceptual article have several independently-editable drafts
+   (e.g. "Draft 1" / "Developing" / "Final") linked together and reachable
+   with one click — WITHOUT using the global Tab Bar, which is for
+   switching between unrelated notes. Each version is a completely normal
+   article under the hood (own tags, own Note-Type, own content) — this
+   is deliberate: it means search, MyWALL, folders, and everything else
+   already work on versions automatically, with zero special-casing. The
+   only thing tying them together is a shared `versionGroupId`. ────────── */
+function _versionSiblings(a){
+  if(!a||!a.versionGroupId)return [];
+  return DB.articles.filter(x=>x.versionGroupId===a.versionGroupId)
+    .sort((x,y)=>(x.versionOrder||0)-(y.versionOrder||0));
+}
+function _versionStripHTML(a){
+  if(!a)return '';
+  const sibs=_versionSiblings(a);
+  if(!sibs.length){
+    return `<div class="ver-strip"><button class="ver-pill ver-add" onclick="startVersioning('${a.id}')" title="Turn this into the first version of a set">🔀 Start Versioning</button></div>`;
+  }
+  let h='<div class="ver-strip">';
+  sibs.forEach(v=>{
+    const cur=v.id===a.id;
+    h+=`<button class="ver-pill${cur?' on':''}" onclick="${cur?'':`selArt('${v.id}')`}" oncontextmenu="showVersionCtx(event,'${v.id}')" title="${cur?'Current version':'Switch to this version'}">`
+      +`${esc(v.versionIcon||'📝')} ${esc(v.versionLabel||'Version')}${cur?' <span class=\"ver-here\">●</span>':''}</button>`;
+  });
+  h+=`<button class="ver-pill ver-add" onclick="addNewVersion('${a.id}')" title="Add a new version, starting from this one">➕</button>`;
+  h+='</div>';
+  return h;
+}
+function startVersioning(aid){
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return;
+  const label=prompt('Label for this first version (e.g. "Draft 1"):','Draft 1');
+  if(!label?.trim())return;
+  a.versionGroupId=uid();
+  a.versionLabel=label.trim();
+  a.versionOrder=0;
+  persist();
+  renderP3H();renderP3C();
+  toast('🔀 Versioning started — tap ➕ to add another version any time');
+}
+function addNewVersion(aid){
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return;
+  const label=prompt('Label for the new version (e.g. "Developing", "Final — public"):');
+  if(!label?.trim())return;
+  const sibs=_versionSiblings(a);
+  const now=new Date().toISOString();
+  const nv={
+    id:uid(),
+    title:a.title,
+    content:a.content,
+    folderIds:[...a.folderIds],
+    tags:[...(a.tags||[])],
+    kinds:a.kinds?[...a.kinds]:undefined,
+    kind:a.kind,
+    versionGroupId:a.versionGroupId,
+    versionLabel:label.trim(),
+    versionOrder:sibs.length?Math.max(...sibs.map(s=>s.versionOrder||0))+1:1,
+    createdAt:now,updatedAt:now
+  };
+  DB.articles.push(nv);
+  persist();
+  selArt(nv.id);
+  toast('➕ New version "'+label.trim()+'" created from "'+(a.versionLabel||'this version')+'"');
+}
+function showVersionCtx(ev,aid){
+  ev.preventDefault();ev.stopPropagation();
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return;
+  const m=document.getElementById('ctx');
+  m.innerHTML=`<div class="ci" onclick="renameVersion('${aid}')">✏ Rename version</div>`
+    +`<div class="ci" onclick="setVersionIcon('${aid}')">🔖 Change icon</div>`
+    +`<div class="csep"></div>`
+    +`<div class="ci" onclick="hideCtx();unlinkVersion('${aid}')">🔓 Remove from version set</div>`
+    +`<div class="csep"></div>`
+    +`<div class="ci d" onclick="hideCtx();confirmDel('art','${aid}')">🗑 Delete this version</div>`;
+  _ctxPos(m,ev);
+}
+function renameVersion(aid){
+  hideCtx();
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return;
+  const label=prompt('Rename version:',a.versionLabel||'');
+  if(!label?.trim())return;
+  a.versionLabel=label.trim();
+  persist();renderP3H();renderP3C();
+}
+function setVersionIcon(aid){
+  hideCtx();
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return;
+  const icon=prompt('Icon (emoji) for this version:',a.versionIcon||'📝');
+  if(icon==null)return;
+  a.versionIcon=icon.trim()||'📝';
+  persist();renderP3H();renderP3C();
+}
+function unlinkVersion(aid){
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return;
+  if(!confirm('Remove "'+(a.versionLabel||'this note')+'" from its version set? The note itself is kept — it just stops being linked to the others.'))return;
+  delete a.versionGroupId;delete a.versionLabel;delete a.versionOrder;delete a.versionIcon;
+  persist();renderP3H();renderP3C();
+  toast('🔓 Removed from version set');
 }
 function mkFolder(pid,name){
   if(!name?.trim())return;
