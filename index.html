@@ -9389,15 +9389,13 @@ function mkArt(fid,title){if(!title?.trim())return;const now=new Date().toISOStr
 function rmArt(id){trashArt(id);}
 
 /* ── Context menu ────────────────────────────────────────────────── */
-function showCtx(ev,fid){
-  if(_dragId)return;
-  ev.preventDefault();ev.stopPropagation();
-  const m=document.getElementById('ctx');
+function _buildFolderCtxMain(fid){
   const _f=DB.folders.find(x=>x.id===fid);
   const _topRow=_f&&_f.parentId
     ? `<div class="ci" onclick="hideCtx();moveFolderToTop('${fid}')">⬆ Move to top level</div>`
     : '';
-  m.innerHTML=`<div class="ci" onclick="hideCtx();openModal('folder','${fid}')">📁 Add subfolder</div>
+  const hasMoveSec=_f&&!_f.parentId&&DB.sections&&DB.sections.some(s=>s.id!==_f.sectionId);
+  return `<div class="ci" onclick="hideCtx();openModal('folder','${fid}')">📁 Add subfolder</div>
     <div class="ci" onclick="hideCtx();openModal('art','${fid}')">📄 Add article here</div>
     <div class="ci" onclick="hideCtx();openModal('rename','${fid}')">✏️ Rename folder</div>
     ${_topRow}
@@ -9413,7 +9411,7 @@ function showCtx(ev,fid){
     <div class="ci" style="cursor:default;opacity:.65;font-size:11px;padding:4px 12px 0">📦 Move to group</div>
     ${folderGroups().filter(g=>g.id!==folderGroupOf(_f)).map(g=>`<div class="ci" onclick="hideCtx();moveFolderToGroup('${fid}','${g.id}')">${g.icon||'📁'} → ${esc(g.name)}</div>`).join('')}
     <div class="ci" onclick="hideCtx();addFolderGroupThenMove('${fid}')">➕ New group…</div>`:''}
-    ${rootSectionMoves(fid)}
+    ${hasMoveSec?`<div class="ci ci-sub" onclick="_folderCtxSub('${fid}','movesec')">↗ Move to section<span class="ci-arr">▶</span></div>`:''}
     ${_isSysFolder(fid)?'':`<div class="ci" onclick="hideCtx();convertFolderToSection('${fid}')">🗂 Convert to section</div>`}
     <div class="ci" onclick="hideCtx();toggleJournalMode('${fid}')">${_f&&_f.journalMode?'📓 Remove Journal mode':'📓 Set as Journal'}</div>
     ${_f&&_f.journalMode&&_f.sectionId!=='db-section'?`<div class="ci" onclick="hideCtx();moveToMyJournal('${fid}')">📓 Move to My Journal</div>`:''}
@@ -9423,12 +9421,28 @@ function showCtx(ev,fid){
     <div class="ci" onclick="${_f&&_f.pinHash?'removeFolderPin':'setFolderPin'}('${fid}')">${_f&&_f.pinHash?'🔓 Remove PIN':'🔒 Set PIN'}</div>
     <div class="csep"></div>
     <div class="ci d" onclick="hideCtx();confirmDel('folder','${fid}')">🗑 Delete folder</div>`;
+}
+function showCtx(ev,fid){
+  if(_dragId)return;
+  ev.preventDefault();ev.stopPropagation();
+  const m=document.getElementById('ctx');
+  m.innerHTML=_buildFolderCtxMain(fid);
   m.style.display='block';
   const vw=window.innerWidth,vh=window.innerHeight;
   let x=ev.clientX,y=ev.clientY;
   const mw=m.offsetWidth||165,mh=m.offsetHeight||170;
   if(x+mw>vw)x=vw-mw-5;if(y+mh>vh)y=vh-mh-5;
   m.style.left=x+'px';m.style.top=y+'px';
+}
+function _folderCtxBack(fid){
+  document.getElementById('ctx').innerHTML=_buildFolderCtxMain(fid);
+}
+function _folderCtxSub(fid,panel){
+  const m=document.getElementById('ctx');
+  const back=`<div class="ci-back" onclick="_folderCtxBack('${fid}')"><span class="ci-back-icon">◀</span> Back</div><div class="csep"></div>`;
+  if(panel==='movesec'){
+    m.innerHTML=back+`<div class="ci-nti-hd">↗ Move to section</div>`+rootSectionMoves(fid);
+  }
 }
 function hideCtx(){document.getElementById('ctx').style.display='none';}
 function moveToMyJournal(fid){
@@ -10179,26 +10193,40 @@ function finRenSmartViews(){
   persist();renderTree();
 }
 
-function showSecCtx(ev,sid){
-  ev.preventDefault();ev.stopPropagation();
-  const m=document.getElementById('ctx');
+function _buildSecCtxMain(sid){
   const canDel=DB.sections.length>1;
-  m.innerHTML=
-    `<div class="ci" onclick="hideCtx();addFolderInSec('${sid}')">📁 New folder here</div>`+
+  const hasConvert=!sid.startsWith('db-')&&!sid.startsWith('kb-')&&
+    DB.sections.some(s=>s.id!==sid&&!s.id.startsWith('db-')&&!s.id.startsWith('kb-'));
+  return `<div class="ci" onclick="hideCtx();addFolderInSec('${sid}')">📁 New folder here</div>`+
     `<div class="ci" onclick="hideCtx();startRenSec('${sid}')">✏️ Rename section</div>`+
     `<div class="ci" style="flex-direction:column;align-items:flex-start;gap:0;cursor:default;padding:6px 0 4px">`+
       `<span class="ctx-clr-lbl">🎨 Section colour</span>`+
       `<div class="ctx-colors">${ctxSecColorSwatches(sid)}</div>`+
     `</div>`+
-    (canDel?`<div class="csep"></div>`:'')+
-    sectionToFolderRows(sid)+
+    (canDel||hasConvert?`<div class="csep"></div>`:'')+
+    (hasConvert?`<div class="ci ci-sub" onclick="_secCtxSub('${sid}','convert')">📁 Convert to folder<span class="ci-arr">▶</span></div>`:'')+
     (canDel?`<div class="ci d" onclick="hideCtx();delSection('${sid}')">🗑 Delete section</div>`:'');
+}
+function showSecCtx(ev,sid){
+  ev.preventDefault();ev.stopPropagation();
+  const m=document.getElementById('ctx');
+  m.innerHTML=_buildSecCtxMain(sid);
   m.style.display='block';
   const x=ev.clientX||ev.target.getBoundingClientRect().right;
   const y=ev.clientY||ev.target.getBoundingClientRect().bottom;
   const mw=m.offsetWidth||170,mh=m.offsetHeight||100;
   m.style.left=Math.min(x,window.innerWidth-mw-4)+'px';
   m.style.top=Math.min(y,window.innerHeight-mh-4)+'px';
+}
+function _secCtxBack(sid){
+  document.getElementById('ctx').innerHTML=_buildSecCtxMain(sid);
+}
+function _secCtxSub(sid,panel){
+  const m=document.getElementById('ctx');
+  const back=`<div class="ci-back" onclick="_secCtxBack('${sid}')"><span class="ci-back-icon">◀</span> Back</div><div class="csep"></div>`;
+  if(panel==='convert'){
+    m.innerHTML=back+`<div class="ci-nti-hd">📁 Convert to folder in…</div>`+sectionToFolderRows(sid);
+  }
 }
 
 /* Inline rename a section */
