@@ -94,6 +94,20 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 /* 3-pane layout */
 #p2{width:300px;min-width:180px;max-width:520px;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border);background:var(--white);flex-shrink:0}
 #p2h{padding:0 12px;display:flex;align-items:center;min-height:48px;flex-shrink:0;border-bottom:1px solid var(--border);gap:8px}
+#p2h-path:empty{display:none}
+.p2h-path-row{display:flex;align-items:center;gap:5px;padding:5px 10px;
+  border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;
+  scrollbar-width:none;-ms-overflow-style:none;background:var(--paper)}
+.p2h-path-row::-webkit-scrollbar{display:none}
+.p2h-path-up,.p2h-path-child,.p2h-path-new{
+  flex-shrink:0;white-space:nowrap;font-size:11.5px;font-family:var(--ui);
+  padding:4px 10px;border-radius:999px;border:1px solid var(--border2);
+  background:var(--white);color:var(--t2);cursor:pointer;transition:background .1s}
+.p2h-path-up:hover,.p2h-path-child:hover,.p2h-path-new:hover{background:var(--hover)}
+.p2h-path-up{color:var(--green2);font-weight:600}
+.p2h-path-cnt{opacity:.55;font-size:10.5px}
+.p2h-path-new{border-style:dashed;color:var(--t3)}
+.p2h-path-sep{flex-shrink:0;color:var(--border2);font-size:12px}
 #p2c{flex:1;overflow-y:auto;min-height:0}
 #rsz2{width:5px;background:transparent;cursor:col-resize;flex-shrink:0;transition:background .2s;position:relative;z-index:10}
 #rsz2:hover,#rsz2.act{background:var(--green)}
@@ -1741,6 +1755,7 @@ sup.ann-sup:hover{text-decoration:underline}
 
 <div id="p2" style="width: 520px;" class="">
   <div id="p2h"></div>
+  <div id="p2h-path"></div>
   <div id="p2c"></div>
 </div>
 
@@ -2144,6 +2159,8 @@ function moveFolderToGroup(fid,gid){
 
 function renderP2H(){
   const el=document.getElementById('p2h');
+  const _pathHost0=document.getElementById('p2h-path');
+  if(_pathHost0)_pathHost0.innerHTML='';
   const curF=DB.folders.find(f=>f.id===ST.folder);
   const _sfDef=!curF&&SF.find(s=>s.id===ST.folder);
   /* Universal new-note button — always visible in every pane-2 state */
@@ -2240,6 +2257,8 @@ function renderP2H(){
   el.innerHTML=ham
     +`<div style="flex:1;min-width:0;overflow:hidden" class="tbt">${esc(curF.name)}${curF.journalMode?'<span style="font-size:11px;margin-left:5px;opacity:.65">📓</span>':''}</div>`
     +_jrnBtn+(curF.journalMode?'':previewBtn)+cls;
+  const _pathHost=document.getElementById('p2h-path');
+  if(_pathHost)_pathHost.innerHTML=_folderPathRowHTML(curF);
 }
 
 function renderP2C(){
@@ -9688,6 +9707,21 @@ function deleteContactAction(aid,actionId){
   persist();
   if(ST.article===aid){renderP3H();renderP3C();}
   renderP2C();
+}
+function _folderPathRowHTML(curF){
+  const parent=curF.parentId?DB.folders.find(f=>f.id===curF.parentId):null;
+  const children=chOf(curF.id);
+  let h='<div class="p2h-path-row">';
+  if(parent){
+    h+=`<button class="p2h-path-up" onclick="selFolder('${parent.id}')" title="Go up to &quot;${esc(parent.name)}&quot;">⬆ ${esc(parent.name)}</button>`;
+    if(children.length)h+='<span class="p2h-path-sep">|</span>';
+  }
+  children.forEach(c=>{
+    h+=`<button class="p2h-path-child" onclick="selFolder('${c.id}')" oncontextmenu="showCtx(event,'${c.id}')" title="Open &quot;${esc(c.name)}&quot; · right-click for options">📁 ${esc(c.name)} <span class="p2h-path-cnt">${cntOf(c.id)}</span></button>`;
+  });
+  h+=`<button class="p2h-path-new" onclick="openModal('folder','${curF.id}')" title="New subfolder inside &quot;${esc(curF.name)}&quot;">➕ New folder</button>`;
+  h+='</div>';
+  return h;
 }
 function mkFolder(pid,name){
   if(!name?.trim())return;
