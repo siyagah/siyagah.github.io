@@ -1319,6 +1319,10 @@ sup.ann-sup:hover{text-decoration:underline}
 .ct-log-empty{padding:10px 16px;font-size:12px;color:var(--t3);
   font-style:italic;line-height:1.6}
 .ct-log-row{padding:8px 16px;border-bottom:1px solid var(--border2)}
+.ct-action-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ct-action-txt{flex:1;min-width:120px}
+.ct-action-done .ct-action-txt{opacity:.5;text-decoration:line-through}
+.ct-action-done .ct-log-date{opacity:.5}
 .ct-log-row:last-child{border-bottom:none}
 .ct-log-date{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:2px}
 .ct-log-ago{font-weight:400;color:var(--t3);margin-left:6px}
@@ -1459,6 +1463,10 @@ sup.ann-sup:hover{text-decoration:underline}
 .eb-grp-btn{flex:1;text-align:center;font-weight:700;font-size:13px;
   padding:5px 3px;border-radius:6px;transition:background .12s,color .12s}
 .eb-grp-btn.on{background:var(--forest);color:#fff}
+@media(min-width:640px){
+  .eb-mob{justify-content:flex-start!important;gap:4px}
+  .eb-grp-btn{flex:0 0 auto;padding:5px 14px;font-size:12.5px}
+}
 .p3h-edit-sub{display:flex;align-items:center;gap:3px;
   padding:3px 8px 4px;flex-wrap:wrap;flex-shrink:0;
   background:var(--hover);border-bottom:1px solid var(--border2);
@@ -2476,9 +2484,9 @@ function renderP3H(){
       +`<button class="btn bn bi" onclick="cancelEdit()" title="Cancel (Esc)">✕</button>`
       +'</div></div>';
     /* Bar 3 — Edit bar: format buttons only, scrollable */
-    /* ── Edit bar: grouped on mobile, flat on desktop ── */
-    if(window.innerWidth<640){
-      /* Mobile: 5 group buttons + expandable sub-row */
+    /* ── Edit bar: grouped — same compact system on every screen size,
+       so it's never a long scattered row regardless of device. ── */
+    {
       const _eg=ST.ebGroup||null;
       const _grps=[
         {id:'text',  icon:'<b>Aa</b>',label:'Text style'},
@@ -2489,46 +2497,9 @@ function renderP3H(){
       ];
       h+='<div class="p3h-edit-bar eb-mob">'
         +_grps.map(g=>`<button class="et eb-grp-btn${_eg===g.id?' on':''}" onmousedown="togEBGroup('${g.id}')" title="${g.label}">${g.icon}</button>`).join('')
-        +`<button class="et modal-pop-btn" onmousedown="event.preventDefault()" onclick="${ST.noteModal?'closeNoteModal':'openNoteModal'}()" title="Pop out note">${ST.noteModal?'⊞':'⊡'}</button>`
+        +`<button class="et modal-pop-btn" onmousedown="event.preventDefault()" onclick="${ST.noteModal?'closeNoteModal':'openNoteModal'}()" title="${ST.noteModal?'Return to layout (Esc / Ctrl+Shift+P)':'Pop out note (Ctrl+Shift+P)'}">${ST.noteModal?'⊞':'⊡'}</button>`
         +'</div>'
         +'<div class="p3h-edit-sub" id="eb-sub">'+_buildEBSub(_eg)+'</div>';
-    } else {
-      /* Desktop/tablet: flat scrollable bar — unchanged */
-      h+=`<div class="p3h-edit-bar">`
-        +`<button class="et" onmousedown="ec(event,'bold')"><b>B</b></button>`
-        +`<button class="et" onmousedown="ec(event,'italic')"><i>I</i></button>`
-        +`<button class="et" onmousedown="ec(event,'underline')" title="Underline"><u>U</u></button>`
-        +`<button class="et" onmousedown="ec(event,'strikeThrough')" title="Strikethrough"><s>S</s></button>`
-        +`<button class="et" onmousedown="edMarkDone(event)" title="Mark done — dim/grey this line, toggle">✓</button>`
-        +`<button class="et" onmousedown="edBoundary(event)" title="Boundary box — frame this paragraph, toggle">▢</button>`
-        +`<button class="et" onmousedown="edColorBtn(event)" title="Text & highlight colour">🎨</button>`
-        +`<button class="et" onmousedown="ec(event,'removeFormat')" title="Clear formatting">✗A</button>`
-        +`<div class="esep"></div>`
-        +_alignBtnsHTML()
-        +`<div class="esep"></div>`
-        +`<button class="et" onmousedown="fb(event,'h1')" style="font-size:12px;font-weight:800">H1</button>`
-        +`<button class="et" onmousedown="fb(event,'h2')" style="font-size:11px;font-weight:700">H2</button>`
-        +`<button class="et" onmousedown="fb(event,'h3')" style="font-size:11px;font-weight:700">H3</button>`
-        +`<button class="et" onmousedown="fb(event,'p')" style="font-size:13px" title="Normal text (remove heading)">¶</button>`
-        +`<button class="et" onmousedown="fb(event,'p')" style="font-size:11px">P</button>`
-        +`<div class="esep"></div>`
-        +`<button class="et" onmousedown="ec(event,'insertUnorderedList')">• List</button>`
-        +`<button class="et" onmousedown="ec(event,'insertOrderedList')">1. List</button>`
-        +`<div class="esep"></div>`
-        +`<button class="et" onmousedown="fb(event,'blockquote')" style="font-style:italic">❝</button>`
-        +`<button class="et" onmousedown="ec(event,'insertHorizontalRule')">─</button>`
-        +`<div class="esep"></div>`
-        +`<button class="et" title="Insert image" onmousedown="edImgPick(event)">🖼</button>`
-        +`<button class="et" title="Insert link" onmousedown="edLink(event)">🔗</button>`
-        +`<button class="et" title="Insert bookmark card" onmousedown="edBookmarkBtn(event)">🔖</button>`
-        +`<button class="et" title="Mention an article (@)" onmousedown="edMentionBtn(event)" style="font-weight:700">@</button>`
-        +`<button class="et" title="Quick Phrases — insert a saved snippet" onmousedown="openQuickPhrasesMenu(event)">💬</button>`
-        +`<div class="esep"></div>`
-        +`<button class="et" onmousedown="ec(event,'undo')" title="Undo (Ctrl+Z)">↩</button>`
-        +`<button class="et" onmousedown="ec(event,'redo')" title="Redo">↪</button>`
-        +`<div class="esep"></div>`
-        +`<button class="et modal-pop-btn" onmousedown="event.preventDefault()" onclick="${ST.noteModal?'closeNoteModal':'openNoteModal'}()" title="${ST.noteModal?'Return to layout (Esc / Ctrl+Shift+P)':'Pop out note (Ctrl+Shift+P)'}">${ST.noteModal?'⊞':'⊡'}</button>`
-        +'</div>';
     }
     el.innerHTML=h;
     renderTagEditor();
@@ -2539,6 +2510,7 @@ function renderP3H(){
     el.innerHTML=_cham
       +`<span class="tbt" style="flex:1;overflow:hidden" oncontextmenu="event.preventDefault();showArtCtx(event,'${curA.id}')">${esc(_ctName(curA.contactData)||curA.title||'Contact')}</span>`
       +`<button class="btn" onclick="logInteraction('${curA.id}')">📋 Log</button>`
+      +`<button class="btn" onclick="logContactAction(event,'${curA.id}')">📞 Action</button>`
       +`<button class="btn bp" onclick="startEdit()">✏ Edit</button>`
       +`<button class="btn bn bi" title="More options" oncontextmenu="event.preventDefault();showArtCtx(event,'${curA.id}')" onclick="showArtCtx({clientX:event.clientX,clientY:event.clientY,preventDefault:()=>{},stopPropagation:()=>{}},curA.id)">⋯</button>`;
     return;
@@ -5288,6 +5260,7 @@ function renderCTCard(a){
   h+='</div>';
   if(cd.comments)h+='<div class="ct-cmts-box">'+esc(cd.comments)+'</div>';
   h+=_renderInteractionLog(a);
+  h+=_renderActionLog(a);
   return h+'</div>';
 }
 
@@ -6484,7 +6457,6 @@ function _buildEBSub(g){
       '<button class="et" onmousedown="fb(event,\'h2\')" style="font-size:11px;font-weight:700">H2</button>',
       '<button class="et" onmousedown="fb(event,\'h3\')" style="font-size:11px;font-weight:700">H3</button>',
       '<button class="et" onmousedown="fb(event,\'p\')" style="font-size:13px" title="Normal text (remove heading)">¶</button>',
-      '<button class="et" onmousedown="fb(event,\'p\')" style="font-size:11px">P</button>',
     ],
     lists:[
       '<button class="et" onmousedown="ec(event,\'insertUnorderedList\')">• List</button>',
@@ -9559,6 +9531,99 @@ function promptCustomHeadingStatus(aid,headingText){
   _showClrPicker(null,defaultColor,hex=>{
     setHeadingStatus(aid,headingText,label.trim(),hex||defaultColor);
   });
+}
+/* ══ Contact Actions / ToDo (links to the existing reminder system) ══════
+   A dated, typed action log (Call/Message/Email/Meet/Other) for a contact,
+   separate from the existing "Interactions" (past-tense) log. Saving an
+   action ALSO sets the note's normal `reminder` field — the same one used
+   everywhere else in the app — so the contact surfaces on MyWALL exactly
+   like any other pending note with a reminder, with no new MyWALL logic
+   needed at all. */
+const ACTION_TYPES=[
+  {type:'Call',icon:'📞'},
+  {type:'Message',icon:'💬'},
+  {type:'Email',icon:'✉️'},
+  {type:'Meet',icon:'🤝'},
+  {type:'Other',icon:'📌'},
+];
+function logContactAction(ev,aid){
+  const a=DB.articles.find(x=>x.id===aid);if(!a||!a.contactData)return;
+  const nm=_ctName(a.contactData)||a.title||'Contact';
+  const tom=new Date();tom.setDate(tom.getDate()+1);
+  const defDate=tom.toISOString().slice(0,10);
+  showModal(`<div class="mt">📞 Log Action / ToDo — ${esc(nm)}</div>
+    <div class="ct-lbl" style="margin-top:4px">Type</div>
+    <select class="mi" id="cta-type" style="width:100%;margin-bottom:8px">
+      ${ACTION_TYPES.map(t=>`<option value="${t.type}">${t.icon} ${t.type}</option>`).join('')}
+    </select>
+    <div class="ct-lbl">Details (optional)</div>
+    <textarea class="mi" id="cta-note" rows="2" style="width:100%;margin-bottom:8px" placeholder="e.g. Discuss the wedding invite"></textarea>
+    <div class="ct-lbl">Due date</div>
+    <input type="date" class="mi" id="cta-date" value="${defDate}" style="width:100%;margin-bottom:12px">
+    <div style="display:flex;justify-content:flex-end;gap:6px">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="saveContactAction('${aid}')">Save &amp; Set Reminder</button>
+    </div>`);
+}
+function saveContactAction(aid){
+  const a=DB.articles.find(x=>x.id===aid);if(!a||!a.contactData)return;
+  const type=document.getElementById('cta-type')?.value||'Other';
+  const note=(document.getElementById('cta-note')?.value||'').trim();
+  const dt=document.getElementById('cta-date')?.value;
+  if(!dt){toast('⚠ Please pick a due date');return;}
+  if(!a.contactData.actions)a.contactData.actions=[];
+  a.contactData.actions.push({id:uid(),type,note,dueDate:dt,done:false,createdAt:new Date().toISOString()});
+  const nm=_ctName(a.contactData)||a.title||'Contact';
+  a.reminder={dt,msg:type+(note?': '+note:'')+' — '+nm};
+  a.updatedAt=new Date().toISOString();
+  persist();
+  closeModal();
+  if(ST.article===aid){renderP3H();renderP3C();}
+  renderP2C();
+  toast('📌 '+type+' scheduled for '+dt+' — reminder set');
+}
+function _renderActionLog(a){
+  const cd=a.contactData;
+  const actions=(cd.actions||[]).slice().sort((x,y)=>
+    (x.done===y.done?0:x.done?1:-1)||String(x.dueDate).localeCompare(String(y.dueDate)));
+  let h='<div class="ct-log">'
+    +'<div class="ct-log-hd"><span>📌 Actions / ToDo</span>'
+    +'<button class="ct-add-btn ct-log-add" onclick="logContactAction(event,\''+a.id+'\')">＋ Log</button></div>';
+  if(!actions.length){
+    h+='<div class="ct-log-empty">No actions scheduled yet.<br>Tap ＋ Log to schedule a call, message, email, or meeting.</div>';
+  } else {
+    actions.forEach(act=>{
+      const icon=(ACTION_TYPES.find(t=>t.type===act.type)||{}).icon||'📌';
+      h+='<div class="ct-log-row ct-action-row'+(act.done?' ct-action-done':'')+'">'
+        +'<div class="ct-log-date">'+esc(act.dueDate)+(act.done?' <span class="ct-log-ago">✓ Done</span>':'')+'</div>'
+        +'<div class="ct-action-txt">'+icon+' <b>'+esc(act.type)+'</b>'+(act.note?': '+esc(act.note):'')+'</div>'
+        +'<button class="ct-rm-btn" onclick="toggleActionDone(\''+a.id+'\',\''+act.id+'\')" title="'+(act.done?'Mark not done':'Mark done')+'">'+(act.done?'↺':'✓')+'</button>'
+        +'<button class="ct-rm-btn" onclick="deleteContactAction(\''+a.id+'\',\''+act.id+'\')" title="Delete">✕</button>'
+        +'</div>';
+    });
+  }
+  return h+'</div>';
+}
+function toggleActionDone(aid,actionId){
+  const a=DB.articles.find(x=>x.id===aid);if(!a||!a.contactData)return;
+  const act=(a.contactData.actions||[]).find(x=>x.id===actionId);if(!act)return;
+  act.done=!act.done;
+  /* If marking done and this is still the active reminder, clear it so the
+     contact drops off MyWALL now that the action is complete. */
+  if(act.done&&a.reminder&&a.reminder.dt===act.dueDate)delete a.reminder;
+  a.updatedAt=new Date().toISOString();
+  persist();
+  if(ST.article===aid){renderP3H();renderP3C();}
+  renderP2C();
+  toast(act.done?'✓ Marked done':'↺ Reopened');
+}
+function deleteContactAction(aid,actionId){
+  const a=DB.articles.find(x=>x.id===aid);if(!a||!a.contactData)return;
+  if(!confirm('Delete this action?'))return;
+  a.contactData.actions=(a.contactData.actions||[]).filter(x=>x.id!==actionId);
+  persist();
+  if(ST.article===aid){renderP3H();renderP3C();}
+  renderP2C();
 }
 function mkFolder(pid,name){
   if(!name?.trim())return;
