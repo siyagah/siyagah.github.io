@@ -2696,6 +2696,67 @@ function _alignBtnsHTML(){
     +'<button class="et" onmousedown="ec(event,\'justifyRight\')" title="Align right"><span class="al-ic al-r"><span></span><span></span><span></span></span></button>'
     +'<button class="et" onmousedown="ec(event,\'justifyFull\')" title="Justify"><span class="al-ic al-j"><span></span><span></span><span></span></span></button>';
 }
+/* ── Heading level mobility: promote/demote the heading at the caret,
+   or every heading in the note at once. Built on the exact same
+   detection + execCommand pattern as fb() above, so it inherits the
+   same reliability — and since it dispatches the same 'input' event,
+   the TOC panel (which already listens for 'input' to refresh) and
+   autosave both stay in sync automatically, with no new wiring. ───── */
+function _curHeadingTag(){
+  try{
+    const sel=window.getSelection();
+    if(sel&&sel.rangeCount){
+      let n=sel.getRangeAt(0).startContainer;
+      n=(n&&n.nodeType===1)?n:(n&&n.parentElement);
+      const b=n&&n.closest&&n.closest('h1,h2,h3,h4');
+      if(b)return b.tagName.toLowerCase();
+    }
+  }catch(e){}
+  return null;
+}
+function shiftHeadingLevel(ev,dir){
+  ev.preventDefault();
+  const ed=document.getElementById('ed');if(!ed)return;
+  const cur=_curHeadingTag();
+  if(!cur){toast('Place your cursor inside a heading (H1–H4) first');return;}
+  const level=parseInt(cur[1]);
+  let newLevel=level+dir,target;
+  if(newLevel<1)target='h1';
+  else if(newLevel>4)target='p';
+  else target='h'+newLevel;
+  document.execCommand('formatBlock',false,'<'+target+'>');
+  ed.focus();
+  try{ed.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}
+}
+function shiftAllHeadingsMenu(ev){
+  ev.preventDefault();
+  const m=document.getElementById('ctx');
+  m.innerHTML=`<div class="ci-nti-hd">↕ Shift ALL headings</div>`
+    +`<div class="ci" onclick="hideCtx();shiftAllHeadings(-1)">⬆ Promote all <span style="opacity:.6;font-size:11px">(H2→H1, H3→H2…)</span></div>`
+    +`<div class="ci" onclick="hideCtx();shiftAllHeadings(1)">⬇ Demote all <span style="opacity:.6;font-size:11px">(H1→H2, H2→H3…)</span></div>`;
+  _ctxPos(m,ev);
+}
+function shiftAllHeadings(dir){
+  const ed=document.getElementById('ed');if(!ed)return;
+  const heads=Array.from(ed.querySelectorAll('h1,h2,h3,h4'));
+  if(!heads.length){toast('No headings in this note yet');return;}
+  if(!confirm(dir<0
+    ?'Promote every heading in this note by one level (H2→H1, H3→H2, H4→H3)?'
+    :'Demote every heading in this note by one level (H1→H2, H2→H3, H3→H4)?'))return;
+  heads.forEach(hEl=>{
+    const level=parseInt(hEl.tagName[1]);
+    let newLevel=level+dir,newTag;
+    if(newLevel<1)newTag='h1';
+    else if(newLevel>4)newTag='h4'; /* stays at the floor — bulk demote shouldn't silently turn headings into body text */
+    else newTag='h'+newLevel;
+    if(newTag===hEl.tagName.toLowerCase())return;
+    const repl=document.createElement(newTag);
+    repl.innerHTML=hEl.innerHTML;
+    hEl.parentNode.replaceChild(repl,hEl);
+  });
+  ed.dispatchEvent(new Event('input',{bubbles:true}));
+  toast(dir<0?'⬆ All headings promoted':'⬇ All headings demoted');
+}
 function fb(ev,tag){
   ev.preventDefault();
   const ed=document.getElementById('ed');if(!ed)return;
@@ -6457,6 +6518,9 @@ function _buildEBSub(g){
       '<button class="et" onmousedown="fb(event,\'h2\')" style="font-size:11px;font-weight:700">H2</button>',
       '<button class="et" onmousedown="fb(event,\'h3\')" style="font-size:11px;font-weight:700">H3</button>',
       '<button class="et" onmousedown="fb(event,\'p\')" style="font-size:13px" title="Normal text (remove heading)">¶</button>',
+      '<button class="et" onmousedown="shiftHeadingLevel(event,-1)" title="Promote this heading (H3→H2→H1) — Ctrl+[">▲</button>',
+      '<button class="et" onmousedown="shiftHeadingLevel(event,1)" title="Demote this heading (H1→H2→H3→H4→text) — Ctrl+]">▼</button>',
+      '<button class="et" onmousedown="shiftAllHeadingsMenu(event)" title="Shift every heading in this note by one level">↕ All</button>',
     ],
     lists:[
       '<button class="et" onmousedown="ec(event,\'insertUnorderedList\')">• List</button>',
@@ -13122,13 +13186,17 @@ window.addEventListener('beforeunload',(ev)=>{
 });
 
 
-/* Keyboard shortcuts: Ctrl+Z = Undo  ·  Ctrl+Y or Ctrl+Shift+Z = Redo */
+/* Keyboard shortcuts: Ctrl+Z = Undo · Ctrl+Y or Ctrl+Shift+Z = Redo
+   Ctrl+[ / Ctrl+] = Promote/demote the heading at the caret */
 document.addEventListener('keydown', function(ev){
   if((ev.ctrlKey||ev.metaKey) && ev.key==='z' && !ev.shiftKey){
     if(!document.activeElement?.isContentEditable){ ev.preventDefault(); undo(); }
   }
   if((ev.ctrlKey||ev.metaKey) && (ev.key==='y'||(ev.key==='z'&&ev.shiftKey))){
     if(!document.activeElement?.isContentEditable){ ev.preventDefault(); redo(); }
+  }
+  if((ev.ctrlKey||ev.metaKey) && (ev.key==='['||ev.key===']') && document.activeElement?.id==='ed'){
+    shiftHeadingLevel(ev, ev.key==='['?-1:1);
   }
 });
 
