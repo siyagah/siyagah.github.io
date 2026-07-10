@@ -34,6 +34,8 @@
   --fs-list-meta:calc(var(--fs-list)*0.846);
   /* Line-spacing variables — adjusted by Appearance ▸ Line spacing (v04.02) */
   --lh-content:1.6;--pp-gap:12px;
+  /* Search-results text colour — adjusted by Appearance ▸ Custom colours */
+  --sr-color:#7A8F7C;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:var(--paper);color:var(--t1);font-size:14px}
@@ -137,6 +139,10 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .av-meta{font-size:11px;color:var(--t3);margin-bottom:8px}
  .note-dateline{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:11px;color:var(--t3);font-family:var(--body);margin:0}
  .ver-strip{display:flex;flex-wrap:wrap;gap:6px;padding:6px 12px 8px;align-items:center}
+ .qp-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px}
+ .qp-ta{flex:1;min-width:0;resize:vertical;font-family:inherit;font-size:13px;line-height:1.4;padding:6px 8px}
+ .qp-row-btns{display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+ .qp-row-btns .btn{padding:3px 8px;font-size:11px}
  .ver-pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:500;color:var(--t2);background:var(--paper);border:1px solid var(--border2);border-radius:999px;padding:4px 11px;cursor:pointer;white-space:nowrap;transition:background .1s,border-color .1s}
  .ver-pill:hover{background:var(--hover)}
  .ver-pill.on{background:var(--greenlt,#e8f5e9);border-color:var(--green2,#2e7d32);color:var(--green2,#2e7d32);font-weight:700;cursor:default}
@@ -150,6 +156,10 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
  .fld-link-open{flex-shrink:0;text-decoration:none;font-size:13px;padding:2px 6px;border-radius:5px;background:var(--greenlt);color:var(--green2)}
  .fld-chips{display:flex;flex-wrap:wrap;gap:4px;padding:0 12px 8px 34px;margin-top:-4px}
  .fld-chip{font-size:10.5px;color:var(--t2);background:var(--paper);border:1px solid var(--border2);border-radius:999px;padding:1px 8px}
+ .hd-status-badge{display:inline-block;float:right;font-size:11px;font-weight:600;padding:2px 10px;border-radius:999px;border:1px solid var(--border2);cursor:pointer;vertical-align:middle;user-select:none;-webkit-user-select:none;white-space:nowrap}
+ .hd-status-badge:hover{filter:brightness(0.97)}
+ .hd-status-unset{color:var(--t3);background:var(--paper);border-style:dashed;font-weight:500;opacity:.75}
+ .hd-status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
  .note-dateline .dl-div{opacity:.45}
  .note-dateline-hr{border:none;border-top:1px solid var(--border);height:0;margin:6px 0 14px}
  #ed:empty::before{content:'Start writing here…';color:var(--t3);opacity:.55;font-style:italic;pointer-events:none}
@@ -318,7 +328,7 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .emi{font-size:36px;opacity:.2}
 .emt{font-family:var(--body);font-size:19px;color:var(--t2)}
 .ems{font-size:13px;color:var(--t3);margin-bottom:6px}
-.sr{padding:6px 12px;cursor:pointer;font-size:12.5px;color:#7A8F7C;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.sr{padding:6px 12px;cursor:pointer;font-size:12.5px;color:var(--sr-color,#7A8F7C);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
 .sr:hover{background:rgba(255,255,255,.04)}
 .sr.on{background:rgba(27,122,70,.15);color:#B8E8C4}
 .srl{padding:4px 12px 5px;font-size:10px;color:#4A5A4C;text-transform:uppercase;letter-spacing:.06em}
@@ -2512,6 +2522,7 @@ function renderP3H(){
         +`<button class="et" title="Insert link" onmousedown="edLink(event)">🔗</button>`
         +`<button class="et" title="Insert bookmark card" onmousedown="edBookmarkBtn(event)">🔖</button>`
         +`<button class="et" title="Mention an article (@)" onmousedown="edMentionBtn(event)" style="font-weight:700">@</button>`
+        +`<button class="et" title="Quick Phrases — insert a saved snippet" onmousedown="openQuickPhrasesMenu(event)">💬</button>`
         +`<div class="esep"></div>`
         +`<button class="et" onmousedown="ec(event,'undo')" title="Undo (Ctrl+Z)">↩</button>`
         +`<button class="et" onmousedown="ec(event,'redo')" title="Redo">↪</button>`
@@ -2601,7 +2612,7 @@ function renderP3C(){
       ${(curA.tags||[]).length
         ?`<div class="art-tags">${(curA.tags||[]).map(t=>{const _tc=(DB.tagColors||{})[t];const _ts=_tc?` style="background:${_tc}1a;color:${_tc};border-color:${_tc}40"`:'';return `<span class="art-tag"${_ts} onclick="selTag('${esc(t)}')" oncontextmenu="event.preventDefault();showTagClrPicker(event,'${esc(t)}')">🏷 ${esc(t)}</span>`;}).join('')}</div>`
         :''}
-      <div class="av-body">${_dateLineHTML(curA)}${_fieldsPanelHTML(curA)}${curA.content}</div>
+      <div class="av-body">${_dateLineHTML(curA)}${_fieldsPanelHTML(curA)}${_injectHeadingStatusBadges(curA.content,curA.id)}</div>
       ${annPanelHTML(curA)}
       ${backlinksHTML(curA)}
     </div></div>`;
@@ -6486,6 +6497,7 @@ function _buildEBSub(g){
       '<button class="et" title="Insert link" onmousedown="edLink(event)">\ud83d\udd17</button>',
       '<button class="et" title="Bookmark card" onmousedown="edBookmarkBtn(event)">\ud83d\udd16</button>',
       '<button class="et" title="Mention (@)" onmousedown="edMentionBtn(event)" style="font-weight:700">@</button>',
+      '<button class="et" title="Quick Phrases" onmousedown="openQuickPhrasesMenu(event)">\ud83d\udcac</button>',
     ],
     hist:[
       '<button class="et" onmousedown="ec(event,\'undo\')" title="Undo">\u21a9</button>',
@@ -9356,6 +9368,198 @@ function unlinkVersion(aid){
   persist();renderP3H();renderP3C();
   toast('🔓 Removed from version set');
 }
+/* ══ Quick Phrases ═════════════════════════════════════════════════════
+   A small, user-editable, reorderable list of frequently-typed text
+   (home/office address, a signature, a common greeting, etc.) — one tap
+   inserts it into whichever note is currently being edited, at the caret,
+   via the same insertAtCaret() used for pasting elsewhere in the app (so
+   it inherits the same iOS-Safari-safe fallback for free). No fixed cap —
+   "at least 10" was the ask, so the list simply grows as needed. */
+function ensureQuickPhrases(){
+  if(!DB.theme)DB.theme={};
+  if(!Array.isArray(DB.theme.quickPhrases)){
+    DB.theme.quickPhrases=[
+      {id:uid(),text:"As-Salāmu 'Alaikum wa Raḥmatullāh"},
+      {id:uid(),text:'Home Address:\n[Your home address here]'},
+      {id:uid(),text:'Office Address:\n[Your office address here]'},
+      {id:uid(),text:'JazakAllahu Khairan'},
+      {id:uid(),text:'[Your name]\n[Your signature line]'},
+    ];
+  }
+  return DB.theme.quickPhrases;
+}
+function _qpTextToHTML(t){
+  return esc(t||'').replace(/\n/g,'<br>');
+}
+function openQuickPhrasesMenu(ev){
+  ev.preventDefault();
+  const phrases=ensureQuickPhrases();
+  const m=document.getElementById('ctx');
+  let h='<div class="ci-nti-hd">💬 Quick Phrases · tap to insert</div>';
+  if(!phrases.length){
+    h+='<div class="ci" style="cursor:default;opacity:.65">No phrases yet</div>';
+  } else {
+    phrases.forEach(p=>{
+      const preview=(p.text||'').replace(/\n/g,' / ').slice(0,44);
+      h+=`<div class="ci" onclick="hideCtx();insertQuickPhrase('${p.id}')">${esc(preview)}${(p.text||'').length>44?'…':''}</div>`;
+    });
+  }
+  h+='<div class="csep"></div>';
+  h+='<div class="ci" onclick="hideCtx();openQuickPhrasesManager()">⚙ Manage phrases…</div>';
+  m.innerHTML=h;
+  _ctxPos(m,ev);
+}
+function insertQuickPhrase(pid){
+  const p=ensureQuickPhrases().find(x=>x.id===pid);if(!p)return;
+  const ed=document.getElementById('ed');
+  if(!ed){toast('Open a note to insert into first');return;}
+  ed.focus();
+  insertAtCaret(_qpTextToHTML(p.text));
+}
+function openQuickPhrasesManager(){
+  showModal(_qpManagerHTML());
+}
+function _qpManagerHTML(){
+  const phrases=ensureQuickPhrases();
+  let h='<div class="mt">💬 Quick Phrases</div>';
+  h+='<div style="font-size:12px;color:var(--t3);margin:-4px 0 10px">Edit, reorder, add, or remove your quick-insert phrases.</div>';
+  h+='<div id="qp-list">';
+  phrases.forEach((p,i)=>{
+    h+=`<div class="qp-row">
+      <textarea class="mi qp-ta" rows="2" onchange="updQuickPhrase('${p.id}',this.value)">${esc(p.text)}</textarea>
+      <div class="qp-row-btns">
+        <button class="btn bn" ${i===0?'disabled':''} onclick="moveQuickPhrase('${p.id}',-1)" title="Move up">▲</button>
+        <button class="btn bn" ${i===phrases.length-1?'disabled':''} onclick="moveQuickPhrase('${p.id}',1)" title="Move down">▼</button>
+        <button class="btn bn" onclick="deleteQuickPhrase('${p.id}')" title="Delete">🗑</button>
+      </div>
+    </div>`;
+  });
+  h+='</div>';
+  h+='<button class="btn bn" style="margin-top:6px" onclick="addQuickPhrase()">➕ Add phrase</button>';
+  h+='<div style="display:flex;justify-content:flex-end;gap:6px;margin-top:14px">'
+    +'<button class="btn bp" onclick="closeModal()">Done</button></div>';
+  return h;
+}
+function addQuickPhrase(){
+  const phrases=ensureQuickPhrases();
+  phrases.push({id:uid(),text:''});
+  if(!DB.theme)DB.theme={};
+  persist();
+  showModal(_qpManagerHTML());
+  setTimeout(()=>{
+    const tas=document.querySelectorAll('#qp-list .qp-ta');
+    const last=tas[tas.length-1];if(last)last.focus();
+  },30);
+}
+function updQuickPhrase(pid,val){
+  const p=ensureQuickPhrases().find(x=>x.id===pid);if(!p)return;
+  p.text=val;
+  persist();
+}
+function deleteQuickPhrase(pid){
+  if(!confirm('Delete this phrase?'))return;
+  DB.theme.quickPhrases=ensureQuickPhrases().filter(x=>x.id!==pid);
+  persist();
+  showModal(_qpManagerHTML());
+}
+function moveQuickPhrase(pid,dir){
+  const phrases=ensureQuickPhrases();
+  const idx=phrases.findIndex(x=>x.id===pid);
+  const j=idx+dir;
+  if(idx<0||j<0||j>=phrases.length)return;
+  const t=phrases[idx];phrases[idx]=phrases[j];phrases[j]=t;
+  persist();
+  showModal(_qpManagerHTML());
+}
+/* ══ Heading Task Status ═══════════════════════════════════════════════
+   A small clickable status badge at the right end of every heading
+   (H1–H4) in VIEW mode — Done / Ongoing / Under Process / Next To Do, a
+   free-text custom label, and a custom colour. Statuses are stored on the
+   article itself (headingStatuses, keyed by the heading's own text), NOT
+   written into the note's HTML — so the saved content is never touched,
+   and there's no risk of an interactive element getting mangled or
+   accidentally edited while typing. This is also why it only appears in
+   VIEW mode: injecting a clickable element into the live contenteditable
+   editing surface risks the browser silently corrupting it, or the user
+   accidentally deleting it while typing — showing it only once you're
+   viewing (not editing) the note avoids that entirely. */
+const HEADING_STATUS_PRESETS=[
+  {label:'Done',color:'#22C55E'},
+  {label:'Ongoing',color:'#F59E0B'},
+  {label:'Under Process',color:'#3B82F6'},
+  {label:'Next To Do',color:'#8B5CF6'},
+];
+function _injectHeadingStatusBadges(html,aid){
+  if(!html)return html;
+  const art=DB.articles.find(a=>a.id===aid);
+  const statuses=(art&&art.headingStatuses)||{};
+  const div=document.createElement('div');
+  div.innerHTML=html;
+  div.querySelectorAll('h1,h2,h3,h4').forEach(hEl=>{
+    const text=hEl.textContent.trim();if(!text)return;
+    const st=statuses[text];
+    const badge=document.createElement('span');
+    badge.className='hd-status-badge';
+    badge.setAttribute('contenteditable','false');
+    badge.setAttribute('data-htext',text);
+    badge.setAttribute('onclick',`event.stopPropagation();showHeadingStatusMenu(event,'${aid}',decodeURIComponent('${encodeURIComponent(text)}'))`);
+    if(st&&st.label){
+      badge.style.background=st.color+'22';
+      badge.style.color=st.color;
+      badge.style.borderColor=st.color+'55';
+      badge.textContent=st.label;
+    }else{
+      badge.classList.add('hd-status-unset');
+      badge.textContent='Set the Status';
+    }
+    hEl.appendChild(document.createTextNode(' '));
+    hEl.appendChild(badge);
+  });
+  return div.innerHTML;
+}
+function showHeadingStatusMenu(ev,aid,headingText){
+  ev.preventDefault();ev.stopPropagation();
+  const art=DB.articles.find(a=>a.id===aid);if(!art)return;
+  const cur=(art.headingStatuses||{})[headingText];
+  const m=document.getElementById('ctx');
+  let h='<div class="ci-nti-hd">📌 Heading status</div>';
+  HEADING_STATUS_PRESETS.forEach(p=>{
+    const on=cur&&cur.label===p.label;
+    h+=`<div class="ci" onclick="setHeadingStatus('${aid}',decodeURIComponent('${encodeURIComponent(headingText)}'),decodeURIComponent('${encodeURIComponent(p.label)}'),'${p.color}')">`
+      +`<span class="hd-status-dot" style="background:${p.color}"></span> ${esc(p.label)}${on?' ✓':''}</div>`;
+  });
+  h+=`<div class="csep"></div>`;
+  h+=`<div class="ci" onclick="promptCustomHeadingStatus('${aid}',decodeURIComponent('${encodeURIComponent(headingText)}'))">✏ Custom text &amp; colour…</div>`;
+  if(cur)h+=`<div class="ci d" onclick="clearHeadingStatus('${aid}',decodeURIComponent('${encodeURIComponent(headingText)}'))">🗑 Clear status</div>`;
+  m.innerHTML=h;
+  _ctxPos(m,ev);
+}
+function setHeadingStatus(aid,headingText,label,color){
+  hideCtx();
+  const art=DB.articles.find(a=>a.id===aid);if(!art)return;
+  if(!art.headingStatuses)art.headingStatuses={};
+  art.headingStatuses[headingText]={label,color};
+  persist();
+  renderP3C();
+}
+function clearHeadingStatus(aid,headingText){
+  hideCtx();
+  const art=DB.articles.find(a=>a.id===aid);if(!art||!art.headingStatuses)return;
+  delete art.headingStatuses[headingText];
+  persist();
+  renderP3C();
+}
+function promptCustomHeadingStatus(aid,headingText){
+  hideCtx();
+  const art=DB.articles.find(a=>a.id===aid);if(!art)return;
+  const cur=(art.headingStatuses||{})[headingText];
+  const label=prompt('Status text:',cur?cur.label:'');
+  if(!label?.trim())return;
+  const defaultColor=cur?cur.color:'#3B82F6';
+  _showClrPicker(null,defaultColor,hex=>{
+    setHeadingStatus(aid,headingText,label.trim(),hex||defaultColor);
+  });
+}
 function mkFolder(pid,name){
   if(!name?.trim())return;
   const _newF={id:uid(),name:name.trim(),parentId:pid||null};
@@ -9883,6 +10087,7 @@ function applyTheme(themeData){
     root.style.setProperty('--border',hexDarken(cu.bg,.08));
     root.style.setProperty('--border2',hexDarken(cu.bg,.15));
   }
+  if(cu.srColor) root.style.setProperty('--sr-color',cu.srColor);
   // Apply any stored font sizes
   if(themeData.fonts) applyFontSizes(themeData.fonts);
   applyLineSpacing(themeData.lineSpacing||'cozy');
@@ -9963,6 +10168,7 @@ function renderThemeModal(){
     {k:'sidebar',label:'Sidebar',sub:'Left panel background',var:'--forest'},
     {k:'accent', label:'Accent',  sub:'Buttons, links, highlights',var:'--green'},
     {k:'bg',     label:'Pane background',sub:'Content area background',var:'--paper'},
+    {k:'srColor',label:'Search Results',sub:'Text colour of titles in global search',var:'--sr-color'},
   ];
   pickers.forEach(p=>{
     const cur_val=(cur.custom||{})[p.k]||getComputedStyle(root).getPropertyValue(p.var).trim();
