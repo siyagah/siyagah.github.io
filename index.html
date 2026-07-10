@@ -1785,13 +1785,17 @@ function loadDB(){
   const el = document.getElementById('nd');
   let emb = null;
   try { emb = el ? JSON.parse(el.textContent) : null; } catch{}
-  // Also check localStorage — prefer whichever has more content
-  // (protects accumulated working data when opening a newer version of the file)
+  // Also check localStorage — merge with embedded data rather than picking
+  // one side and discarding the other entirely. The old approach compared
+  // total folder+article COUNTS and let whichever was bigger win outright —
+  // which meant real accumulated usage (which naturally grows the count
+  // over time) would almost always "beat" a hand-edited file update that
+  // added folders but no new articles, silently discarding that update
+  // the moment it was opened. A proper union merge can't lose data on
+  // either side.
   let _stored=null;
   try{_stored=JSON.parse(localStorage.getItem(SK));}catch{}
-  const _ec=(emb?.folders?.length||0)+(emb?.articles?.length||0);
-  const _sc=(_stored?.folders?.length||0)+(_stored?.articles?.length||0);
-  if(_stored?.folders&&_sc>=_ec){DB=JSON.parse(JSON.stringify(_stored));}
+  if(_stored?.folders&&emb?.folders){DB=mergeDB(_stored,emb);}
   else if(emb?.folders){DB=JSON.parse(JSON.stringify(emb));}
   else if(_stored?.folders){DB=JSON.parse(JSON.stringify(_stored));}
   else{DB=mkDefaults();}
