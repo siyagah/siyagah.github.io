@@ -4134,7 +4134,7 @@ function renderSecSF(secId){
   if(!ST.secSFOpen)ST.secSFOpen={};
   const open=ST.secSFOpen[secId]===true; /* default collapsed */
   const anyActive=ST.secSF&&ST.secSF.secId===secId;
-  let h=`<div class="sec-sf-hd${anyActive?' ssf-active':''}" onclick="togSecSF(event,'${secId}')">`
+  let h=`<div class="sec-sf-hd${anyActive?' ssf-active':''}" onclick="togSecSF(event,'${secId}')" oncontextmenu="showSmartViewCtx(event)">`
     +`<span class="tr-tog">${open?'▾':'▸'}</span>`
     +`<span style="font-size:13px">📊</span>`
     +`<span class="sec-sf-lbl">Smart Views</span>`
@@ -4144,9 +4144,11 @@ function renderSecSF(secId){
       const cnt=getSecSmartArts(secId,sf.id).length;
       const active=ST.secSF&&ST.secSF.secId===secId&&ST.secSF.sfId===sf.id;
       const sfName=(DB.sfItems?.[sf.id]?.name)||sf.name;
-      h+=`<div class="sec-sf-item${active?' sel':''}" onclick="selSecSF('${secId}','${sf.id}')">`
+      const _it=DB.sfItems?.[sf.id]||{};
+      const sfClr=(_it.color?`color:${_it.color};`:'')+(_it.bold?'font-weight:700':'');
+      h+=`<div class="sec-sf-item${active?' sel':''}" onclick="selSecSF('${secId}','${sf.id}')" oncontextmenu="showSfItemCtx(event,'${sf.id}')">`
         +`<span>${sf.icon}</span>`
-        +`<span style="flex:1">${esc(sfName)}</span>`
+        +`<span style="flex:1;${sfClr}">${esc(sfName)}</span>`
         +(cnt?`<span class="sf-cnt">${cnt}</span>`:'')
         +'</div>';
     });
