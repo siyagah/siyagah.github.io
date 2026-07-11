@@ -108,6 +108,16 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .p2h-path-cnt{opacity:.55;font-size:10.5px}
 .p2h-path-new{border-style:dashed;color:var(--t3)}
 .p2h-path-sep{flex-shrink:0;color:var(--border2);font-size:12px}
+.p2h-tree-wrap{max-height:260px;overflow-y:auto;border-bottom:1px solid var(--border);background:var(--paper)}
+.p2h-tree-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:6px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--t3);position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--border)}
+.p2h-tree-hd-btns{display:flex;gap:4px;flex-shrink:0}
+.p2h-tree-node{display:flex;align-items:center;gap:5px;padding:5px 12px;font-size:13px;
+  color:var(--t2);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p2h-tree-node:hover{background:var(--hover)}
+.p2h-tree-node.cur{background:var(--greenlt);color:var(--green2);font-weight:700}
+.p2h-tree-tog{display:inline-block;width:14px;flex-shrink:0;text-align:center;color:var(--t3);font-size:11px}
 #p2c{flex:1;overflow-y:auto;min-height:0}
 #rsz2{width:5px;background:transparent;cursor:col-resize;flex-shrink:0;transition:background .2s;position:relative;z-index:10}
 #rsz2:hover,#rsz2.act{background:var(--green)}
@@ -9715,19 +9725,88 @@ function deleteContactAction(aid,actionId){
   if(ST.article===aid){renderP3H();renderP3C();}
   renderP2C();
 }
+function toggleP2HTreeMode(){
+  ST.p2hTreeMode=!ST.p2hTreeMode;
+  renderP2H();
+}
+function togP2HTreeNode(fid){
+  if(!ST.p2hTreeOpen)ST.p2hTreeOpen={};
+  ST.p2hTreeOpen[fid]=!(ST.p2hTreeOpen[fid]===true);
+  renderP2H();
+}
+function p2hTreeExpandAll(fid){
+  if(!ST.p2hTreeOpen)ST.p2hTreeOpen={};
+  (function markAll(id){
+    ST.p2hTreeOpen[id]=true;
+    chOf(id).forEach(c=>markAll(c.id));
+  })(fid);
+  renderP2H();
+}
+function p2hTreeCollapseAll(){
+  ST.p2hTreeOpen={};
+  renderP2H();
+}
+function _folderTreeNodeHTML(f,depth,extraClass){
+  return `<div class="p2h-tree-node${extraClass||''}" style="padding-left:${depth*16}px"
+    draggable="true" ondragstart="dStart(event,'${f.id}')" ondragend="dEnd(event)"
+    ondragover="dOver(event,'${f.id}')" ondragleave="dLeave(event)" ondrop="dDrop(event,'${f.id}')"
+    onclick="selFolder('${f.id}')" oncontextmenu="showCtx(event,'${f.id}')" title="Right-click for options · drag to move to a different folder">
+    <span class="p2h-tree-tog"></span>📁 ${esc(f.name)} <span class="p2h-path-cnt">${cntOf(f.id)}</span>
+  </div>`;
+}
+function _folderDescendantsHTML(fid,depth){
+  const kids=chOf(fid);
+  if(!kids.length)return '';
+  if(!ST.p2hTreeOpen)ST.p2hTreeOpen={};
+  let h='';
+  kids.forEach(k=>{
+    const open=ST.p2hTreeOpen[k.id]===true;
+    const hasKids=chOf(k.id).length>0;
+    h+=`<div class="p2h-tree-node" style="padding-left:${depth*16}px"
+      draggable="true" ondragstart="dStart(event,'${k.id}')" ondragend="dEnd(event)"
+      ondragover="dOver(event,'${k.id}')" ondragleave="dLeave(event)" ondrop="dDrop(event,'${k.id}')"
+      oncontextmenu="showCtx(event,'${k.id}')" title="Right-click for options · drag to move to a different folder">
+      <span class="p2h-tree-tog" ${hasKids?`onclick="event.stopPropagation();togP2HTreeNode('${k.id}')"`:''}>${hasKids?(open?'▾':'▸'):''}</span>
+      <span onclick="selFolder('${k.id}')" style="flex:1">📁 ${esc(k.name)} <span class="p2h-path-cnt">${cntOf(k.id)}</span></span>
+    </div>`;
+    if(open)h+=_folderDescendantsHTML(k.id,depth+1);
+  });
+  return h;
+}
+function _folderFullTreeHTML(curF){
+  const section=DB.sections.find(s=>s.id===curF.sectionId);
+  const ancestors=pathOf(curF.id).slice(0,-1); /* excludes curF itself */
+  let h='<div class="p2h-tree-wrap">';
+  h+=`<div class="p2h-tree-hd">`
+    +`<span>${esc(section?section.name:'')}</span>`
+    +`<span class="p2h-tree-hd-btns">`
+    +`<button class="p2h-path-new" onclick="p2hTreeExpandAll('${curF.id}')" title="Expand every layer below">⬇ Expand all</button>`
+    +`<button class="p2h-path-new" onclick="p2hTreeCollapseAll()" title="Collapse everything back to one level">⬆ Collapse all</button>`
+    +`</span></div>`;
+  ancestors.forEach((anc,i)=>{ h+=_folderTreeNodeHTML(anc,i,''); });
+  h+=_folderTreeNodeHTML(curF,ancestors.length,' cur');
+  h+=_folderDescendantsHTML(curF.id,ancestors.length+1);
+  h+='</div>';
+  return h;
+}
 function _folderPathRowHTML(curF){
   const parent=curF.parentId?DB.folders.find(f=>f.id===curF.parentId):null;
   const children=chOf(curF.id);
+  const treeOn=!!ST.p2hTreeMode;
   let h='<div class="p2h-path-row">';
-  if(parent){
-    h+=`<button class="p2h-path-up" onclick="selFolder('${parent.id}')" title="Go up to &quot;${esc(parent.name)}&quot;">⬆ ${esc(parent.name)}</button>`;
-    if(children.length)h+='<span class="p2h-path-sep">|</span>';
+  h+=`<button class="p2h-path-new" onclick="toggleP2HTreeMode()" title="${treeOn?'Switch back to the simple up/down view':'Show the full folder tree (all ancestors and descendants)'}">${treeOn?'🌳 Simple view':'🌳 Full tree'}</button>`;
+  if(!treeOn){
+    if(parent){
+      h+=`<button class="p2h-path-up" onclick="selFolder('${parent.id}')" title="Go up to &quot;${esc(parent.name)}&quot;">⬆ ${esc(parent.name)}</button>`;
+      if(children.length)h+='<span class="p2h-path-sep">|</span>';
+    }
+    children.forEach(c=>{
+      h+=`<button class="p2h-path-child" onclick="selFolder('${c.id}')" oncontextmenu="showCtx(event,'${c.id}')" title="Open &quot;${esc(c.name)}&quot; · right-click for options">📁 ${esc(c.name)} <span class="p2h-path-cnt">${cntOf(c.id)}</span></button>`;
+    });
   }
-  children.forEach(c=>{
-    h+=`<button class="p2h-path-child" onclick="selFolder('${c.id}')" oncontextmenu="showCtx(event,'${c.id}')" title="Open &quot;${esc(c.name)}&quot; · right-click for options">📁 ${esc(c.name)} <span class="p2h-path-cnt">${cntOf(c.id)}</span></button>`;
-  });
   h+=`<button class="p2h-path-new" onclick="openModal('folder','${curF.id}')" title="New subfolder inside &quot;${esc(curF.name)}&quot;">➕ New folder</button>`;
   h+='</div>';
+  if(treeOn)h+=_folderFullTreeHTML(curF);
   return h;
 }
 /* One-click creation of the 7 starter MyDatabase folders (MyResources,
