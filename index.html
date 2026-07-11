@@ -1712,6 +1712,7 @@ sup.ann-sup:hover{text-decoration:underline}
           <div class="sb-mi" onclick="toggleHijri();closeSBMenu()" title="Toggle Hijri dates in the calendar">☪ Hijri Dates</div>
           <div id="pwa-install-mi" class="sb-mi" style="display:none" onclick="installPWA();closeSBMenu()" title="Add Siyagah to Home Screen">📱 Install App</div>
           <div class="sb-mi" onclick="syncKnowledgeBase();closeSBMenu()" title="Update the built-in guide notes to the latest version">📚 Sync Knowledge Base</div>
+          <div class="sb-mi" onclick="addStarterMyDatabaseFolders();closeSBMenu()" title="Adds MyResources, MyIdeas, MyMemories, MyPlanning, MyBuy-MyShopping, MyQueries, MyTravel under MyDatabase — safe to run more than once">🗂 Add Starter MyDatabase Folders</div>
           <div class="sb-ms"></div>
           <div class="sb-mi" id="sync-menu-item" onclick="openSyncModal();closeSBMenu()">☁ Cloud Sync</div>
           <div class="sb-mi" onclick="doSignOut();closeSBMenu()" id="signout-menu-item">🔒 Sign Out</div>
@@ -9728,6 +9729,39 @@ function _folderPathRowHTML(curF){
   h+=`<button class="p2h-path-new" onclick="openModal('folder','${curF.id}')" title="New subfolder inside &quot;${esc(curF.name)}&quot;">➕ New folder</button>`;
   h+='</div>';
   return h;
+}
+/* One-click creation of the 7 starter MyDatabase folders (MyResources,
+   MyIdeas, etc.) — idempotent, safe to run more than once, skips any
+   that already exist by name. Lives as a real Settings menu item so it
+   runs in the user's own already-authenticated session with zero need
+   for DevTools/console access. */
+function addStarterMyDatabaseFolders(){
+  const specs=[
+    ['MyResources',[['Resource Type','select',['Video','PDF','Link','Article','Other']],['Topic','select',['Health','Farming','Country','Other']],['Link','link',[]],['Shared?','checkbox',[]],['Platform','text',[]],['Audience','text',[]]]],
+    ['MyIdeas',[['Category','select',['Business','Personal','Content','Invention','Other']],['Status','select',['New','Exploring','Shelved','Acted On']],['Priority','select',['Low','Medium','High']]]],
+    ['MyMemories',[['Category','select',['Family','Travel','Milestone','Everyday']],['Date','date',[]],['Location','text',[]],['People','text',[]]]],
+    ['MyPlanning',[['Category','select',['Short-term','Long-term','Goal','Project']],['Target Date','date',[]],['Status','select',['Not Started','In Progress','Done']],['Priority','select',['Low','Medium','High']]]],
+    ['MyBuy - MyShopping',[['Item Category','select',['Household','Electronics','Clothing','Grocery','Other']],['Estimated Price','text',[]],['Link','link',[]],['Purchased?','checkbox',[]],['Priority','select',['Low','Medium','High']]]],
+    ['MyQueries',[['Category','select',['Question','Research','To-Ask','Follow-up']],['Status','select',['Open','Answered','Pending']],['Source / Person','text',[]]]],
+    ['MyTravel',[['Category','select',['Destination','Itinerary','Packing','Booking','Idea']],['Date','date',[]],['Booked?','checkbox',[]],['Link','link',[]]]],
+  ];
+  const existing=new Set(DB.folders.filter(f=>f.sectionId==='db-section'&&!f.parentId).map(f=>f.name));
+  const maxOrder=Math.max(0,...DB.folders.filter(f=>f.sectionId==='db-section'&&!f.parentId).map(f=>f.order||0));
+  let added=0;
+  specs.forEach(([name,fieldDefs],i)=>{
+    if(existing.has(name))return;
+    const fields=fieldDefs.map(([label,type,options])=>({id:uid(),label,type,options}));
+    DB.folders.push({id:uid(),name,parentId:null,sectionId:'db-section',
+      order:maxOrder+i+1,structured:true,fields});
+    added++;
+  });
+  if(added>0){
+    persist();
+    renderTree();renderP2C();
+    toast('🗂 Added '+added+' starter folder'+(added>1?'s':'')+' under MyDatabase');
+  }else{
+    toast('✓ All 7 starter folders already exist — nothing to add');
+  }
 }
 function mkFolder(pid,name){
   if(!name?.trim())return;
