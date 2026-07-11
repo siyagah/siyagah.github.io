@@ -77,7 +77,7 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .tr-row.doi{background:rgba(27,122,70,.22)!important;border-radius:4px}
 .tr-tog{width:20px;flex-shrink:0;text-align:center;font-size:22px;color:#4A5A4C;line-height:1}
 .tr-ico{font-size:14px;flex-shrink:0;line-height:1}
-.tr-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-name{flex:1;white-space:normal;word-break:break-word;line-height:1.3}
 .tr-cnt{font-size:10px;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:9px;flex-shrink:0;color:#4A6A4D}
 .drag-hint{position:fixed;top:0;left:0;pointer-events:none;background:var(--forest);color:#B8E8C4;padding:4px 10px;border-radius:20px;font-size:12px;border:1px solid var(--green);opacity:0;transition:opacity .15s;z-index:9000}
 
@@ -107,14 +107,15 @@ body{font-family:var(--ui);display:flex;height:100vh;overflow:hidden;background:
 .p2h-path-up{color:var(--green2);font-weight:600}
 .p2h-path-cnt{opacity:.55;font-size:10.5px}
 .p2h-path-new{border-style:dashed;color:var(--t3)}
+.p2h-path-new.on{border-style:solid;background:var(--greenlt);color:var(--green2);font-weight:600}
 .p2h-path-sep{flex-shrink:0;color:var(--border2);font-size:12px}
 .p2h-tree-wrap{max-height:260px;overflow-y:auto;border-bottom:1px solid var(--border);background:var(--paper)}
 .p2h-tree-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;
   padding:6px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
   color:var(--t3);position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--border)}
 .p2h-tree-hd-btns{display:flex;gap:4px;flex-shrink:0}
-.p2h-tree-node{display:flex;align-items:center;gap:5px;padding:5px 12px;font-size:13px;
-  color:var(--t2);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p2h-tree-node{display:flex;align-items:flex-start;gap:5px;padding:5px 12px;font-size:13px;
+  color:var(--t2);cursor:pointer;white-space:normal;word-break:break-word;line-height:1.35}
 .p2h-tree-node:hover{background:var(--hover)}
 .p2h-tree-node.cur{background:var(--greenlt);color:var(--green2);font-weight:700}
 .p2h-tree-tog{display:inline-block;width:14px;flex-shrink:0;text-align:center;color:var(--t3);font-size:11px}
@@ -2404,7 +2405,7 @@ function renderP2C(){
   if(curF.journalMode){el.innerHTML=_renderJournalFolder(curF);return;}
   const subs=chOf(curF.id),arts=artsIn(curF.id);
   let h='<div class="fv">';
-  if(subs.length){
+  if(subs.length&&ST.p2hCardView){
     h+=`<div class="slbl">Subfolders</div><div class="sg">`;
     subs.forEach(sf=>{h+=`<div class="sc" onclick="selFolder('${sf.id}')"><div class="sc-nm">📁 ${esc(sf.name)}</div><div class="sc-ct">${cntOf(sf.id)} articles</div></div>`;});
     h+='</div>';
@@ -9725,6 +9726,10 @@ function deleteContactAction(aid,actionId){
   if(ST.article===aid){renderP3H();renderP3C();}
   renderP2C();
 }
+function toggleP2HCardView(){
+  ST.p2hCardView=!ST.p2hCardView;
+  renderP2C();
+}
 function toggleP2HTreeMode(){
   ST.p2hTreeMode=!ST.p2hTreeMode;
   renderP2H();
@@ -9795,6 +9800,7 @@ function _folderPathRowHTML(curF){
   const treeOn=!!ST.p2hTreeMode;
   let h='<div class="p2h-path-row">';
   h+=`<button class="p2h-path-new" onclick="toggleP2HTreeMode()" title="${treeOn?'Switch back to the simple up/down view':'Show the full folder tree (all ancestors and descendants)'}">${treeOn?'🌳 Simple view':'🌳 Full tree'}</button>`;
+  h+=`<button class="p2h-path-new${ST.p2hCardView?' on':''}" onclick="toggleP2HCardView()" title="Show subfolders as cards in the list below">🗂 Card View</button>`;
   if(!treeOn){
     if(parent){
       h+=`<button class="p2h-path-up" onclick="selFolder('${parent.id}')" title="Go up to &quot;${esc(parent.name)}&quot;">⬆ ${esc(parent.name)}</button>`;
