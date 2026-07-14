@@ -1115,8 +1115,8 @@ sup.ann-sup:hover{text-decoration:underline}
 .kind-arch-btn:hover{opacity:1;background:var(--hover)!important}
 .kind-arch-btn.archived{opacity:1;color:#d97706}
 .kind-arch-row{display:none!important}
-#nti-picker,#jrn-picker{display:none;position:fixed;z-index:9200;background:var(--paper);border:1px solid var(--border2);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.22);width:min(310px,92vw);max-height:min(480px,78vh);flex-direction:column;overflow:hidden}
-#nti-picker.open,#jrn-picker.open{display:flex}
+#nti-picker,#jrn-picker,#mdb-picker{display:none;position:fixed;z-index:9200;background:var(--paper);border:1px solid var(--border2);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.22);width:min(310px,92vw);max-height:min(480px,78vh);flex-direction:column;overflow:hidden}
+#nti-picker.open,#jrn-picker.open,#mdb-picker.open{display:flex}
 .nti-pk-hd{display:flex;align-items:center;padding:10px 12px 8px;font-size:12px;font-weight:700;color:var(--t1);flex-shrink:0;border-bottom:1px solid var(--border2)}
 .nti-pk-cls{margin-left:auto;border:none;background:none;cursor:pointer;font-size:16px;color:var(--t3);line-height:1;padding:0 2px}
 .nti-pk-cls:hover{color:var(--t1)}
@@ -4522,6 +4522,67 @@ function newJournalEventForNote(aid){
   const p=document.getElementById('jrn-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderJournalPickerBody(aid);
   renderTree();renderP2C();renderP3H();renderP3C();
   toast('📓 Added to new event "'+name.trim()+'"');
+}
+/* ══ Attach pulldown ══════════════════════════════════════════════════════
+   Consolidates Folder assignment, My Journal, and MyDatabase into one
+   button (kindBarHTML's "📎 Attach ▾") instead of three separate buttons
+   crowding the note pane. Reuses the existing #ctx context-menu element
+   purely as a small dropdown — no new positioning code needed. ────────── */
+function openAttachMenu(ev,aid){
+  if(ev){ev.preventDefault();ev.stopPropagation();}
+  hideCtx();
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return;
+  const inEdit=ST.editing&&ST.article===aid;
+  const fCount=_attachCount(a);
+  const m=document.getElementById('ctx');
+  m.innerHTML=(inEdit
+      ?`<div class="ci" onclick="hideCtx();openPicker()">📁 Folder${fCount?' ('+fCount+')':''}</div>`
+      :`<div class="ci" style="opacity:.55" onclick="hideCtx();toast('Open this note for editing to change its folders')">📁 Folder${fCount?' ('+fCount+')':''}</div>`)
+    +`<div class="ci" onclick="hideCtx();openJournalPicker('${aid}')">📓 My Journal</div>`
+    +`<div class="ci" onclick="hideCtx();openMyDatabasePicker('${aid}')">🗄 MyDatabase</div>`;
+  _ctxPos(m,ev);
+}
+/* ── MyDatabase folder picker — same toggle-to-attach mechanics as the
+   Journal picker above, but lists MyDatabase's real folders (excluding
+   journal-event folders, which already have their own picker). ────────── */
+function openMyDatabasePicker(aid){
+  closeJournalPicker();
+  let p=document.getElementById('mdb-picker');
+  if(p&&p.classList.contains('open')&&p.dataset.aid===aid){closeMyDatabasePicker();return;}
+  if(!p){p=document.createElement('div');p.id='mdb-picker';document.body.appendChild(p);}
+  p.dataset.aid=aid;
+  p.innerHTML=renderMyDatabasePickerBody(aid);
+  p.style.cssText='bottom:60px;left:4px;right:4px;top:auto;width:auto';
+  if(window.innerWidth>=1200)p.style.cssText='top:70px;right:20px;bottom:auto;left:auto;width:min(310px,92vw)';
+  p.classList.add('open');
+  const _cl=e=>{const pp=document.getElementById('mdb-picker'),cx=document.getElementById('ctx');if(pp&&!pp.contains(e.target)&&!(cx&&cx.contains(e.target))){closeMyDatabasePicker();document.removeEventListener('mousedown',_cl,true);document.removeEventListener('touchstart',_cl,true);}};
+  setTimeout(()=>{document.addEventListener('mousedown',_cl,{capture:true});document.addEventListener('touchstart',_cl,{capture:true});},50);
+}
+function closeMyDatabasePicker(){const p=document.getElementById('mdb-picker');if(p)p.classList.remove('open');}
+function renderMyDatabasePickerBody(aid){
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return '';
+  const inSet=new Set(a.folderIds||[]);
+  const folders=DB.folders.filter(f=>f.sectionId==='db-section'&&!f.parentId&&!f.journalMode).sort((x,y)=>(x.order||0)-(y.order||0));
+  let h=`<div class="nti-pk-hd">🗄 MyDatabase<button class="nti-pk-cls" onclick="closeMyDatabasePicker()">✕</button></div><div class="nti-pk-scroll">`;
+  h+='<div class="nti-pk-kinds" style="flex-direction:column;align-items:stretch;gap:6px">';
+  if(folders.length){
+    h+=folders.map(f=>{const on=inSet.has(f.id);const sty=on?'background:var(--accent);border-color:var(--accent);color:#fff;opacity:1':'color:var(--accent);border-color:var(--accent)';return `<button class="nti-pk-kind${on?' on':''}" style="justify-content:flex-start;text-align:left;${sty}" onclick="toggleNoteDbFolder('${aid}','${f.id}')" title="${on?'Tap to remove from this folder':'Tap to add to this folder'}">${on?'✓ ':'🗄 '}${esc(f.name)}</button>`;}).join('');
+  }else{
+    h+='<span class="nti-pk-empty">No MyDatabase folders yet.</span>';
+  }
+  h+='</div></div>';
+  return h;
+}
+function toggleNoteDbFolder(aid,fid){
+  const a=DB.articles.find(x=>x.id===aid);if(!a)return;
+  if(!a.folderIds)a.folderIds=[];
+  const i=a.folderIds.indexOf(fid);
+  if(i>=0){a.folderIds.splice(i,1);toast('Removed from folder');}
+  else{a.folderIds.push(fid);a.folderIds=_autoLeavePrimary(a.folderIds);toast('🗄 Added to folder');}
+  a.updatedAt=new Date().toISOString();
+  persist();
+  const p=document.getElementById('mdb-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderMyDatabasePickerBody(aid);
+  renderTree();renderP2C();renderP3H();renderP3C();
 }
 function togNtiCat(catId){if(!ST.ntiCatOpen)ST.ntiCatOpen={};ST.ntiCatOpen[catId]=!(ST.ntiCatOpen[catId]!==false);const p=document.getElementById('nti-picker');if(p&&p.classList.contains('open'))p.innerHTML=renderNtiPickerBody(p.dataset.aid);}
 function _ctxPos(m,ev){m.style.display='block';const vw=window.innerWidth,vh=window.innerHeight;let x=ev.clientX,y=ev.clientY;setTimeout(()=>{const mw=m.offsetWidth,mh=m.offsetHeight;if(x+mw>vw)x=vw-mw-4;if(y+mh>vh)y=vh-mh-4;m.style.left=x+'px';m.style.top=y+'px';},0);}
@@ -9003,7 +9064,7 @@ function artDStart(ev,aid){
   ev.dataTransfer.setData('text','art:'+aid);
   const a=DB.articles.find(x=>x.id===aid);
   const gh=document.getElementById('dgh');
-  gh.textContent='📄 '+(a?.title||'Article').slice(0,42)+'  →  drop on a folder';
+  gh.textContent='📄 '+(a?.title||'Article').slice(0,42)+'  →  drop on a folder or the Tab bar';
   gh.style.opacity='1';
   setTimeout(()=>ev.target.classList.add('drg'),0);
 }
@@ -9013,6 +9074,7 @@ function artDEnd(ev){
   _artDragId=null;
   document.getElementById('dgh').style.opacity='0';
   clearDI(); // remove any folder-highlight left from hovering
+  const tb=document.getElementById('tab-bar');if(tb)tb.classList.remove('tab-drop-over');
 }
 
 
@@ -12788,10 +12850,16 @@ function kindBarHTML(a){
   return `<div class="kind-bar">`
     +`<div class="nti-chips">${chips||'<span class="nti-no-type">No type</span>'}</div>`
     +`<button class="nti-picker-btn" onclick="openNtiPicker('${a.id}',this)" title="Add / manage NTI types">🏷 Types</button>`
-    +`<button class="nti-picker-btn" onclick="openJournalPicker('${a.id}',this)" title="Add this note to a My Journal event">📓 Journal</button>`
-    +((ST.editing&&ST.article===a.id)?`<button class="nti-picker-btn nti-editbtn" onclick="openPicker()" title="Assign folder">🏷 ${ST.efolders.length===1?'1 folder':ST.efolders.length+' folders'}</button><button class="nti-picker-btn nti-editbtn nti-save" onclick="saveArt()" title="Save note">💾 Save</button>`:'')
+    +`<button class="nti-picker-btn" onclick="openAttachMenu(event,'${a.id}')" title="Attach: Folder · My Journal · MyDatabase">📎 Attach${_attachCount(a)?' ('+_attachCount(a)+')':''} ▾</button>`
+    +((ST.editing&&ST.article===a.id)?`<button class="nti-picker-btn nti-editbtn nti-save" onclick="saveArt()" title="Save note">💾 Save</button>`:'')
     +`<div class="kind-act">${statusHTML}${archIcon}</div>`
     +`</div>`;
+}
+/* Small helper so the Attach button shows a live folder count without
+   caring whether the note is currently mid-edit (ST.efolders) or just
+   being viewed (a.folderIds) — same distinction openPicker() relies on. */
+function _attachCount(a){
+  return (ST.editing&&ST.article===a.id)?ST.efolders.length:(a.folderIds||[]).length;
 }
 
 /* Title-pane render for the MyWall smart view: one collapsible sub-folder
