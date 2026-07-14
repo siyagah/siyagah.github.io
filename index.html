@@ -875,6 +875,7 @@ sup.ann-sup:hover{text-decoration:underline}
   padding:5px 6px 0;gap:3px;border-bottom:1px solid var(--border2);
   background:var(--paper2,var(--paper));scrollbar-width:none;min-height:0}
 #tab-bar.has-tabs{display:flex}
+#tab-bar.tab-drop-over{background:rgba(99,102,241,.1);box-shadow:inset 0 0 0 2px var(--accent)}
 #tab-bar::-webkit-scrollbar{display:none}
 .tab-it{display:inline-flex;align-items:center;gap:5px;padding:5px 11px 5px;
   border:1px solid var(--border2);border-radius:6px 6px 0 0;border-bottom:none;
@@ -1796,7 +1797,7 @@ sup.ann-sup:hover{text-decoration:underline}
 <div id="rsz2" title="Drag to resize panes" class=""></div>
 
 <div id="p3" class="">
-  <div id="tab-bar" class="has-tabs" style="display: flex;"></div>
+  <div id="tab-bar" class="has-tabs" style="display: flex;" ondragover="tabBarDragOver(event)" ondragleave="tabBarDragLeave(event)" ondrop="tabBarDrop(event)"></div>
   <div id="p3h" class=""></div>
   <div id="p3c"></div>
 </div>
@@ -4033,6 +4034,35 @@ function closeTab(aid){
   if(!DB.tabs)return;
   DB.tabs=DB.tabs.filter(x=>x!==aid);
   persist();renderTabBar();
+}
+/* ── Drag a pane-2 note title straight onto the Tab bar to pin it ─────────
+   Reuses the same drag sources already wired up elsewhere: _artDragId (set
+   by artDStart on every pane-2 card) and _pinDragAid (set by pinTabDStart
+   when dragging an existing tab). Mirrors _pinPanelDrop's dual-source
+   pattern so both a fresh card AND an existing tab can be dropped here. */
+function tabBarDragOver(ev){
+  if(!(_artDragId||_pinDragAid))return;
+  ev.preventDefault();
+  ev.dataTransfer.dropEffect='copy';
+  document.getElementById('tab-bar')?.classList.add('tab-drop-over');
+}
+function tabBarDragLeave(ev){
+  if(!ev.currentTarget.contains(ev.relatedTarget))document.getElementById('tab-bar')?.classList.remove('tab-drop-over');
+}
+function tabBarDrop(ev){
+  ev.preventDefault();
+  document.getElementById('tab-bar')?.classList.remove('tab-drop-over');
+  const aid=_artDragId||_pinDragAid||(function(){try{return ev.dataTransfer.getData('text/plain')||ev.dataTransfer.getData('text').replace(/^art:/,'');}catch(e){return null;}})();
+  _artDragId=null;_pinDragAid=null;
+  if(!aid)return;
+  const art=DB.articles.find(x=>x.id===aid);
+  if(!art)return;
+  if(!DB.tabs)DB.tabs=[];
+  if(DB.tabs.includes(aid)){toast('📑 Already in Tab bar');return;}
+  DB.tabs.push(aid);
+  persist();
+  renderTabBar();
+  toast('📑 "'+(art.title||'Untitled').slice(0,30)+'" added to Tab bar');
 }
 
 
@@ -12005,6 +12035,43 @@ function quickCapture(){
     else{var ed=document.getElementById('ed');if(ed)ed.focus();}
   },80);
 }
+/* ── MyWALL "New note under this NTI type" — v03.54.01 ────────────────────
+   Same quick-capture mechanics as quickCapture() above, but the new note is
+   pre-tagged with the NTI kind the user right-clicked in MyWALL, so it
+   appears under that exact type the moment MyWALL re-renders — no separate
+   trip to the NTI Types picker needed. */
+function quickCaptureWithKind(kid){
+  hideCtx();
+  var pf=_dedupePrimaryFolders();
+  if(!pf){
+    var _sec=DB.sections&&DB.sections.length
+      ?[...DB.sections].sort(function(a,b){return a.order-b.order;})[0].id
+      :null;
+    var _ord=DB.folders.filter(function(f){return !f.parentId&&f.sectionId===_sec;}).length+1;
+    pf={id:uid(),name:'Primary',parentId:null,sectionId:_sec,order:_ord};
+    DB.folders.push(pf);
+    if(!DB.theme)DB.theme={};
+    DB.theme.quickCaptureFolderId=pf.id;
+  }
+  var _now=new Date().toISOString();
+  var art={id:uid(),title:'',content:'',folderIds:[pf.id],
+           tags:[],createdAt:_now,updatedAt:_now,kind:kid,kinds:[kid]};
+  DB.articles.push(art);
+  persist();
+  ST.folder=pf.id;
+  ST.article=art.id;ST.editing=false;
+  renderTree();renderP2C();renderP3H();renderP3C();
+  adjustP3Layout();
+  if(window.innerWidth<1200) showPane('p3');
+  startEdit();
+  setTimeout(function(){
+    var ti=document.getElementById('ti');
+    if(ti){ti.focus();}
+    else{var ed=document.getElementById('ed');if(ed)ed.focus();}
+  },80);
+  var k=kindById(kid);
+  toast('✚ New note added under '+(k?k.name:'this type'));
+}
 
 /* ── Pane 3 back navigation ─────────────────────────────────────────
    If pane 2 is open (user came through article list): reveal pane 2.
@@ -13051,6 +13118,8 @@ function showWallKindCtx(ev,kid){
   ev.preventDefault();ev.stopPropagation();
   const m=document.getElementById('ctx');
   m.innerHTML=
+    `<div class="ci" onclick="quickCaptureWithKind('${kid}')">✚ New note here</div>`+
+    `<div class="csep"></div>`+
     `<div class="ci" onclick="hideCtx();renameNoteKind('${kid}')">✏️ Rename</div>`+
     `<div class="ci" onclick="openKindClrPicker(event,'${kid}',null)">🎨 Change colour</div>`+
     `<div class="ci" onclick="hideCtx();addNoteKindTab()">➕ Add category</div>`+
