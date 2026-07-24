@@ -1556,6 +1556,29 @@ sup.ann-sup:hover{text-decoration:underline}
 @keyframes ebsub-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .p3h-edit-sub .et{min-width:36px;padding:4px 7px;font-size:13px}
 
+/* ══ v04.19 Unified toolbar — Home + Edit + NTI merge ══════════════════════ */
+.p3h-unified-tb{display:flex;align-items:center;flex-wrap:wrap;gap:4px;
+  padding:4px 8px;border-bottom:1px solid var(--border2);flex-shrink:0;background:var(--paper)}
+.p3h-unified-tb .tb-sep{width:1px;align-self:stretch;background:var(--border2);flex-shrink:0;margin:2px 1px}
+.p3h-unified-tb .eb-grp-btn,.p3h-nav-edit-row .eb-grp-btn{flex:0 0 auto!important;padding:5px 8px!important;font-size:12.5px!important}
+.p3h-nav-edit-row{display:flex;align-items:center;justify-content:space-between;
+  gap:6px;padding:4px 8px;border-bottom:1px solid var(--border2);flex-shrink:0;background:var(--paper)}
+.p3h-nav-edit-row .nav-l,.p3h-nav-edit-row .nav-r{display:flex;align-items:center;gap:2px;
+  overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;flex-shrink:1;min-width:0}
+.p3h-nav-edit-row .nav-l::-webkit-scrollbar,.p3h-nav-edit-row .nav-r::-webkit-scrollbar{display:none}
+.p3h-nav-edit-row .nav-r{justify-content:flex-end}
+.fl-pop{display:none;position:fixed;z-index:9200;background:var(--paper);
+  border:1px solid var(--border2);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.22);
+  width:min(260px,92vw);max-height:min(360px,70vh);flex-wrap:wrap;
+  gap:4px;padding:8px;overflow:auto}
+.fl-pop.open{display:flex}
+.fl-pop .et{min-width:36px;padding:4px 7px;font-size:13px}
+@media(max-width:1199px){
+  .p3h-nav-edit-row{min-height:42px}
+  .fl-pop .et{min-width:40px;padding:6px 9px;font-size:14px;min-height:38px}
+  .fl-pop .ed-col-btn{font-size:13px;padding:6px 12px;min-height:38px}
+}
+
 /* ══ v28 Unified Calendar System ════════════ */
 .cal-layer-btn{font-size:13px;padding:2px 5px;border-radius:5px;
   background:var(--hover);border:1px solid var(--border2);
@@ -2602,31 +2625,38 @@ function renderP3H(){
   if(ST.editing&&curA){
     el.classList.add('editing');  /* scopes flex-direction:column to edit mode */
     const fc=ST.efolders.length;
-    /* v03.15.03 — nav kept at the very top in its own bar; title moved to body (below NTI bar) */
-    h=`<div class="p3h-tag-bar">`
+    const _mobE=window.innerWidth<1200;
+    /* v04.19 — Home + Edit-bar + NTI bar merged per the top-bar restructure:
+       desktop gets one unified toolbar (Home | Aa H ≡ + ↺ ⊡ | Types/Attach/Save | ⋯);
+       tablet/mobile get a nav+edit row (🏠 ◀ ≡ on the left, Aa H ≡ + ↺ right-aligned),
+       with the NTI/Types/Attach/Save row kept separate below (rendered in renderP3C). */
+    h='';
+    if(_mobE){
+      h+='<div class="p3h-nav-edit-row">'
+        +'<div class="nav-l">'
+          +_p3HomeBtnHTML()
+          +'<button class="btn bn bi" onclick="openP2()" style="font-size:16px" title="Back to article list">◀</button>'
+          +'<button class="btn bn bi" onclick="backFromP3()" style="font-size:20px" title="Open folders">≡</button>'
+        +'</div>'
+        +'<div class="nav-r">'+_p3EditIconsHTML(curA)+'</div>'
+        +'</div>';
+    }
+    h+=`<div class="p3h-tag-bar">`
       +`<span class="tag-ed-lbl">🏷 Tags</span>`
       +`<div class="tag-editor" id="tag-editor" onclick="document.getElementById('tag-inp')?.focus()"></div>`
       +`<div class="p3h-eflx"></div>`
       +`<div class="p3h-tag-bar-acts">`
       +`<button class="btn bn bi" onclick="cancelEdit()" title="Cancel (Esc)">✕</button>`
       +'</div></div>';
-    /* Bar 3 — Edit bar: format buttons only, scrollable */
-    /* ── Edit bar: grouped — same compact system on every screen size,
-       so it's never a long scattered row regardless of device. ── */
-    {
-      const _eg=ST.ebGroup||null;
-      const _grps=[
-        {id:'text',  icon:'<b>Aa</b>',label:'Text style'},
-        {id:'heads', icon:'H',         label:'Headings'},
-        {id:'lists', icon:'≡',       label:'Lists'},
-        {id:'insert',icon:'+',         label:'Insert'},
-        {id:'hist',  icon:'↺',       label:'History'},
-      ];
-      h+='<div class="p3h-edit-bar eb-mob">'
-        +_grps.map(g=>`<button class="et eb-grp-btn${_eg===g.id?' on':''}" onmousedown="togEBGroup('${g.id}')" title="${g.label}">${g.icon}</button>`).join('')
-        +`<button class="et modal-pop-btn" onmousedown="event.preventDefault()" onclick="popOutNote('${curA.id}')" title="Pop out as floating window (Ctrl+Shift+P)">⊡</button>`
-        +'</div>'
-        +'<div class="p3h-edit-sub" id="eb-sub">'+_buildEBSub(_eg)+'</div>';
+    if(!_mobE){
+      h+='<div class="p3h-unified-tb">'
+        +_p3HomeBtnHTML()
+        +'<span class="tb-sep"></span>'
+        +_p3EditIconsHTML(curA)
+        +'<span class="tb-sep"></span>'
+        +kindBarHTML(curA,true)
+        +_edColToolbarHTML()
+        +'</div>';
     }
     el.innerHTML=h;
     renderTagEditor();
@@ -2682,10 +2712,11 @@ function renderP3C(){
     /* Preserve any unsaved live edits before rebuilding the editor (fixes content loss on NTI/title/any re-render) */
     {const _le=document.getElementById('ed');
      if(_le&&_le.dataset.aid===curA.id){const _c=_le.cloneNode(true);_c.querySelectorAll('.ann-inline-card').forEach(n=>n.remove());_edColClean(_c);curA.content=_c.innerHTML;if(ST.etitle!=null)curA.title=ST.etitle.trim();}}
-    el.innerHTML=kindBarHTML(curA)
+    const _mobE2=window.innerWidth<1200;
+    el.innerHTML=(_mobE2?kindBarHTML(curA):'')
       +`<div class="p3h-title-bar p3c-titlebar">${_navBtnsHTML()}<input id="ti" value="${esc(ST.etitle!=null?ST.etitle:(curA.title||''))}" placeholder="Article title…" oninput="ST.etitle=this.value"><span id="save-flash" class="save-flash">✓ Saved</span></div>`
       +_versionStripHTML(curA)
-      +_edColToolbarHTML()+_dateLineHTML(curA)+_fieldsPanelHTML(curA)+`<div id="ed" data-aid="${curA.id}" contenteditable="true" spellcheck="true"></div>`;
+      +(_mobE2?_edColToolbarHTML():'')+_dateLineHTML(curA)+_fieldsPanelHTML(curA)+`<div id="ed" data-aid="${curA.id}" contenteditable="true" spellcheck="true"></div>`;
     if(_tiF2){const _tin=document.getElementById('ti');if(_tin){_tin.focus({preventScroll:true});try{_tin.setSelectionRange(_s2,_e2);}catch(e){}}}
     const ed=document.getElementById('ed');ed.innerHTML=curA.content;if(_isPlaceholder(curA.content))ed.innerHTML='';initRichPaste(ed);
     wireAnnEditor(ed,curA);
@@ -2864,6 +2895,7 @@ function _renderP2SearchBar(){
 }
 function _renderP3SearchBar(){
   const el=document.getElementById('p3-srch-bar');if(!el)return;
+  if(ST.editing){el.innerHTML='';return;}
   const show=!!(ST.lastSearch&&!ST.search);
   el.innerHTML='<div class="mini-srch-row">'
     +'<button class="btn bn bi" onclick="goHome()" title="Home — reset search/filters and show the folder list" style="font-size:12.5px">🏠 Home</button>'
@@ -6782,14 +6814,52 @@ function _tabBarCursor(e){
 
 
 /* ══ MOBILE EDIT BAR GROUPS ══════════════════════════════════════════════════ */
+/* ══ v04.19 — generic floating popover (reused for Edit-bar sub-options and
+   the Collapse/Expand/Preview overflow menu). Same anchor/close pattern as
+   openNtiPicker(), so behaviour (mobile bottom-sheet, outside-click close)
+   stays consistent with the rest of the app. ══════════════════════════════ */
+function _openFloatPop(id,btn,html){
+  let p=document.getElementById(id);
+  if(p&&p.classList.contains('open')){closeFloatPop(id);return null;}
+  if(!p){p=document.createElement('div');p.id=id;p.className='fl-pop';document.body.appendChild(p);}
+  p.innerHTML=html;
+  const r=btn.getBoundingClientRect(),mob=window.innerWidth<1200;
+  if(mob){p.style.cssText='bottom:60px;left:4px;right:4px;top:auto;width:auto';}
+  else{const top=Math.min(r.bottom+4,window.innerHeight-320),left=Math.max(4,Math.min(r.left-4,window.innerWidth-268));p.style.cssText=`top:${top}px;left:${left}px;bottom:auto;right:auto`;}
+  p.classList.add('open');
+  const _cl=e=>{const pp=document.getElementById(id);if(pp&&!pp.contains(e.target)&&!btn.contains(e.target)){closeFloatPop(id);document.removeEventListener('mousedown',_cl,true);document.removeEventListener('touchstart',_cl,true);}};
+  setTimeout(()=>{document.addEventListener('mousedown',_cl,{capture:true});document.addEventListener('touchstart',_cl,{capture:true});},50);
+  return p;
+}
+function closeFloatPop(id){const p=document.getElementById(id);if(p)p.classList.remove('open');}
+/* Home (+ Back-to-results) icon buttons — shared by the desktop unified
+   toolbar and the tablet/mobile nav+edit row. */
+function _p3HomeBtnHTML(){
+  const show=!!(ST.lastSearch&&!ST.search);
+  return '<button class="btn bn bi" onclick="goHome()" title="Home — reset search/filters and show the folder list" style="font-size:14px">🏠</button>'
+    +(show?'<button class="btn bn bi" onclick="restoreLastSearch()" title="Back to search results: \''+esc(ST.lastSearch)+'\'" style="font-size:13px">🔍↺</button>':'');
+}
+/* Aa/H/≡/+/↺ format-group icons (+ pop-out, auto-hidden <900px via CSS) —
+   shared by the desktop unified toolbar and the tablet/mobile nav+edit row. */
+function _p3EditIconsHTML(curA){
+  const _eg=ST.ebGroup||null;
+  const _grps=[
+    {id:'text',  icon:'<b>Aa</b>',label:'Text style'},
+    {id:'heads', icon:'H',         label:'Headings'},
+    {id:'lists', icon:'≡',       label:'Lists'},
+    {id:'insert',icon:'+',         label:'Insert'},
+    {id:'hist',  icon:'↺',       label:'History'},
+  ];
+  return _grps.map(g=>`<button class="et eb-grp-btn${_eg===g.id?' on':''}" data-g="${g.id}" onmousedown="togEBGroup('${g.id}')" title="${g.label}">${g.icon}</button>`).join('')
+    +`<button class="et modal-pop-btn" onmousedown="event.preventDefault()" onclick="popOutNote('${curA.id}')" title="Pop out as floating window (Ctrl+Shift+P)">⊡</button>`;
+}
 function togEBGroup(g){
-  ST.ebGroup=(ST.ebGroup===g)?null:g;
-  const sub=document.getElementById('eb-sub');
-  if(sub)sub.innerHTML=_buildEBSub(ST.ebGroup);
-  document.querySelectorAll('.eb-grp-btn').forEach(btn=>{
-    const m=btn.getAttribute('onmousedown')?.match(/togEBGroup\('(.+?)'\)/);
-    if(m)btn.classList.toggle('on',m[1]===ST.ebGroup);
-  });
+  const btn=document.querySelector('.eb-grp-btn[data-g="'+g+'"]');
+  if(!btn)return;
+  if(ST.ebGroup===g){ST.ebGroup=null;closeFloatPop('eb-pop');btn.classList.remove('on');return;}
+  ST.ebGroup=g;
+  document.querySelectorAll('.eb-grp-btn').forEach(b=>b.classList.toggle('on',b===btn));
+  _openFloatPop('eb-pop',btn,_buildEBSub(g));
 }
 function _buildEBSub(g){
   if(!g)return '';
@@ -8899,8 +8969,8 @@ function _edColInit(ed){
   if(!ed)return;
   ed.querySelectorAll('.ed-col-arr,.ed-col-grip').forEach(function(n){n.remove();});
   const heads=_edColHeads(ed);
-  const tb=document.getElementById('ed-col-tb');
-  if(tb)tb.style.display=heads.length?'flex':'none';
+  const tb=document.getElementById('ed-col-wrap');
+  if(tb)tb.style.display=heads.length?'inline-flex':'none';
   if(!heads.length)return;
   heads.forEach(function(h){
     const g=document.createElement('span');
@@ -9056,11 +9126,21 @@ function _edColSyncPrevBtn(){
   if(btn)btn.classList.toggle('on',DB.theme&&DB.theme.collapsePreview==='preview');
 }
 function _edColToolbarHTML(){
-  return '<div id="ed-col-tb" style="display:none">'
-    +'<button class="ed-col-btn" onmousedown="event.preventDefault()" onclick="_edColAll(true)">&#9654; Collapse all</button>'
-    +'<button class="ed-col-btn" onmousedown="event.preventDefault()" onclick="_edColAll(false)">&#9660; Expand all</button>'
-    +'<button class="ed-col-btn" id="ed-col-prev-btn" onmousedown="event.preventDefault()" onclick="_edColPreview()" title="Show a preview line under collapsed sections">&#8801; Preview</button>'
+  return '<div id="ed-col-wrap" style="display:none">'
+    +'<button class="et" id="ed-col-btn" onmousedown="event.preventDefault()" onclick="toggleEdColPop(event)" title="Section tools: Collapse / Expand / Preview">⋯</button>'
     +'</div>';
+}
+/* v04.19 — Collapse all / Expand all / Preview moved off their own
+   always-reserved row into this overflow popover, opened from the ⋯
+   trigger. Same _edColAll()/_edColPreview() logic underneath, unchanged. */
+function toggleEdColPop(ev){
+  const btn=ev.currentTarget;
+  if(document.getElementById('edcol-pop')?.classList.contains('open')){closeFloatPop('edcol-pop');return;}
+  const onPrev=!!(DB.theme&&DB.theme.collapsePreview==='preview');
+  _openFloatPop('edcol-pop',btn,
+    '<button class="ed-col-btn" onmousedown="event.preventDefault()" onclick="_edColAll(true)">&#9654; Collapse all</button>'
+    +'<button class="ed-col-btn" onmousedown="event.preventDefault()" onclick="_edColAll(false)">&#9660; Expand all</button>'
+    +'<button class="ed-col-btn'+(onPrev?' on':'')+'" id="ed-col-prev-btn" onmousedown="event.preventDefault()" onclick="_edColPreview()" title="Show a preview line under collapsed sections">&#8801; Preview</button>');
 }
 
 /* Wire the editor (called from renderP3C each time edit mode opens) */
@@ -13238,7 +13318,7 @@ function renameNoteKind(kid){
 }
 
 /* Character tabs + Finish bar shown at the top of the note view */
-function kindBarHTML(a){
+function kindBarHTML(a,bare){
   const curKinds=new Set(artKinds(a));
   const activeKinds=noteKinds().filter(k=>curKinds.has(k.id));
   const chips=activeKinds.map(k=>{
@@ -13258,13 +13338,12 @@ function kindBarHTML(a){
   const archIcon=a.archived
     ?`<button class="kind-arch-btn archived" onclick="toggleArchive('${a.id}')" title="Unarchive">📤</button>`
     :`<button class="kind-arch-btn" onclick="toggleArchive('${a.id}')" title="Archive">📦</button>`;
-  return `<div class="kind-bar">`
-    +`<div class="nti-chips">${chips||'<span class="nti-no-type">No type</span>'}</div>`
+  const inner=`<div class="nti-chips">${chips||'<span class="nti-no-type">No type</span>'}</div>`
     +`<button class="nti-picker-btn" onclick="openNtiPicker('${a.id}',this)" title="Add / manage NTI types">🏷 Types</button>`
     +`<button class="nti-picker-btn" onclick="openAttachMenu(event,'${a.id}')" title="Attach: Folder · My Journal · MyDatabase">📎 Attach${_attachCount(a)?' ('+_attachCount(a)+')':''} ▾</button>`
     +((ST.editing&&ST.article===a.id)?`<button class="nti-picker-btn nti-editbtn nti-save" onclick="saveArt()" title="Save note">💾 Save</button>`:'')
-    +`<div class="kind-act">${statusHTML}${archIcon}</div>`
-    +`</div>`;
+    +`<div class="kind-act">${statusHTML}${archIcon}</div>`;
+  return bare?inner:`<div class="kind-bar">${inner}</div>`;
 }
 /* Small helper so the Attach button shows a live folder count without
    caring whether the note is currently mid-edit (ST.efolders) or just
