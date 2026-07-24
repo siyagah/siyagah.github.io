@@ -2081,7 +2081,22 @@ function _renderPreserveEdit(){
     renderTree();renderP2H();renderP2C();renderTabBar();updateTrashBtn();
     return;
   }
+  /* v03.70.01 — preserve Pane 3's scroll position across a background sync
+     re-render. render() rebuilds Pane 3's content from scratch, and a
+     freshly-created element always starts scrolled to the top — so any
+     incoming sync update while just reading a note (not editing) silently
+     jumped the screen back to the beginning. Genuinely switching to a
+     different note is untouched — that still starts at the top, as
+     intended; this only preserves position when re-rendering the SAME
+     note you were already reading. */
+  const avw=document.querySelector('.avw');
+  const savedArticleId=ST.article;
+  const savedScroll=avw?avw.scrollTop:0;
   render();
+  if(savedScroll&&ST.article===savedArticleId){
+    const avw2=document.querySelector('.avw');
+    if(avw2)avw2.scrollTop=savedScroll;
+  }
 }
 
 function _searchWords(q){return q.toLowerCase().split(/\s+/).filter(Boolean);}
@@ -6810,7 +6825,7 @@ function _buildEBSub(g){
       '<button class="et" title="Insert link" onmousedown="edLink(event)">\ud83d\udd17</button>',
       '<button class="et" title="Bookmark card" onmousedown="edBookmarkBtn(event)">\ud83d\udd16</button>',
       '<button class="et" title="Mention (@)" onmousedown="edMentionBtn(event)" style="font-weight:700">@</button>',
-      '<button class="et" title="Quick Phrases" onmousedown="openQuickPhrasesMenu(event)">\ud83d\udcac</button>',
+      '<button class="et" title="Quick Phrases" onmousedown="openQuickPhrasesMenu(event)" onclick="event.stopPropagation()">\ud83d\udcac</button>',
     ],
     hist:[
       '<button class="et" onmousedown="ec(event,\'undo\')" title="Undo">\u21a9</button>',
